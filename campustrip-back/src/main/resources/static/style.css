@@ -1,0 +1,14 @@
+.body {
+    justify-content: center;
+    align-items: center;
+}
+
+.main_box {
+    width: 500px;
+    height: 200px;
+    margin: 100px auto;
+    line-height: 200px;
+    text-align: center;
+    background-color: aliceblue;
+    border-radius: 10px;
+}
