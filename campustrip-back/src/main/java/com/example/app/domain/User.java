@@ -15,13 +15,14 @@ import lombok.AllArgsConstructor;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long membership_id;
+    @Column(name="membership_id")
+    private Integer membership_id;
     @Column(name="name", nullable=false, length=50)
     private String name;
     @Column(name="password", nullable=false, length=50)
     private String password;
-    @Column(name="user_id", nullable=false)
-    private Long user_id;
+    @Column(name="user_id", nullable=false, length=50)
+    private String user_id;
     @Column(name="phone_number", length=50)
     private String phone_number;
     @Column(name="email", nullable=false, length=50)
