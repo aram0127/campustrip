@@ -34,7 +34,7 @@ public class User {
     @Column(name="preference")
     private Integer preference;
     @Column(name="user_score", nullable=false)
-    private Float user_score;
+    private Float user_score = 36.5F;
 
     // 기본 생성자, getter, setter 생략
 }

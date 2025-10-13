@@ -7,7 +7,30 @@
 </head>
 <body>
     <div class="main_box">
-        <h1>여기에 홈페이지 표시할 예정!</h1>
+        <h1>회원가입</h1>
+        <form id="userForm">
+            <label>이름:
+                <input type="text" name="name" required>
+            </label><br>
+            <label>아이디:
+                <input name="user_id" type="text" required>
+            </label><br>
+            <label>비밀번호:
+                <input name="password" type="password" required>
+            </label><br>
+            <label>전화번호:
+                <input name="phone_number" type="phonenumber" required>
+            </label><br>
+            <label>이메일:
+                <input name="school_email" type="email">
+            </label><br>
+            <label>학교메일:
+                <input name="email" type="email" aria-label="email">
+            </label><br>
+            <button type="submit">register</button>
+        </form>
     </div>
+    <div id="result"></div>
+    <script src="register.js"></script>
 </body>
 </html>
