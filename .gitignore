@@ -11,6 +11,7 @@ build/
 # Spring
 target/
 *.log
+application-secret.properties
 
 # OS
 .DS_Store
