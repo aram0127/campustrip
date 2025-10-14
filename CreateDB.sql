@@ -1,10 +1,10 @@
 -- 1. 데이터베이스 생성 (원하는 이름으로 수정 가능)
-CREATE DATABASE IF NOT EXISTS campus_trip
+CREATE DATABASE IF NOT EXISTS campustrip
 CHARACTER SET utf8mb4
 COLLATE utf8mb4_unicode_ci;
 
 -- 2. 생성한 데이터베이스 선택
-USE campus_trip;
+USE campustrip;
 
 -- 3. 이어서 테이블 생성 스크립트 실행
 -- (앞서 작성해드린 CREATE TABLE 구문들을 여기에 붙여넣고 실행)
@@ -19,7 +19,7 @@ CREATE TABLE User (
     email VARCHAR(255) DEFAULT NULL COMMENT '앞뒤 trimming 및 *@* 방식으로 검증',
     school_email VARCHAR(255) NOT NULL COMMENT '앞뒤 trimming 및 *@* 방식으로 검증',
     mbti VARCHAR(255) DEFAULT NULL,
-    preference TINYINT DEFAULT NULL COMMENT '바이너리 정보',
+    preference INT DEFAULT NULL COMMENT '바이너리 정보',
     user_score FLOAT NOT NULL DEFAULT 36.5
 ) ENGINE=InnoDB;
 

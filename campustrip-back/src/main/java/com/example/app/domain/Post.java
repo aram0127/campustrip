@@ -5,10 +5,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import org.hibernate.mapping.ToOne;
 
 @Entity
-@Table(name="post")
+@Table(name="Post")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,9 +18,15 @@ public class Post {
     @Column(name="post_id")
     private Integer post_id;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name="membership_id", nullable=false)
-    private User user;  // User 엔티티와의 관계 설정?
+    private User membership_id;
+
+    @Column(name="title", nullable=false, length=100)
+    private String title;
+
+    @Column(name="body", nullable=false, columnDefinition="TEXT")
+    private String body;
 
     @Column(name="created_at", nullable=false)
     private java.time.LocalDateTime created_at = java.time.LocalDateTime.now();
@@ -29,22 +34,14 @@ public class Post {
     @Column(name="updated_at")
     private java.time.LocalDateTime updated_at;
 
-    @Column(name="title", nullable=false, length=100)
-    private String title;
+    @Column(name="team_size", nullable=false)
+    private Integer team_size = 0;
 
-    @Column(name="body", nullable=false)
-    private String body;
+    @Column(name="chat_id", nullable=false)
+    private Integer chat_id = 0;
 
-    @Column(name = "team_size", nullable = false)
-    private Integer team_size;
-
-    @OneToOne
-    @JoinColumn(name="chat_id", nullable=false)
-    private Chat chat;
-
-    @OneToOne
-    @JoinColumn(name="planner_id", nullable=false)
-    private Planner planner;
+    @Column(name="planner_id", nullable=false)
+    private Integer planner_id = 0;
 
     // 기본 생성자, getter, setter 생략
 }

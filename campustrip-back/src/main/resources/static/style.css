@@ -5,8 +5,9 @@
 
 .main_box {
     width: 500px;
-    height: 200px;
+    height: auto;
     margin: 100px auto;
+    padding: 30px;
     text-align: center;
     background-color: aliceblue;
     border-radius: 10px;
