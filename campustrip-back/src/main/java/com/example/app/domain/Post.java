@@ -37,11 +37,13 @@ public class Post {
     @Column(name="team_size", nullable=false)
     private Integer team_size = 0;
 
-    @Column(name="chat_id", nullable=false)
-    private Integer chat_id = 0;
+    @OneToOne
+    @JoinColumn(name="chat_id", nullable=false)
+    private Chat chat;
 
-    @Column(name="planner_id", nullable=false)
-    private Integer planner_id = 0;
+    @OneToOne
+    @JoinColumn(name="planner_id", nullable=false)
+    private Planner planner;
 
     // 기본 생성자, getter, setter 생략
 }
