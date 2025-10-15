@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.app.service.UserService;
 import com.example.app.domain.User;
+import com.example.app.util.JwtUtil;
 import java.util.List;
 
 @RestController  // REST API용 컨트롤러
@@ -18,10 +19,10 @@ public class UserController {
     }
 
     // GET: 전체 사용자 조회
-//    @GetMapping
-//    public List<User> getAllUsers() {
-//        return userService.getAllUsers();
-//    }
+    @GetMapping
+    public List<User> getAllUsers() {
+        return userService.getAllUsers();
+    }
 
     // GET: ID로 사용자 조회
     @GetMapping("/{id}")
@@ -37,16 +38,16 @@ public class UserController {
     }
 
     // PUT: 사용자 정보 수정
-//    @PutMapping("/{id}")
-//    public User updateUser(@PathVariable Long id, @RequestBody User user) {
-//        user.setId(id);
-//        userService.saveUser(user);
-//        return user;
-//    }
+    @PutMapping("/{id}")
+    public User updateUser(@PathVariable String id, @RequestBody User user) {
+        user.setUserId(id);
+        userService.saveUser(user);
+        return user;
+    }
 
     // DELETE: 사용자 삭제
-//    @DeleteMapping("/{id}")
-//    public void deleteUser(@PathVariable Long id) {
-//        userService.deleteUser(id);
-//    }
+    @DeleteMapping("/{id}")
+    public void deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+    }
 }

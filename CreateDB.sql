@@ -20,7 +20,8 @@ CREATE TABLE User (
     school_email VARCHAR(255) NOT NULL COMMENT '앞뒤 trimming 및 *@* 방식으로 검증',
     mbti VARCHAR(255) DEFAULT NULL,
     preference INT DEFAULT NULL COMMENT '바이너리 정보',
-    user_score FLOAT NOT NULL DEFAULT 36.5
+    user_score FLOAT NOT NULL DEFAULT 36.5,
+    role INT NOT NULL DEFAULT 1
 ) ENGINE=InnoDB;
 
 -- 채팅방 테이블
