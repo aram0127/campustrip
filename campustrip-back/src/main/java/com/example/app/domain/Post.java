@@ -6,6 +6,9 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name="Post")
 @Getter
@@ -16,11 +19,11 @@ public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="post_id")
-    private Integer post_id;
+    private Integer postId;
 
     @ManyToOne
     @JoinColumn(name="membership_id", nullable=false)
-    private User membership_id;
+    private User membershipId;
 
     @Column(name="title", nullable=false, length=100)
     private String title;
@@ -29,13 +32,21 @@ public class Post {
     private String body;
 
     @Column(name="created_at", nullable=false)
-    private java.time.LocalDateTime created_at = java.time.LocalDateTime.now();
+    private java.time.LocalDateTime createdAt = java.time.LocalDateTime.now();
 
     @Column(name="updated_at")
-    private java.time.LocalDateTime updated_at;
+    private java.time.LocalDateTime updatedAt;
 
     @Column(name="team_size", nullable=false)
-    private Integer team_size = 0;
+    private Integer teamSize = 0;
+
+    @ManyToMany
+    @JoinTable(
+        name = "Post_Region",
+        joinColumns = @JoinColumn(name = "post_id"),
+        inverseJoinColumns = @JoinColumn(name = "region_id")
+    )
+    private List<Region> regions = new ArrayList<>();
 
 //    @ManyToOne
 //    @JoinColumn(name="chat_id", nullable=false)
