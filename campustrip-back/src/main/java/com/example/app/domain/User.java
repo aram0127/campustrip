@@ -18,14 +18,14 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class User implements UserDetails {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="membership_id")
     private Integer id;
     @Column(name="name", nullable=false, length=50)
     private String name;
-    @Column(name="password", nullable=false, length=50)
+    @Column(name="password", nullable=false, length=100)
     private String password;
     @Column(name="user_id", nullable=false, length=50)
     private String userId;
@@ -44,19 +44,8 @@ public class User implements UserDetails {
     @Column(name="role", nullable=false, length=20)
     private Integer role = 1;
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        String role = this.role == 1 ? "ROLE_USER" : "ROLE_ADMIN";
-        return List.of(new SimpleGrantedAuthority(role));
-    }
-
-    @Override
-    public String getUsername() {
-        return name;
-    }
-
     public void setRole(String role) {
-        this.role = role == "ROLE_ADMIN" ? 0 : 1;
+        this.role = "ROLE_ADMIN".equals(role) ? 0 : 1;
     }
 
     // 기본 생성자, getter, setter 생략
