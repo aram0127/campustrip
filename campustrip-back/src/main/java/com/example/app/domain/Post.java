@@ -42,7 +42,7 @@ public class Post {
 
     @ManyToMany
     @JoinTable(
-        name = "Post_Region",
+        name = "PostRegion",
         joinColumns = @JoinColumn(name = "post_id"),
         inverseJoinColumns = @JoinColumn(name = "region_id")
     )
