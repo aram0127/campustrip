@@ -29,9 +29,12 @@ public class UserService implements UserDetailsService {
         return userRepository.findByName(name);
     }
 
-    public User getUserById(Long id) {
-        return userRepository.findById(Long.valueOf(id))
-                .orElseThrow(() -> new NoSuchElementException("User not found with id: " + id));
+    public User getUserById(String id) {
+        User user = userRepository.findById(id);
+        if (user == null) {
+            throw new NoSuchElementException("User not found with id: " + id);
+        }
+        return user;
     }
 
     public void saveUser(User user) {

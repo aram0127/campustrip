@@ -5,7 +5,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.app.service.UserService;
 import com.example.app.domain.User;
-import com.example.app.util.JwtUtil;
 import java.util.List;
 
 @RestController  // REST API용 컨트롤러
@@ -29,7 +28,7 @@ public class UserController {
 
     // GET: ID로 사용자 조회
     @GetMapping("/{id}")
-    public User getUserById(@PathVariable Long id) {
+    public User getUserById(@PathVariable String id) {
         return userService.getUserById(id);
     }
 

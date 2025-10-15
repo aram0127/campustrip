@@ -12,6 +12,7 @@ USE campustrip;
 -- 회원 테이블
 CREATE TABLE User (
     membership_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+--     membership_id VARCHAR(255) NOT NULL PRIMARY KEY,
     user_id VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -27,6 +28,7 @@ CREATE TABLE User (
 -- 채팅방 테이블
 CREATE TABLE Chat (
     chat_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+--     chat_id VARCHAR(255) NOT NULL PRIMARY KEY,
     created_at DATETIME NOT NULL,
     title VARCHAR(255) NOT NULL
 ) ENGINE=InnoDB;
@@ -35,6 +37,8 @@ CREATE TABLE Chat (
 CREATE TABLE Planner (
     planner_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     membership_id INT NOT NULL,
+--     planner_id VARCHAR(255) NOT NULL PRIMARY KEY,
+--     membership_id VARCHAR(255) NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     FOREIGN KEY (membership_id) REFERENCES User(membership_id)
@@ -44,6 +48,8 @@ CREATE TABLE Planner (
 CREATE TABLE Post (
     post_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     membership_id INT NOT NULL,
+--     post_id VARCHAR(255) NOT NULL PRIMARY KEY,
+--     membership_id VARCHAR(255) NOT NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     title VARCHAR(255) NOT NULL,
@@ -51,6 +57,8 @@ CREATE TABLE Post (
     team_size INT DEFAULT NULL,
     chat_id INT NOT NULL,
     planner_id INT NOT NULL,
+--     chat_id VARCHAR(255) NOT NULL,
+--     planner_id VARCHAR(255) NOT NULL,
     FOREIGN KEY (membership_id) REFERENCES User(membership_id),
     FOREIGN KEY (chat_id) REFERENCES Chat(chat_id),
     FOREIGN KEY (planner_id) REFERENCES Planner(planner_id)
@@ -59,6 +67,7 @@ CREATE TABLE Post (
 -- 지역 테이블
 CREATE TABLE Region (
     region_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+--     region_id VARCHAR(255) NOT NULL PRIMARY KEY,
     region_name VARCHAR(255) NOT NULL
 ) ENGINE=InnoDB;
 
@@ -66,6 +75,8 @@ CREATE TABLE Region (
 CREATE TABLE PostRegion (
     post_id INT NOT NULL,
     region_id INT NOT NULL,
+--     post_id VARCHAR(255) NOT NULL,
+--     region_id VARCHAR(255) NOT NULL,
     PRIMARY KEY (post_id, region_id),
     FOREIGN KEY (post_id) REFERENCES Post(post_id),
     FOREIGN KEY (region_id) REFERENCES Region(region_id)
@@ -74,9 +85,12 @@ CREATE TABLE PostRegion (
 -- 댓글 테이블
 CREATE TABLE Comment (
     comment_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    body VARCHAR(255) NOT NULL,
     membership_id INT NOT NULL,
+--     comment_id VARCHAR(255) NOT NULL PRIMARY KEY,
+--     membership_id VARCHAR(255) NOT NULL,
+    body VARCHAR(255) NOT NULL,
     post_id INT NOT NULL,
+--     post_id VARCHAR(255) NOT NULL,
     FOREIGN KEY (membership_id) REFERENCES User(membership_id),
     FOREIGN KEY (post_id) REFERENCES Post(post_id)
 ) ENGINE=InnoDB;
@@ -85,6 +99,8 @@ CREATE TABLE Comment (
 CREATE TABLE Alarm (
     alarm_id INT NOT NULL AUTO_INCREMENT,
     membership_id INT NOT NULL,
+--     alarm_id VARCHAR(255) NOT NULL,
+--     membership_id VARCHAR(255) NOT NULL,
     link VARCHAR(255) DEFAULT NULL,
     comment VARCHAR(255) DEFAULT NULL,
     PRIMARY KEY (alarm_id, membership_id),
@@ -95,6 +111,8 @@ CREATE TABLE Alarm (
 CREATE TABLE ChatMember (
     chat_id INT NOT NULL,
     membership_id INT NOT NULL,
+--     chat_id VARCHAR(255) NOT NULL,
+--     membership_id VARCHAR(255) NOT NULL,
     is_owner TINYINT NOT NULL DEFAULT 0 COMMENT '1이면 방장, 0이면 참가자',
     PRIMARY KEY (chat_id, membership_id),
     FOREIGN KEY (chat_id) REFERENCES Chat(chat_id),
@@ -115,6 +133,8 @@ CREATE TABLE ChatMember (
 CREATE TABLE PlannerDetail (
     planner_order INT NOT NULL,
     planner_id INT NOT NULL,
+--     planner_order VARCHAR(255) NOT NULL,
+--     planner_id VARCHAR(255) NOT NULL,
     day INT NOT NULL,
     google_place_id VARCHAR(255) NOT NULL,
     PRIMARY KEY (planner_order, planner_id),
@@ -125,6 +145,8 @@ CREATE TABLE PlannerDetail (
 CREATE TABLE PostAsset (
     asset_id INT NOT NULL AUTO_INCREMENT,
     post_id INT NOT NULL,
+--     asset_id VARCHAR(255) NOT NULL,
+--     post_id VARCHAR(255) NOT NULL,
     storage_url VARCHAR(255) NOT NULL,
     file_size INT NOT NULL DEFAULT 0 COMMENT 'KB 단위',
     PRIMARY KEY (asset_id, post_id),
@@ -133,31 +155,43 @@ CREATE TABLE PostAsset (
 
 -- 팔로우 테이블
 CREATE TABLE Follow (
-    follow_id INT NOT NULL AUTO_INCREMENT,
+--     follow_id INT NOT NULL AUTO_INCREMENT,
     membership_id INT NOT NULL,
     target_id INT NOT NULL COMMENT '팔로우 대상',
-    PRIMARY KEY (follow_id, membership_id),
+    -- follow_id VARCHAR(255) NOT NULL,
+--     membership_id VARCHAR(255) NOT NULL,
+--     target_id VARCHAR(255) NOT NULL COMMENT '팔로우 대상',
+    -- PRIMARY KEY (follow_id, membership_id),
+    PRIMARY KEY (membership_id, target_id),
     FOREIGN KEY (membership_id) REFERENCES User(membership_id),
     FOREIGN KEY (target_id) REFERENCES User(membership_id)
 ) ENGINE=InnoDB;
 
 -- 차단 테이블
 CREATE TABLE Block (
-    block_id INT NOT NULL AUTO_INCREMENT,
+--     block_id INT NOT NULL AUTO_INCREMENT,
     membership_id INT NOT NULL,
     target_id INT NOT NULL COMMENT '차단 대상',
-    PRIMARY KEY (block_id, membership_id),
+    -- block_id VARCHAR(255) NOT NULL,
+--     membership_id VARCHAR(255) NOT NULL,
+--     target_id VARCHAR(255) NOT NULL COMMENT '차단 대상',
+    -- PRIMARY KEY (block_id, membership_id),
+    PRIMARY KEY (membership_id, target_id),
     FOREIGN KEY (membership_id) REFERENCES User(membership_id),
     FOREIGN KEY (target_id) REFERENCES User(membership_id)
 ) ENGINE=InnoDB;
 
 -- 스코어 테이블 (회원 평가)
 CREATE TABLE Score (
-    score_id INT NOT NULL AUTO_INCREMENT,
+--     score_id INT NOT NULL AUTO_INCREMENT,
     membership_id INT NOT NULL,
     target_id INT NOT NULL COMMENT '평가 대상',
+    -- score_id VARCHAR(255) NOT NULL AUTO_INCREMENT,
+--     membership_id VARCHAR(255) NOT NULL,
+--     target_id VARCHAR(255) NOT NULL COMMENT '평가 대상',
     score INT NOT NULL,
-    PRIMARY KEY (score_id, membership_id),
+--     PRIMARY KEY (score_id, membership_id),
+    PRIMARY KEY (membership_id, target_id),
     FOREIGN KEY (membership_id) REFERENCES User(membership_id),
     FOREIGN KEY (target_id) REFERENCES User(membership_id)
 ) ENGINE=InnoDB;
@@ -165,11 +199,14 @@ CREATE TABLE Score (
 -- 위치 공유 테이블
 CREATE TABLE Location (
     location_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+--     location_id VARCHAR(255) NOT NULL PRIMARY KEY,
     latitude DOUBLE NOT NULL,
     longitude DOUBLE NOT NULL,
     timestamp DATETIME NOT NULL,
     chat_id INT NOT NULL,
     membership_id INT NOT NULL,
+--     chat_id VARCHAR(255) NOT NULL,
+--     membership_id VARCHAR(255) NOT NULL,
     FOREIGN KEY (chat_id) REFERENCES Chat(chat_id),
     FOREIGN KEY (membership_id) REFERENCES User(membership_id)
 ) ENGINE=InnoDB;
@@ -179,6 +216,9 @@ CREATE TABLE Application (
     application_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     post_id INT NOT NULL,
     membership_id INT NOT NULL,
+--     application_id VARCHAR(255) NOT NULL PRIMARY KEY,
+--     post_id VARCHAR(255) NOT NULL,
+--     membership_id VARCHAR(255) NOT NULL,
     application_date DATE NOT NULL,
     state TINYINT NOT NULL DEFAULT 0 COMMENT '1이면 승인',
     FOREIGN KEY (post_id) REFERENCES Post(post_id),
