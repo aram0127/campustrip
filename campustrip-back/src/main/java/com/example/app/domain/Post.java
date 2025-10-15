@@ -37,11 +37,11 @@ public class Post {
     @Column(name="team_size", nullable=false)
     private Integer team_size = 0;
 
-//    @OneToOne
+//    @ManyToOne
 //    @JoinColumn(name="chat_id", nullable=false)
 //    private Chat chat;
 //
-//    @OneToOne
+//    @ManyToOne
 //    @JoinColumn(name="planner_id", nullable=false)
 //    private Planner planner;
 
