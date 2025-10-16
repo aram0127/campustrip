@@ -48,6 +48,10 @@ public class Post {
     )
     private List<Region> regions = new ArrayList<>();
 
+    public User getUser() {
+        return membershipId;
+    }
+
 //    @ManyToOne
 //    @JoinColumn(name="chat_id", nullable=false)
 //    private Chat chat;

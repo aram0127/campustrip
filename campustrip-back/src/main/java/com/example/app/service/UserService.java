@@ -29,16 +29,20 @@ public class UserService implements UserDetailsService {
         return userRepository.findByName(name);
     }
 
-    public User getUserById(Long id) {
-        return userRepository.findById(Long.valueOf(id))
+    public User getUserById(Integer id) {
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("User not found with id: " + id));
+        if (user == null) {
+            throw new NoSuchElementException("User not found with id: " + id);
+        }
+        return user;
     }
 
     public void saveUser(User user) {
         userRepository.save(user);
     }
 
-    public void deleteUser(Long id) {
+    public void deleteUser(Integer id) {
         userRepository.deleteById(id);
     }
 
