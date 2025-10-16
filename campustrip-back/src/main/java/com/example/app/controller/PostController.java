@@ -4,7 +4,6 @@ import com.example.app.domain.Post;
 import com.example.app.service.PostService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.List;
 
 @RestController
@@ -23,9 +22,21 @@ public class PostController {
     }
 
     // GET: ID로 게시물 조회
-    @GetMapping("/{post_id}")
-    public Post getPostById(@PathVariable Integer post_id) {
-        return postService.getPostById(post_id);
+    @GetMapping("/{postId}")
+    public Post getPostById(@PathVariable Integer postId) {
+        return postService.getPostById(postId);
+    }
+
+    // 사용자 ID로 게시물 조회 (작성한 게시글 조회)
+    @GetMapping("/user/{membershipId}")
+    public List<Post> getPostsByUserId(@PathVariable Integer membershipId) {
+        return postService.getPostsByMembershipId(membershipId);
+    }
+
+    // 지역 ID들로 게시물 조회 (지역별 게시글 조회)
+    @GetMapping("/regions")
+    public List<Post> getPostsByRegionIds(@RequestParam List<Integer> regionIds) {
+        return postService.getPostsByRegionIds(regionIds);
     }
 
     // POST: 새 게시물 생성
@@ -36,16 +47,16 @@ public class PostController {
     }
 
     // PUT: 게시물 정보 수정
-    @PutMapping("/{post_id}")
-    public Post updatePost(@PathVariable Integer post_id, @RequestBody Post post) {
-        post.setPostId(post_id);
+    @PutMapping("/{postId}")
+    public Post updatePost(@PathVariable Integer postId, @RequestBody Post post) {
+        post.setPostId(postId);
         postService.savePost(post);
         return post;
     }
 
     // DELETE: 게시물 삭제
-    @DeleteMapping("/{post_id}")
-    public void deletePost(@PathVariable Integer post_id) {
-        postService.deletePost(post_id);
+    @DeleteMapping("/{postId}")
+    public void deletePost(@PathVariable Integer postId) {
+        postService.deletePost(postId);
     }
 }
