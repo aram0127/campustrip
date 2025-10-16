@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;  // 의존성 주
 import com.example.app.domain.Post;
 import com.example.app.repository.PostRepository;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
@@ -16,6 +17,10 @@ public class PostService {
         this.postRepository = postRepository;
     }
 
+    public List<Post> getAllPosts() {
+        return postRepository.findAll();
+    }
+
     public Post getPostById(Integer post_id) {
         return postRepository.findById(post_id)
                 .orElseThrow(() -> new NoSuchElementException("Post not found with id: " + post_id));
@@ -24,4 +29,9 @@ public class PostService {
     public void savePost(Post post) {
         postRepository.save(post);
     }
+
+    public void deletePost(Integer post_id) {
+        postRepository.deleteById(post_id);
+    }
+
 }

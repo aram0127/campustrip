@@ -10,8 +10,8 @@ public interface PostRepository extends JpaRepository<Post,Integer>
     // JPA Repository 기본 메세드
     // save, findById, findAll, deleteById, existsById, count
 
-    //findByUser() DTO List
-    //find(term, regionList, page, size): DTO List
+    //findByUser() List
+    //find(term, regionList, page, size): List
 
     // 동적 쿼리 생성
 //    @Query(value= "select m from Member m where m.memberId = :id and m.email = :email" )
