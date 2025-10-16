@@ -28,7 +28,7 @@ public class UserController {
 
     // GET: ID로 사용자 조회
     @GetMapping("/{id}")
-    public User getUserById(@PathVariable String id) {
+    public User getUserById(@PathVariable Integer id) {
         return userService.getUserById(id);
     }
 
@@ -50,7 +50,7 @@ public class UserController {
 
     // DELETE: 사용자 삭제
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
+    public void deleteUser(@PathVariable Integer id) {
         userService.deleteUser(id);
     }
 }
