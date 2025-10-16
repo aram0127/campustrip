@@ -206,7 +206,7 @@
                             <pre>${token || '토큰이 헤더에 없습니다'}</pre>
                         </div>
                         <div class="api-test">
-                            <button onclick="testAuthenticatedAPI()">인증 필요한 API 테스트</button>
+                            <button onclick="testAuthenticatedAPI()">인증 필요한 API 테스트<br>id=1인 사용자정보</button>
                         </div>
                     `;
 
@@ -240,7 +240,7 @@
         }
 
         try {
-            const response = await fetch('http://localhost:8080/api/test', {
+            const response = await fetch('http://localhost:8080/api/users/1', {
                 method: 'GET',
                 headers: {
                     'Authorization': savedToken
