@@ -72,9 +72,9 @@ function PostListPage() {
       } finally {
         setIsLoading(false);
       }
-    };
 
-    fetchPosts();
+      fetchPosts();
+    };
   }, []); // 빈 배열을 전달하여 컴포넌트 마운트 시 1회만 실행
 
   const handleApplyFilter = (location: string) => {
