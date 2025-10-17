@@ -15,7 +15,7 @@ import lombok.AllArgsConstructor;
 public class Application {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="application_id")
+    @Column(name="application_id" )
     private Integer id;
 
     @ManyToOne
@@ -27,7 +27,7 @@ public class Application {
     private User user;
 
     @Column(name="state")
-    private Boolean applicationStatus = false;
+    private Boolean applicationStatus;
 
     @Column(name="application_date", nullable=false)
     private java.time.LocalDateTime applicationDate = java.time.LocalDateTime.now();
