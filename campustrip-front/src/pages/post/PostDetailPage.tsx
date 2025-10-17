@@ -6,13 +6,6 @@ import { type Post } from "../../types/post";
 import { IoArrowBack } from "react-icons/io5";
 import { useAuth } from "../../context/AuthContext";
 
-// AuthContext에서 제공될 사용자 정보에 대한 타입 (AuthContext.tsx에서 실제 구현 필요)
-interface UserInfo {
-  id: number;
-  name: string;
-  userId: string;
-}
-
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const PageContainer = styled.div`
@@ -161,15 +154,13 @@ const ErrorMessage = styled.p`
 const PostDetailPage: React.FC = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
-  // AuthContext에서 사용자 정보를 가져옵니다. (AuthContext.tsx 수정 필요)
-  const { user } = useAuth() as { user: UserInfo | null };
+  const { user } = useAuth();
 
   const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"post" | "planner">("post");
 
-  // 동행 신청 관련 상태
   const [isApplying, setIsApplying] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
 
@@ -212,16 +203,14 @@ const PostDetailPage: React.FC = () => {
     setApplyError(null);
 
     try {
-      // 백엔드 Application 객체 구조에 맞춰 데이터 전송
       const applicationData = {
-        post: { postId: post.postId },
+        post: { postId: parseInt(postId!, 10) },
         user: { id: user.id },
       };
 
       await axios.post(`${API_BASE_URL}/api/applications`, applicationData);
 
       alert("동행 신청이 완료되었습니다.");
-      // TODO: 신청 완료 후 버튼 상태 변경 등의 UI 업데이트
     } catch (err) {
       console.error("동행 신청 실패:", err);
       let message =
@@ -230,7 +219,9 @@ const PostDetailPage: React.FC = () => {
         if (err.response.status === 500) {
           message = "이미 신청했거나 처리 중 오류가 발생했습니다.";
         } else {
-          message = `신청 실패 (${err.response.status}): ${err.message}`;
+          message = `신청 실패 (${err.response.status}): ${
+            err.response.data?.message || err.message
+          }`;
         }
       }
       setApplyError(message);
