@@ -11,6 +11,7 @@ import java.io.Serializable;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@IdClass(ChatMember.ChatMemberId.class)
 public class ChatMember {
 
     @Id
