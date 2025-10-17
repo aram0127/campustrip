@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 import Checkbox from "../../components/common/Checkbox";
+import { useAuth } from "../../context/AuthContext";
 
 const LoginPageContainer = styled.div`
   width: 100%;
@@ -58,17 +60,55 @@ const StyledLink = styled(Link)`
   }
 `;
 
+const ErrorMessage = styled.p`
+  color: ${({ theme }) => theme.colors.error};
+  font-size: 12px;
+  margin-top: 8px;
+  text-align: center;
+  min-height: 18px;
+`;
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 function LoginPage() {
-  const [id, setId] = useState("");
+  const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // 실제로는 여기서 백엔드에 id, password를 보내 로그인 API를 호출하고 성공 시 토큰을 받아 저장
-    alert("로그인에 성공했습니다.");
-    // 로그인 성공 후 '/posts' 경로로 이동
-    navigate("/posts");
+    setError("");
+
+    const formData = new FormData();
+    formData.append("username", userId);
+    formData.append("password", password);
+
+    try {
+      const response = await axios.post(`${API_BASE_URL}/login`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const token = response.headers["authorization"];
+
+      if (token) {
+        login(token);
+        alert("로그인에 성공했습니다.");
+        navigate("/posts");
+      } else {
+        setError("로그인에 실패했습니다.");
+      }
+    } catch (err) {
+      console.error("로그인 실패:", err);
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        setError("아이디 또는 비밀번호가 올바르지 않습니다.");
+      } else {
+        setError("로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      }
+    }
   };
 
   return (
@@ -78,8 +118,8 @@ function LoginPage() {
         <Input
           type="text"
           placeholder="아이디"
-          value={id}
-          onChange={(e) => setId(e.target.value)}
+          value={userId}
+          onChange={(e) => setUserId(e.target.value)}
           required
         />
         <Input
@@ -92,6 +132,7 @@ function LoginPage() {
         <OptionsContainer>
           <Checkbox label="로그인 상태 유지" />
         </OptionsContainer>
+        <ErrorMessage>{error}</ErrorMessage>
         <Button
           size="large"
           type="submit"

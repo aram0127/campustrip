@@ -46,6 +46,8 @@ const ValidationMessage = styled.p<{ isValid: boolean }>`
   text-align: left;
 `;
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 function SignupPage() {
   const navigate = useNavigate();
 
@@ -139,7 +141,7 @@ function SignupPage() {
       };
 
       // 백엔드 API 호출
-      await axios.post("http://localhost:8080/api/users", userData, {
+      await axios.post(`${API_BASE_URL}/api/users`, userData, {
         headers: {
           "Content-Type": "application/json",
         },
@@ -149,7 +151,13 @@ function SignupPage() {
       navigate("/login");
     } catch (err) {
       console.error("회원가입 실패:", err);
-      setError("회원가입에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      if (axios.isAxiosError(err) && err.response) {
+        setError(`회원가입 실패 (${err.response.status}): ${err.message}`);
+      } else {
+        setError(
+          "회원가입 중 오류가 발생했습니다. 네트워크 연결을 확인하거나 잠시 후 다시 시도해주세요."
+        );
+      }
       alert(error);
     }
   };
