@@ -204,8 +204,8 @@ const PostDetailPage: React.FC = () => {
 
     try {
       const applicationData = {
-        post: { postId: parseInt(postId!, 10) },
-        user: { id: user.id },
+        post: { postId: post.postId },
+        user: { userId: user.userId },
       };
 
       await axios.post(`${API_BASE_URL}/api/applications`, applicationData);

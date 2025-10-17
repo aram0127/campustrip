@@ -1,5 +1,6 @@
 package com.example.app.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,11 +18,13 @@ public class ChatMember {
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chat_id", nullable = false)
+    @JsonBackReference("chat-chatMembers")  // 역방향 참조 (JSON에서 제외)
     private Chat chat;
 
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "membership_id", nullable = false)
+    @JsonBackReference("user-chatMembers")  // 역방향 참조 (JSON에서 제외)
     private User user;
 
     // 조인테이블에 추가할 컬럼 예시
