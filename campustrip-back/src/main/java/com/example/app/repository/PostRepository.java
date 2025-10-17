@@ -23,6 +23,26 @@ public interface PostRepository extends JpaRepository<Post,Integer>
     @Query("SELECT DISTINCT p FROM Post p JOIN FETCH p.regions r WHERE r.regionId IN :regionIds")
     List<Post> findAllByRegionIds(@Param("regionIds") List<Integer> regionIds);
 
+    /**
+     * 모든 게시글을 조회할 때 User와 Region 정보를 함께 Fetch Join하여 N+1 문제를 해결합니다.
+     * /api/posts 와 같이 전체 목록을 조회하는 API에서 기본 findAll() 대신 사용해야 합니다.
+     * @return 모든 Post 리스트 (User, Region 정보 포함)
+     */
+    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.regions LEFT JOIN FETCH p.user")
+    List<Post> findAllWithDetails();
+
+
+    /**
+     * 주어진 regionId 리스트에 포함된 지역(Region)과 하나라도 연관된 모든 게시글(Post)을 조회합니다.
+     * JPQL의 JOIN FETCH를 사용하여 N+1 문제를 방지하고, DISTINCT를 통해 중복된 Post가 반환되는 것을 막습니다.
+     * 예를 들어, regionId가 [1, 2]로 주어졌을 때,
+     * 1번 지역에만 속한 게시글, 2번 지역에만 속한 게시글, 그리고 1번과 2번 지역 모두에 속한 게시글을 모두 반환합니다.
+     *
+     * @param regionIds 조회할 지역 ID의 리스트
+     * @return 조건에 맞는 Post 리스트
+     */
+    @Query("SELECT DISTINCT p FROM Post p JOIN FETCH p.regions r WHERE r.regionId IN :regionIds")
+    List<Post> findPostsByRegionIds(@Param("regionIds") List<Integer> regionIds);
 
     // 동적 쿼리 생성
 //    @Query(value= "select m from Member m where m.memberId = :id and m.email = :email" )
