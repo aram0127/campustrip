@@ -21,7 +21,7 @@ interface DecodedToken {
 // Context에서 전역으로 관리할 사용자 정보 타입
 interface UserInfo {
   id: number;
-  userId: string;
+  username: string;
   role: string;
 }
 
