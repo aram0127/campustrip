@@ -1,5 +1,6 @@
 package com.example.app.domain;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -47,6 +48,10 @@ public class Post {
         inverseJoinColumns = @JoinColumn(name = "region_id")
     )
     private List<Region> regions = new ArrayList<>();
+
+    @JsonManagedReference("post-applications")
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private java.util.List<Application> applications = new java.util.ArrayList<>();
 
     @OneToOne
     @JoinColumn(name="chat_id", nullable=false)

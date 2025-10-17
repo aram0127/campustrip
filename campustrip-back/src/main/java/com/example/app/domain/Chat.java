@@ -1,5 +1,6 @@
 package com.example.app.domain;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,6 +25,7 @@ public class Chat {
     @Column(name="title", nullable = false, length = 100)
     private String title;
 
+    @JsonManagedReference("chat-chatMembers")  // 정방향 참조 (JSON에 포함)
     @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true)
     private java.util.List<ChatMember> chatMembers = new java.util.ArrayList<>();
 }

@@ -4,6 +4,7 @@ import styled from "styled-components";
 import axios from "axios";
 import { type Post } from "../../types/post";
 import { IoArrowBack } from "react-icons/io5";
+import { useAuth } from "../../context/AuthContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -130,6 +131,11 @@ const ActionButton = styled.button`
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
+
+  &:disabled {
+    background-color: ${({ theme }) => theme.colors.grey};
+    cursor: not-allowed;
+  }
 `;
 
 const Message = styled.p`
@@ -138,13 +144,25 @@ const Message = styled.p`
   color: ${({ theme }) => theme.colors.secondaryTextColor};
 `;
 
+const ErrorMessage = styled.p`
+  color: ${({ theme }) => theme.colors.error};
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 16px;
+`;
+
 const PostDetailPage: React.FC = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
   const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"post" | "planner">("post");
+
+  const [isApplying, setIsApplying] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!postId) {
@@ -170,15 +188,47 @@ const PostDetailPage: React.FC = () => {
     fetchPost();
   }, [postId]);
 
-  const handleApply = () => {
-    alert("동행 신청 기능은 준비 중");
-    // 동행 신청 API 호출?
-    // try {
-    //   await axios.post(`${API_BASE_URL}/api/applications`, { postId, membershipId: /* 현재 사용자 ID */ });
-    //   alert('동행 신청이 완료되었습니다.');
-    // } catch (err) {
-    //   alert('동행 신청에 실패했습니다.');
-    // }
+  const handleApply = async () => {
+    if (!user || !post) {
+      alert("로그인 정보 또는 게시글 정보가 유효하지 않습니다.");
+      return;
+    }
+
+    if (user.id === post.user.id) {
+      alert("자신이 작성한 게시글에는 동행을 신청할 수 없습니다.");
+      return;
+    }
+
+    setIsApplying(true);
+    setApplyError(null);
+
+    try {
+      const applicationData = {
+        post: { postId: post.postId },
+        user: { userId: user.userId },
+      };
+
+      await axios.post(`${API_BASE_URL}/api/applications`, applicationData);
+
+      alert("동행 신청이 완료되었습니다.");
+    } catch (err) {
+      console.error("동행 신청 실패:", err);
+      let message =
+        "동행 신청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+      if (axios.isAxiosError(err) && err.response) {
+        if (err.response.status === 500) {
+          message = "이미 신청했거나 처리 중 오류가 발생했습니다.";
+        } else {
+          message = `신청 실패 (${err.response.status}): ${
+            err.response.data?.message || err.message
+          }`;
+        }
+      }
+      setApplyError(message);
+      alert(message);
+    } finally {
+      setIsApplying(false);
+    }
   };
 
   if (isLoading) {
@@ -192,6 +242,8 @@ const PostDetailPage: React.FC = () => {
   if (!post) {
     return <Message>게시글 정보를 찾을 수 없습니다.</Message>;
   }
+
+  const isMyPost = user?.id === post.user.id;
 
   return (
     <PageContainer>
@@ -234,11 +286,9 @@ const PostDetailPage: React.FC = () => {
                   "정보 없음"}
               </span>
             </MetaItem>
-            {/* 백엔드에서 startDate, endDate 필드 추가 후 수정 */}
             <MetaItem>
               📅 일정: <span>기간 정보 없음</span>
             </MetaItem>
-            {/* 백엔드에서 currentMembers 필드 추가 후 수정 */}
             <MetaItem>
               👥 모집 인원: <span>? / {post.teamSize} 명</span>
             </MetaItem>
@@ -246,7 +296,15 @@ const PostDetailPage: React.FC = () => {
 
           <PostBody>{post.body}</PostBody>
 
-          <ActionButton onClick={handleApply}>동행 신청하기</ActionButton>
+          {applyError && <ErrorMessage>{applyError}</ErrorMessage>}
+
+          <ActionButton onClick={handleApply} disabled={isApplying || isMyPost}>
+            {isMyPost
+              ? "내 게시글"
+              : isApplying
+              ? "신청 중..."
+              : "동행 신청하기"}
+          </ActionButton>
         </ContentContainer>
       )}
 

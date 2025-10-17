@@ -34,8 +34,13 @@ public class ChatService {
     }
 
     public void saveChatMember(CreateChatMember createChatMember) {
-        ChatMember chatMember = new ChatMember(createChatMember.getPost().getChat(),
-                                               createChatMember.getUser(), false);
+        // DB에서 영속 상태의 엔티티 조회
+        Chat chat = chatRepository.findById(createChatMember.getPost().getChat().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Chat not found"));
+        User user = userRepository.findById(createChatMember.getUser().getId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        ChatMember chatMember = new ChatMember(chat, user, false);
         chatMemberRepository.save(chatMember);
     }
 
