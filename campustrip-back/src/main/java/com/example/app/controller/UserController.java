@@ -39,6 +39,7 @@ public class UserController {
     // POST: 새 사용자 생성
     @PostMapping
     public UserResponse createUser(@RequestBody CreateUserRequest request) {
+        request.setPasswordEncoder(passwordEncoder);
         User user = request.toEntity();
         userService.saveUser(user);
         return new UserResponse(user);

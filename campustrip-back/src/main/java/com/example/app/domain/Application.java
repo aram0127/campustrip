@@ -26,7 +26,7 @@ public class Application {
     @JoinColumn(name="membership_id", nullable=false)
     private User user;
 
-    @Column(name="state", nullable=false)
+    @Column(name="state")
     private Boolean applicationStatus = false;
 
     @Column(name="application_date", nullable=false)

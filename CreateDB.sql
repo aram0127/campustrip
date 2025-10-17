@@ -113,7 +113,7 @@ CREATE TABLE ChatMember (
     membership_id INT NOT NULL,
 --     chat_id VARCHAR(255) NOT NULL,
 --     membership_id VARCHAR(255) NOT NULL,
-    is_owner TINYINT NOT NULL DEFAULT 0 COMMENT '1이면 방장, 0이면 참가자',
+    is_owner BIT NOT NULL DEFAULT 0 COMMENT '1이면 방장, 0이면 참가자',
     PRIMARY KEY (chat_id, membership_id),
     FOREIGN KEY (chat_id) REFERENCES Chat(chat_id),
     FOREIGN KEY (membership_id) REFERENCES User(membership_id)

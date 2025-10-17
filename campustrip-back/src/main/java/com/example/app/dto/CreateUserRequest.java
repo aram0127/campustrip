@@ -22,7 +22,7 @@ public class CreateUserRequest {
 
     public User toEntity() {
         String encodedPassword = passwordEncoder.encode(password);
-        return new User(null, name, encodedPassword, userId, phoneNumber, email, schoolEmail, null, 0, 36.5F, 1);
+        return new User(null, name, encodedPassword, userId, phoneNumber, email, schoolEmail, null, 0, 36.5F, 1, null);
     }
 
 }
