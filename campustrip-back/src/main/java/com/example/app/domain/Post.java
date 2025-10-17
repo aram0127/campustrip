@@ -23,7 +23,7 @@ public class Post {
 
     @ManyToOne
     @JoinColumn(name="membership_id", nullable=false)
-    private User membershipId;
+    private User user;
 
     @Column(name="title", nullable=false, length=100)
     private String title;
@@ -47,10 +47,6 @@ public class Post {
         inverseJoinColumns = @JoinColumn(name = "region_id")
     )
     private List<Region> regions = new ArrayList<>();
-
-    public User getUser() {
-        return membershipId;
-    }
 
 //    @ManyToOne
 //    @JoinColumn(name="chat_id", nullable=false)
