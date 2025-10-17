@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import org.hibernate.mapping.ToOne;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +51,7 @@ public class Post {
     @OneToOne
     @JoinColumn(name="chat_id", nullable=false)
     private Chat chat;
-
+//
 //    @ManyToOne
 //    @JoinColumn(name="planner_id", nullable=false)
 //    private Planner planner;
