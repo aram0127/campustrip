@@ -6,7 +6,7 @@ export interface Post {
   updatedAt?: string | null;
   teamSize: number;
   // User 정보
-  membershipId: {
+  user: {
     id: number;
     name: string;
     userId: string;
