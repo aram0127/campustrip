@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import org.hibernate.mapping.ToOne;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +49,7 @@ public class Post {
     )
     private List<Region> regions = new ArrayList<>();
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name="chat_id", nullable=false)
     private Chat chat;
 
