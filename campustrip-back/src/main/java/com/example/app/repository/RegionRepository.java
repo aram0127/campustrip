@@ -7,6 +7,6 @@ public interface RegionRepository extends JpaRepository<Region, Integer> {
     // JPA Repository 기본 메세드
     // save, findById, findAll, deleteById, existsById, count
 
-    Region findByName(String name);
+    Region findByRegionName(String regionName);
 
 }

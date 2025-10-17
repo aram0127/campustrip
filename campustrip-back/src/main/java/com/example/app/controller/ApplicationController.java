@@ -42,7 +42,7 @@ public class ApplicationController {
     }
 
     // 동행 신청 수락 (신청받은 사람이 수락)
-    @PostMapping("/update")
+    @PutMapping("/update")
     public Application updateApplication(@RequestBody Application application, Authentication authentication) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         User currentUser = userDetails.getUser();

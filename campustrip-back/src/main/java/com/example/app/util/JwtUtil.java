@@ -15,18 +15,18 @@ public class JwtUtil {
     private final long expiredMs = 1000 * 60 * 60; // 1시간
 
     // JWT 토큰 생성
-public String createToken(String username, String role) {
-    Date now = new Date();
-    Date expiration = new Date(now.getTime() + expiredMs);
+    public String createToken(String username, String role) {
+        Date now = new Date();
+        Date expiration = new Date(now.getTime() + expiredMs);
 
-    return Jwts.builder()
-            .claim("username", username)
-            .claim("role", role)
-            .setIssuedAt(now)
-            .setExpiration(expiration)
-            .signWith(secretKey)
-            .compact();
-}
+        return Jwts.builder()
+                .claim("username", username)
+                .claim("role", role)
+                .setIssuedAt(now)
+                .setExpiration(expiration)
+                .signWith(secretKey)
+                .compact();
+    }
 
     // 토큰에서 사용자명 추출
     public String getUsername(String token) {

@@ -1,10 +1,13 @@
 package com.example.app.controller;
 
+import com.example.app.dto.UserResponse;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.app.service.UserService;
 import com.example.app.domain.User;
+import com.example.app.dto.CreateUserRequest;
 import java.util.List;
 
 @RestController  // REST API용 컨트롤러
@@ -21,7 +24,8 @@ public class UserController {
     }
 
     // GET: 전체 사용자 조회
-    @GetMapping
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
     public List<User> getAllUsers() {
         return userService.getAllUsers();
     }
@@ -34,14 +38,15 @@ public class UserController {
 
     // POST: 새 사용자 생성
     @PostMapping
-    public User createUser(@RequestBody User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+    public UserResponse createUser(@RequestBody CreateUserRequest request) {
+        User user = request.toEntity();
         userService.saveUser(user);
-        return user;
+        return new UserResponse(user);
     }
 
-    // PUT: 사용자 정보 수정
+    // PUT: 사용자 정보 수정 // id가 뭘 의미하는지 다시 보자
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
     public User updateUser(@PathVariable String id, @RequestBody User user) {
         user.setUserId(id);
         userService.saveUser(user);
@@ -50,6 +55,7 @@ public class UserController {
 
     // DELETE: 사용자 삭제
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteUser(@PathVariable Integer id) {
         userService.deleteUser(id);
     }

@@ -15,6 +15,7 @@ public class PostController {
     public PostController(PostService postService) {
         this.postService = postService;
     }
+
     // GET: 전체 게시물 조회
     @GetMapping
     public List<Post> getAllPosts() {
