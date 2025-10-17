@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import styled from "styled-components";
 import PostListItem from "../../components/domain/PostListItem";
 import SearchBar from "../../components/common/SearchBar";
@@ -8,6 +8,8 @@ import LocationFilterModal, {
 } from "../../components/domain/LocationFilterModal";
 import { IoFilter } from "react-icons/io5";
 import FloatingActionButton from "../../components/common/FloatingActionButton";
+import { type Post } from "../../types/post";
+import axios from "axios";
 
 const PageContainer = styled.div`
   width: 100%;
@@ -33,101 +35,110 @@ const PostListContainer = styled.div`
   flex-grow: 1;
 `;
 
-// 임시 데이터
-const dummyPosts = [
-  {
-    id: 1,
-    title: "제주도 한라산 등반할 분 구해요!",
-    location: "제주도",
-    period: "10/25 ~ 10/30 (5박 6일)",
-    members: "모집 인원 [1/8]",
-  },
-  {
-    id: 2,
-    title: "오키나와 여행 갈 사람 모여라~",
-    location: "일본",
-    period: "9/14 ~ 9/17 (3박 4일)",
-    members: "모집 인원 [5/5]",
-  },
-  {
-    id: 3,
-    title: "경주 불국사 탐방 같이 갈 사람 구해요",
-    location: "경주시",
-    period: "11/1 ~ 11/2 (1박 2일)",
-    members: "모집 인원 [2/4]",
-  },
-  {
-    id: 4,
-    title: "서울 맛집 탐방",
-    location: "서울특별시",
-    period: "주말",
-    members: "모집 인원 [1/4]",
-  },
-  {
-    id: 5,
-    title: "구미 금오산 등산 동행",
-    location: "구미시",
-    period: "주말 당일치기",
-    members: "모집 인원 [1/3]",
-  },
-];
+const LoadingMessage = styled.p`
+  text-align: center;
+  padding: 20px;
+  color: ${({ theme }) => theme.colors.secondaryTextColor};
+`;
+
+const ErrorMessage = styled.p`
+  text-align: center;
+  padding: 20px;
+  color: ${({ theme }) => theme.colors.error};
+`;
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 function PostListPage() {
+  const [posts, setPosts] = useState<Post[]>([]); // 게시글 데이터 상태
+  const [isLoading, setIsLoading] = useState(true); // 로딩 상태
+  const [error, setError] = useState<string | null>(null); // 에러 상태
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("전체"); // 기본값을 전체로
+  const [selectedLocation, setSelectedLocation] = useState("전체");
+
+  // 컴포넌트 마운트 시 게시글 목록 가져오기
+  useEffect(() => {
+    const fetchPosts = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get<Post[]>(`${API_BASE_URL}/api/posts`);
+        setPosts(response.data);
+      } catch (err) {
+        console.error("게시글 로딩 실패:", err);
+        setError("게시글을 불러오는 중 오류가 발생했습니다.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []); // 빈 배열을 전달하여 컴포넌트 마운트 시 1회만 실행
 
   const handleApplyFilter = (location: string) => {
     setSelectedLocation(location);
+    // TODO: 선택된 지역으로 API 다시 호출 또는 프론트엔드 필터링 로직 강화
+    console.log("선택된 지역:", location);
   };
 
+  // 검색어와 지역 필터링 로직 (API 연동 후 필요시 백엔드 필터링으로 변경 고려)
   const filteredPosts = useMemo(() => {
-    return dummyPosts.filter((post) => {
+    return posts.filter((post) => {
       const matchesSearch = post.title
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
 
+      // 지역 필터링 로직 (locationsData와 API 응답의 regions 정보를 활용하여 개선 필요)
       let matchesLocation = true;
-      if (selectedLocation === "국내 전체") {
-        matchesLocation =
-          Object.values(locationsData.domestic)
+      if (selectedLocation !== "전체") {
+        // 현재 regions는 객체 배열이므로, regionName만 추출하여 비교
+        const postRegionNames = post.regions.map((r) => r.regionName);
+
+        if (selectedLocation === "국내 전체") {
+          // domestic의 모든 지역 이름을 가져와 포함되는지 확인
+          const allDomesticRegions = Object.values(locationsData.domestic)
             .flat()
-            .includes(post.location) ||
-          Object.keys(locationsData.domestic).includes(post.location);
-      } else if (selectedLocation === "해외 전체") {
-        matchesLocation = locationsData.overseas.includes(post.location);
-      } else if (selectedLocation !== "전체") {
-        return matchesSearch; // '전체' 선택 시, 검색어만으로 필터링
-      }
-
-      const isDomesticKey = Object.prototype.hasOwnProperty.call(
-        locationsData.domestic,
-        selectedLocation
-      );
-
-      if (isDomesticKey) {
-        const subRegions =
-          locationsData.domestic[
-            selectedLocation as keyof typeof locationsData.domestic
-          ];
-        // 하위 지역이 있는 경우
-        if (subRegions.length > 0) {
-          return (
-            matchesSearch &&
-            (subRegions.includes(post.location) ||
-              post.location === selectedLocation)
+            .concat(Object.keys(locationsData.domestic));
+          matchesLocation = postRegionNames.some((name) =>
+            allDomesticRegions.includes(name)
           );
+        } else if (selectedLocation === "해외 전체") {
+          matchesLocation = postRegionNames.some((name) =>
+            locationsData.overseas.includes(name)
+          );
+        } else {
+          // 특정 지역 또는 하위 지역 선택 시
+          const isDomesticKey = Object.prototype.hasOwnProperty.call(
+            locationsData.domestic,
+            selectedLocation
+          );
+          if (isDomesticKey) {
+            const subRegions =
+              locationsData.domestic[
+                selectedLocation as keyof typeof locationsData.domestic
+              ];
+            if (subRegions.length > 0) {
+              matchesLocation = postRegionNames.some(
+                (name) => subRegions.includes(name) || name === selectedLocation
+              );
+            } else {
+              matchesLocation = postRegionNames.includes(selectedLocation);
+            }
+          } else {
+            matchesLocation = postRegionNames.includes(selectedLocation);
+          }
         }
       }
 
-      // 그 외의 경우 (하위 지역이 없는 국내 지역, 해외 지역 등)
       return matchesSearch && matchesLocation;
     });
-  }, [searchQuery, selectedLocation]);
+  }, [posts, searchQuery, selectedLocation]);
 
   const handleCreatePost = () => {
-    // 나중에 새 글 작성 페이지로 이동 추가
-    alert("새 모집 게시글 작성 페이지로 이동합니다.");
+    alert("새 모집 게시글 작성 페이지로 이동");
+    // navigate('/posts/new'); // 예시
   };
 
   return (
@@ -155,9 +166,16 @@ function PostListPage() {
       </ControlsContainer>
 
       <PostListContainer>
-        {filteredPosts.map((post) => (
-          <PostListItem key={post.id} post={post} />
-        ))}
+        {isLoading && <LoadingMessage>게시글을 불러오는 중...</LoadingMessage>}
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+        {!isLoading && !error && filteredPosts.length === 0 && (
+          <LoadingMessage>표시할 게시글이 없습니다.</LoadingMessage>
+        )}
+        {!isLoading &&
+          !error &&
+          filteredPosts.map((post) => (
+            <PostListItem key={post.postId} post={post} />
+          ))}
       </PostListContainer>
 
       <LocationFilterModal
