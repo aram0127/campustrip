@@ -60,4 +60,7 @@ public class PostController {
     public void deletePost(@PathVariable Integer postId) {
         postService.deletePost(postId);
     }
+
+    // 추후 추가할 것
+    // 채팅방과 연결된 게시물 조회
 }

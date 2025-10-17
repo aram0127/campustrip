@@ -22,10 +22,14 @@ public class PostService {
     }
 
     public List<Post> getAllPosts() {
+        // n+1 문제 해결 위해 수정 필요
+        // return postRepository.findAllWithDetails();
         return postRepository.findAll();
     }
 
     public Post getPostById(Integer postId) {
+        // n+1 문제 해결 위해 수정 필요
+        // return postRepository.findByIdWithDetails(postId)
         return postRepository.findById(postId)
                 .orElseThrow(() -> new NoSuchElementException("Post not found with id: " + postId));
     }
@@ -33,10 +37,14 @@ public class PostService {
     public List<Post> getPostsByMembershipId(Integer membershipId) {
         User user = userRepository.findById(membershipId)
                 .orElseThrow(() -> new NoSuchElementException("User not found with id: " + membershipId));
+        // n+1 문제 해결 위해 수정 필요
+        // return postRepository.findAllByUserWithDetails(user);
         return postRepository.findAllByUser(user);
     }
 
     public List<Post> getPostsByRegionIds(List<Integer> regionIds) {
+        // n+1 문제 해결 위해 수정 필요
+        // return postRepository.findPostsByRegionIds(regionIds);
         return postRepository.findAllByRegionIds(regionIds);
     }
 
