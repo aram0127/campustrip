@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
+import java.util.Optional;
 
 public interface PostRepository extends JpaRepository<Post,Integer>
 {
@@ -14,9 +15,6 @@ public interface PostRepository extends JpaRepository<Post,Integer>
 
     //findByUser() List
     //find(term, regionList, page, size): List
-
-    // membershipId로 Post 찾기 - 삭제
-    List<Post> findAllByUser(User user);
     /**
      * 모든 게시글을 조회할 때 User, Region, Chat 정보를 함께 Fetch Join하여 N+1 문제를 해결합니다.
      * /api/posts 와 같이 전체 목록을 조회하는 API에서 기본 findAll() 대신 사용해야 합니다.
@@ -24,6 +22,28 @@ public interface PostRepository extends JpaRepository<Post,Integer>
      */
     @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.chat LEFT JOIN FETCH p.regions")
     List<Post> findAllWithDetails();
+
+    /**
+     * 게시글 ID로 단일 게시글을 조회합니다.
+     * JPQL의 JOIN FETCH를 사용하여 User, Chat, Region 정보를 함께 조회하여 N+1 문제를 방지합니다.
+     *
+     * @param postId 조회할 게시글의 ID
+     * @return Post 객체를 담은 Optional
+     */
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.chat LEFT JOIN FETCH p.regions WHERE p.postId = :postId")
+    Optional<Post> findByIdWithDetails(@Param("postId") Integer postId);
+
+    // membershipId로 Post 찾기 - 삭제
+    List<Post> findAllByUser(User user);
+    /**
+     * 특정 사용자가 작성한 모든 게시글을 조회합니다.
+     * JPQL의 JOIN FETCH를 사용하여 User, Chat, Region 정보를 함께 조회하여 N+1 문제를 방지합니다.
+     *
+     * @param user 조회할 User 객체
+     * @return 해당 사용자의 Post 리스트
+     */
+    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.chat LEFT JOIN FETCH p.regions WHERE p.user = :user")
+    List<Post> findAllByUserWithDetails(@Param("user") User user);
 
     // regionId로 Post 찾기 - 삭제
     @Query("SELECT DISTINCT p FROM Post p JOIN FETCH p.regions r WHERE r.regionId IN :regionIds")
