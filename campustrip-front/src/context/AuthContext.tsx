@@ -98,8 +98,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setToken(null);
     setUser(null);
     delete axios.defaults.headers.common["Authorization"];
-    // 로그인 페이지로 리디렉션 (선택적)
-    // window.location.href = "/login";
+    window.location.href = "/login";
   };
 
   const isLoggedIn = !!token;
