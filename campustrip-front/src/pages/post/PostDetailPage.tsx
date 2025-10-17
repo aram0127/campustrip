@@ -215,7 +215,7 @@ const PostDetailPage: React.FC = () => {
       // 백엔드 Application 객체 구조에 맞춰 데이터 전송
       const applicationData = {
         post: { postId: post.postId },
-        user: { id: user.id },
+        user: { userId: user.userId },
       };
 
       await axios.post(`${API_BASE_URL}/api/applications`, applicationData);

@@ -36,17 +36,12 @@ public class ApplicationService {
     }
 
     public void saveApplication(Application application) {
-        // null 체크 추가
-        if (application.getPost().getPostId() == null) {
-            throw new IllegalArgumentException("Post ID cannot be null");
-        }
-        if (application.getUser().getId() == null) {
-            throw new IllegalArgumentException("User ID cannot be null");
-        }
 
         // DB에서 영속 상태의 엔티티 조회
-        User user = userRepository.findById(application.getUser().getId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = userRepository.findByUserId(application.getUser().getUserId());
+        if(user == null){
+            throw new IllegalArgumentException("User not found");
+        }
         Post post = postRepository.findById(application.getPost().getPostId())
                 .orElseThrow(() -> new IllegalArgumentException("Post not found"));
 

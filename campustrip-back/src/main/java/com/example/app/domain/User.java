@@ -1,5 +1,6 @@
 package com.example.app.domain;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,8 +38,12 @@ public class User {
     private Float userScore = 36.5F;
     @Column(name="role", nullable=false, length=20)
     private Integer role = 1;
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("user-chatMembers")  // 정방향 참조 (JSON에 포함)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private java.util.List<ChatMember> chatMembers = new java.util.ArrayList<>();
+    @JsonManagedReference("user-applications")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private java.util.List<Application> applications = new java.util.ArrayList<>();
 
     public void setRole(String role) {
         this.role = "ROLE_ADMIN".equals(role) ? 0 : 1;

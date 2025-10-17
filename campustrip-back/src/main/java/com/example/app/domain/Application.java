@@ -1,5 +1,6 @@
 package com.example.app.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,15 +16,17 @@ import lombok.AllArgsConstructor;
 public class Application {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="application_id" )
+    @Column(name="application_id")
     private Integer id;
 
     @ManyToOne
     @JoinColumn(name="post_id", nullable=false)
+    @JsonBackReference("post-applications")  // 고유 이름 지정
     private Post post;
 
     @ManyToOne
     @JoinColumn(name="membership_id", nullable=false)
+    @JsonBackReference("user-applications")  // 고유 이름 지정
     private User user;
 
     @Column(name="state")
@@ -31,7 +34,6 @@ public class Application {
 
     @Column(name="application_date", nullable=false)
     private java.time.LocalDateTime applicationDate = java.time.LocalDateTime.now();
-    // 기본 생성자, getter, setter 생략
 
     public String getUserId() {
         return user.getUserId();
