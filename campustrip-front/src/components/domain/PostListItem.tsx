@@ -1,10 +1,14 @@
 import styled from "styled-components";
 import { type Post } from "../../types/post";
+import { Link } from "react-router-dom";
 
-const ListItemContainer = styled.div`
+const ListItemContainer = styled(Link)`
+  display: block;
   padding: 16px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.grey};
   cursor: pointer;
+  text-decoration: none;
+  color: inherit;
 
   &:hover {
     background-color: ${({ theme }) =>
@@ -20,44 +24,42 @@ const PostTitle = styled.h2`
 
 const PostInfo = styled.p`
   font-size: 14px;
-  margin: 4px 0 0 0; /* 위쪽 마진 추가 */
+  margin: 4px 0 0 0;
   color: ${({ theme }) => theme.colors.grey};
 `;
 
 interface PostListItemProps {
-  post: Post; // 타입을 Post로 변경
+  post: Post;
 }
 
-// 날짜 포맷팅 함수
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+const getRegionNames = (regions: Post["regions"]): string => {
+  if (!regions || regions.length === 0) {
+    return "지역 정보 없음";
+  }
+  return regions.map((r) => r.regionName).join(", ");
+};
+
+const getDummyPeriod = (postId: number): string => {
+  if (postId % 3 === 0) return "11/1 ~ 11/2 (1박 2일)";
+  if (postId % 2 === 0) return "9/14 ~ 9/17 (3박 4일)";
+  return "10/25 ~ 10/30 (5박 6일)";
+};
+
+const getDummyCurrentMembers = (postId: number, teamSize: number): string => {
+  const current = Math.min(Math.floor(postId / 2) + 1, teamSize);
+  return `모집 인원 [${current}/${teamSize}]`;
 };
 
 const PostListItem: React.FC<PostListItemProps> = ({ post }) => {
   return (
-    // 클릭 시 상세 페이지로 이동하는 Link 추가
-    // <ListItemContainer as={Link} to={`/posts/${post.postId}`}>
-    <ListItemContainer>
+    <ListItemContainer to={`/posts/${post.postId}`}>
       <PostTitle>{post.title}</PostTitle>
-      {/* 백엔드 데이터 필드에 맞게 수정 */}
+      <PostInfo>📍 {getRegionNames(post.regions)}</PostInfo>
+      <PostInfo>📅 {getDummyPeriod(post.postId)}</PostInfo>
       <PostInfo>
-        👤 작성자: {post.membershipId.name} ({post.membershipId.userId})
+        👥 {getDummyCurrentMembers(post.postId, post.teamSize)}
       </PostInfo>
-      <PostInfo>📅 작성일: {formatDate(post.createdAt)}</PostInfo>
-      {/* 필요한 다른 정보 추가 */}
-      {post.regions.length > 0 && (
-        <PostInfo>
-          📍 지역: {post.regions.map((r) => r.regionName).join(", ")}
-        </PostInfo>
-      )}
-      <PostInfo>👥 모집 인원: {post.teamSize}명</PostInfo>
     </ListItemContainer>
-    // </ListItemContainer>
   );
 };
 
