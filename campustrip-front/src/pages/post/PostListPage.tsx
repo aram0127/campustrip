@@ -73,7 +73,6 @@ function PostListPage() {
         setIsLoading(false);
       }
     };
-
     fetchPosts();
   }, []); // 빈 배열을 전달하여 컴포넌트 마운트 시 1회만 실행
 
