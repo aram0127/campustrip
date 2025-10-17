@@ -3,23 +3,26 @@ package com.example.app.controller;
 import com.example.app.domain.User;
 import com.example.app.dto.CustomUserDetails;
 import com.example.app.service.ApplicationService;
+import com.example.app.service.ChatService;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.app.domain.Application;
+import com.example.app.dto.CreateChatMember;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/applications")
 public class ApplicationController {
-    @Autowired
     private final ApplicationService applicationService;
+    private final ChatService chatService;
 
     @Autowired
-    public ApplicationController(ApplicationService applicationService) {
+    public ApplicationController(ApplicationService applicationService, ChatService chatService) {
         this.applicationService = applicationService;
+        this.chatService = chatService;
     }
 
     // 사용자 ID로 동행 신청 조회
@@ -42,14 +45,27 @@ public class ApplicationController {
     }
 
     // 동행 신청 수락 (신청받은 사람이 수락)
-    @PutMapping("/update")
-    public Application updateApplication(@RequestBody Application application, Authentication authentication) {
+    @PutMapping("/accept")
+    public Application acceptApplication(@RequestBody Application application, Authentication authentication) {
+        return updateApplicationStatus(application, authentication, true);
+    }
+
+    @PutMapping("/reject")
+    public Application rejectApplication(@RequestBody Application application, Authentication authentication) {
+        return updateApplicationStatus(application, authentication, false);
+    }
+
+    private Application updateApplicationStatus(Application application, Authentication authentication, Boolean status) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         User currentUser = userDetails.getUser();
         if (!currentUser.getUserId().equals(application.getPost().getUser().getUserId()) && currentUser.getRole() != 0) {
             throw new AccessDeniedException("권한이 없습니다.");
         }
+        application.setApplicationStatus(status);
         applicationService.saveApplication(application);
+        if(status) {
+            chatService.saveChatMember(new CreateChatMember(application.getPost(), application.getUser()));
+        }
         return application;
     }
 

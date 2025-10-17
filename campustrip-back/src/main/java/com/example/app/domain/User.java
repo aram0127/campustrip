@@ -37,6 +37,8 @@ public class User {
     private Float userScore = 36.5F;
     @Column(name="role", nullable=false, length=20)
     private Integer role = 1;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<ChatMember> chatMembers = new java.util.ArrayList<>();
 
     public void setRole(String role) {
         this.role = "ROLE_ADMIN".equals(role) ? 0 : 1;

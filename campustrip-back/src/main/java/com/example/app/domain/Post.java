@@ -48,9 +48,9 @@ public class Post {
     )
     private List<Region> regions = new ArrayList<>();
 
-//    @ManyToOne
-//    @JoinColumn(name="chat_id", nullable=false)
-//    private Chat chat;
+    @OneToOne
+    @JoinColumn(name="chat_id", nullable=false)
+    private Chat chat;
 //
 //    @ManyToOne
 //    @JoinColumn(name="planner_id", nullable=false)
