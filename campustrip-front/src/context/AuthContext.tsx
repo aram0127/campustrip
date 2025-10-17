@@ -7,25 +7,24 @@ import React, {
 } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import { type User as FullUser } from "../types/user.ts";
 
-// JWT 토큰에서 디코딩할 사용자 정보의 타입
-// 백엔드의 JwtUtil.java에서 토큰 생성 시 id(membership_id)를 추가해야 합니다.
+// JWT 토큰 페이로드 타입
 interface DecodedToken {
-  id: number; // User의 membership_id
   username: string; // User의 userId
   role: string;
   iat: number;
   exp: number;
 }
 
-// Context에서 전역으로 관리할 사용자 정보 타입
+// 전역으로 관리할 사용자 정보 타입
 interface UserInfo {
-  id: number;
-  username: string;
+  id: number; // User의 membership_id
+  userId: string;
+  name: string;
   role: string;
 }
 
-// AuthContext가 제공할 값들의 타입
 interface AuthContextType {
   token: string | null;
   user: UserInfo | null;
@@ -34,7 +33,6 @@ interface AuthContextType {
   logout: () => void;
 }
 
-// Context 생성 (초기값 설정)
 const AuthContext = createContext<AuthContextType>({
   token: null,
   user: null,
@@ -47,61 +45,110 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserInfo | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
-  // 앱 시작 시 로컬 스토리지에서 토큰을 확인하고 상태를 초기화
   useEffect(() => {
-    const storedToken = localStorage.getItem("authToken");
-    if (storedToken) {
-      try {
-        const decoded = jwtDecode<DecodedToken>(storedToken);
-        // 토큰 만료 시간 확인
-        if (decoded.exp * 1000 > Date.now()) {
-          setToken(storedToken);
-          setUser({
-            id: decoded.id,
-            userId: decoded.username,
-            role: decoded.role,
-          });
-          axios.defaults.headers.common["Authorization"] = storedToken;
-        } else {
-          // 토큰이 만료되었으면 제거
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem("authToken");
+      if (storedToken) {
+        try {
+          const decoded = jwtDecode<DecodedToken>(storedToken);
+          if (decoded.exp * 1000 > Date.now()) {
+            axios.defaults.headers.common["Authorization"] = storedToken;
+
+            // NOTE: This is an inefficient workaround because the backend doesn't provide user ID in the JWT.
+            // This should be replaced with a proper `/api/users/me` endpoint in the future.
+            try {
+              const allUsersResponse = await axios.get<FullUser[]>(
+                `${API_BASE_URL}/api/users/all`
+              );
+              const currentUser = allUsersResponse.data.find(
+                (u) => u.userId === decoded.username
+              );
+
+              if (currentUser) {
+                setToken(storedToken);
+                setUser({
+                  id: currentUser.id,
+                  userId: currentUser.userId,
+                  name: currentUser.name,
+                  role: decoded.role,
+                });
+              } else {
+                throw new Error("Current user not found in all users list.");
+              }
+            } catch (fetchErr) {
+              console.error("Failed to fetch user data after login:", fetchErr);
+              localStorage.removeItem("authToken");
+            }
+          } else {
+            localStorage.removeItem("authToken");
+          }
+        } catch (error) {
+          console.error("Failed to decode stored token:", error);
           localStorage.removeItem("authToken");
         }
-      } catch (error) {
-        console.error("저장된 토큰 디코딩 실패:", error);
-        localStorage.removeItem("authToken");
       }
-    }
+      setAuthLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
-  // 로그인 함수
-  const login = (newToken: string) => {
+  const login = async (newToken: string) => {
     try {
       const decoded = jwtDecode<DecodedToken>(newToken);
       localStorage.setItem("authToken", newToken);
-      setToken(newToken);
-      setUser({ id: decoded.id, userId: decoded.username, role: decoded.role });
       axios.defaults.headers.common["Authorization"] = newToken;
+
+      // NOTE: Inefficient workaround. See note in useEffect.
+      try {
+        const allUsersResponse = await axios.get<FullUser[]>(
+          `${API_BASE_URL}/api/users/all`
+        );
+        const currentUser = allUsersResponse.data.find(
+          (u) => u.userId === decoded.username
+        );
+
+        if (currentUser) {
+          setToken(newToken);
+          setUser({
+            id: currentUser.id,
+            userId: currentUser.userId,
+            name: currentUser.name,
+            role: decoded.role,
+          });
+        } else {
+          throw new Error("Current user not found in all users list.");
+        }
+      } catch (fetchErr) {
+        console.error("Failed to fetch user data after login:", fetchErr);
+        logout(); // Log out if user fetch fails
+      }
     } catch (error) {
-      console.error("새 토큰 디코딩 실패:", error);
-      // 디코딩 실패 시 상태를 초기화
+      console.error("Failed to decode new token:", error);
       logout();
     }
   };
 
-  // 로그아웃 함수
   const logout = () => {
     localStorage.removeItem("authToken");
     setToken(null);
     setUser(null);
     delete axios.defaults.headers.common["Authorization"];
-    window.location.href = "/login";
   };
 
-  const isLoggedIn = !!token;
+  const isLoggedIn = !!token && !!user;
+
+  // 인증 정보 로딩 중에는 아무것도 렌더링하지 않음
+  if (authLoading) {
+    return null;
+  }
 
   return (
     <AuthContext.Provider value={{ token, user, isLoggedIn, login, logout }}>
@@ -110,5 +157,4 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-// 커스텀 훅
 export const useAuth = () => useContext(AuthContext);

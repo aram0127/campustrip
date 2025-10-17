@@ -154,7 +154,7 @@ const ErrorMessage = styled.p`
 const PostDetailPage: React.FC = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth(); // AuthContext에서 user 정보 직접 가져오기
+  const { user } = useAuth();
 
   const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -204,7 +204,7 @@ const PostDetailPage: React.FC = () => {
 
     try {
       const applicationData = {
-        post: { postId: post.postId },
+        post: { postId: parseInt(postId!, 10) },
         user: { id: user.id },
       };
 
@@ -220,7 +220,7 @@ const PostDetailPage: React.FC = () => {
           message = "이미 신청했거나 처리 중 오류가 발생했습니다.";
         } else {
           message = `신청 실패 (${err.response.status}): ${
-            err.response.data.message || err.message
+            err.response.data?.message || err.message
           }`;
         }
       }
