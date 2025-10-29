@@ -1,5 +1,6 @@
 package com.example.app.util;
 
+import com.example.app.dto.CustomUserDetails;
 import com.example.app.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
@@ -58,16 +59,21 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
                                             HttpServletResponse response,
                                             FilterChain chain,
                                             Authentication authentication) {
-        String username = authentication.getName();
+        // CustomUserDetails 로 캐스팅하여 추가 정보 접근
+        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        String username = customUserDetails.getUsername(); // userId
+        Integer membershipId = customUserDetails.getMembershipId(); // membership_id 추가
+        String name = customUserDetails.getRealName(); // name 추가
 
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
         GrantedAuthority auth = iterator.next();
         String role = auth.getAuthority();
 
-        logger.info("로그인 성공 - 사용자명: {}, 권한: {}", username, role);
+        logger.info("로그인 성공 - 사용자명: {}, ID: {}, 이름: {}, 권한: {}", username, membershipId, name, role);
 
-        String token = jwtUtil.createToken(username, role);
+        String token = jwtUtil.createToken(username, membershipId, name, role);
 
         logger.debug("JWT 토큰 생성 완료");
 

@@ -15,12 +15,14 @@ public class JwtUtil {
     private final long expiredMs = 1000 * 60 * 60; // 1시간
 
     // JWT 토큰 생성
-    public String createToken(String username, String role) {
+    public String createToken(String username, Integer membershipId, String name, String role) {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + expiredMs);
 
         return Jwts.builder()
                 .claim("username", username)
+                .claim("membershipId", membershipId) // membership_id 추가
+                .claim("name", name) // name 추가
                 .claim("role", role)
                 .setIssuedAt(now)
                 .setExpiration(expiration)
@@ -36,6 +38,26 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getPayload()
                 .get("username", String.class);
+    }
+
+    // 토큰에서 membershipId 추출
+    public Integer getMembershipId(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getPayload()
+                .get("membershipId", Integer.class);
+    }
+
+    // 토큰에서 실명 추출
+    public String getName(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getPayload()
+                .get("name", String.class);
     }
 
     // 토큰에서 역할 추출

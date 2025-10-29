@@ -34,9 +34,19 @@ public class CustomUserDetails implements UserDetails {
         return user;
     }
 
-    public String getId() {
-        return user.getUserId();
+    // membership_id 반환 메서드
+    public Integer getMembershipId() {
+        return user.getId();
     }
+
+    // 실명 반환 메서드
+    public String getRealName() {
+        return user.getName();
+    }
+
+//    public String getId() {
+//        return user.getUserId();
+//    }
 
 //    @Override
 //    public boolean isAccountNonExpired() {
