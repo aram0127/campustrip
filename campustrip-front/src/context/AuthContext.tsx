@@ -7,11 +7,12 @@ import React, {
 } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import { type User as FullUser } from "../types/user.ts";
 
 // JWT 토큰 페이로드 타입
 interface DecodedToken {
   username: string; // User의 userId
+  membershipId: number; // User의 membership_id
+  name: string; // User의 name
   role: string;
   iat: number;
   exp: number;
@@ -45,15 +46,13 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserInfo | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    const initializeAuth = async () => {
+    const initializeAuth = () => {
       const storedToken = localStorage.getItem("authToken");
       if (storedToken) {
         try {
@@ -61,31 +60,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (decoded.exp * 1000 > Date.now()) {
             axios.defaults.headers.common["Authorization"] = storedToken;
 
-            // NOTE: This is an inefficient workaround because the backend doesn't provide user ID in the JWT.
-            // This should be replaced with a proper `/api/users/me` endpoint in the future.
-            try {
-              const allUsersResponse = await axios.get<FullUser[]>(
-                `${API_BASE_URL}/api/users/all`
-              );
-              const currentUser = allUsersResponse.data.find(
-                (u) => u.userId === decoded.username
-              );
-
-              if (currentUser) {
-                setToken(storedToken);
-                setUser({
-                  id: currentUser.id,
-                  userId: currentUser.userId,
-                  name: currentUser.name,
-                  role: decoded.role,
-                });
-              } else {
-                throw new Error("Current user not found in all users list.");
-              }
-            } catch (fetchErr) {
-              console.error("Failed to fetch user data after login:", fetchErr);
-              localStorage.removeItem("authToken");
-            }
+            // 토큰에서 직접 사용자 정보를 가져와 상태 설정
+            setToken(storedToken);
+            setUser({
+              id: decoded.membershipId,
+              userId: decoded.username,
+              name: decoded.name,
+              role: decoded.role,
+            });
           } else {
             localStorage.removeItem("authToken");
           }
@@ -100,36 +82,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
-  const login = async (newToken: string) => {
+  const login = (newToken: string) => {
     try {
       const decoded = jwtDecode<DecodedToken>(newToken);
       localStorage.setItem("authToken", newToken);
       axios.defaults.headers.common["Authorization"] = newToken;
 
-      // NOTE: Inefficient workaround. See note in useEffect.
-      try {
-        const allUsersResponse = await axios.get<FullUser[]>(
-          `${API_BASE_URL}/api/users/all`
-        );
-        const currentUser = allUsersResponse.data.find(
-          (u) => u.userId === decoded.username
-        );
-
-        if (currentUser) {
-          setToken(newToken);
-          setUser({
-            id: currentUser.id,
-            userId: currentUser.userId,
-            name: currentUser.name,
-            role: decoded.role,
-          });
-        } else {
-          throw new Error("Current user not found in all users list.");
-        }
-      } catch (fetchErr) {
-        console.error("Failed to fetch user data after login:", fetchErr);
-        logout(); // Log out if user fetch fails
-      }
+      // 토큰에서 직접 사용자 정보를 가져와 상태 설정
+      setToken(newToken);
+      setUser({
+        id: decoded.membershipId,
+        userId: decoded.username,
+        name: decoded.name,
+        role: decoded.role,
+      });
     } catch (error) {
       console.error("Failed to decode new token:", error);
       logout();
