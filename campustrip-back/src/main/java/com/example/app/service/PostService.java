@@ -1,6 +1,8 @@
 package com.example.app.service;
 
 import com.example.app.domain.User;
+import com.example.app.repository.PostRegionRepository;
+import com.example.app.repository.RegionRepository;
 import com.example.app.repository.UserRepository;
 import org.springframework.stereotype.Service;  // @Service 어노테이션
 import org.springframework.beans.factory.annotation.Autowired;  // 의존성 주입용 (선택적)
@@ -13,12 +15,16 @@ import java.util.NoSuchElementException;
 public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final PostRegionRepository postRegionRepository;
+    private final RegionRepository regionRepository;
 
     @Autowired
     public PostService(PostRepository postRepository,
-                       UserRepository userRepository) {
+                       UserRepository userRepository, PostRegionRepository postRegionRepository, RegionRepository regionRepository) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
+        this.postRegionRepository = postRegionRepository;
+        this.regionRepository = regionRepository;
     }
 
     public List<Post> getAllPosts() {
@@ -56,4 +62,7 @@ public class PostService {
         postRepository.deleteById(postId);
     }
 
+    public void assignRegionsToPost(Post post, List<Integer> regions) {
+        post.setRegions(regionRepository.findByRegionIdIn(regions));
+    }
 }
