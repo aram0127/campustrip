@@ -26,6 +26,7 @@ import FollowListPage from "./pages/follow/FollowListPage";
 import BlockedListPage from "./pages/follow/BlockedListPage";
 import NotificationListPage from "./pages/notification/NotificationListPage";
 import PostDetailPage from "./pages/post/PostDetailPage";
+import PostCreateFlow from "./pages/post/create/PostCreateFlow";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 const RootRedirect: React.FC = () => {
@@ -84,6 +85,7 @@ function App() {
             <Route path="/settings/blocked" element={<BlockedListPage />} />
             <Route path="/notifications" element={<NotificationListPage />} />
             <Route path="/posts/:postId" element={<PostDetailPage />} />
+            <Route path="/posts/new/*" element={<PostCreateFlow />} />
 
             {/* MainLayout을 사용하는 페이지들 */}
             <Route

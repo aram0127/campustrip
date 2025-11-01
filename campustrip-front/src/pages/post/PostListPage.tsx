@@ -11,6 +11,7 @@ import FloatingActionButton from "../../components/common/FloatingActionButton";
 import { type Post } from "../../types/post";
 import { useQuery } from "@tanstack/react-query";
 import { getPosts } from "../../api/posts";
+import { useNavigate } from "react-router-dom";
 
 const PageContainer = styled.div`
   width: 100%;
@@ -52,6 +53,8 @@ function PostListPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("전체");
+
+  const navigate = useNavigate();
 
   const {
     data: posts = [], // posts 데이터가 없을 경우 빈 배열([])을 기본값으로 사용
@@ -122,8 +125,7 @@ function PostListPage() {
   }, [posts, searchQuery, selectedLocation]);
 
   const handleCreatePost = () => {
-    alert("새 모집 게시글 작성 페이지로 이동");
-    // navigate('/posts/new'); // 예시
+    navigate("/posts/new/region"); // 1단계(지역 선택) 페이지로 이동
   };
 
   return (
