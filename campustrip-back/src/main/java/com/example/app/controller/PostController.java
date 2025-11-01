@@ -1,7 +1,9 @@
 package com.example.app.controller;
 
 import com.example.app.domain.Post;
+import com.example.app.domain.PostDTO;
 import com.example.app.dto.CreatePost;
+import com.example.app.service.ChatService;
 import com.example.app.service.PostService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,10 +13,12 @@ import java.util.List;
 @RequestMapping("/api/posts")
 public class PostController {
     private final PostService postService;
+    private final ChatService chatService;
 
     @Autowired
-    public PostController(PostService postService) {
+    public PostController(PostService postService, ChatService chatService) {
         this.postService = postService;
+        this.chatService = chatService;
     }
 
     // GET: 전체 게시물 조회
@@ -25,8 +29,20 @@ public class PostController {
 
     // GET: ID로 게시물 조회
     @GetMapping("/{postId}")
-    public Post getPostById(@PathVariable Integer postId) {
-        return postService.getPostById(postId);
+    public PostDTO getPostById(@PathVariable Integer postId) {
+        Post post = postService.getPostById(postId);
+        PostDTO postDTO = new PostDTO();
+        postDTO.setUserName(post.getUser().getName());
+        postDTO.setUserScore(post.getUser().getUserScore());
+        postDTO.setTitle(post.getTitle());
+        postDTO.setBody(post.getBody());
+        postDTO.setCreatedAt(post.getCreatedAt());
+        postDTO.setUpdatedAt(post.getUpdatedAt());
+        postDTO.setTeamSize(post.getTeamSize());
+        postDTO.setMemberNumber(chatService.getNumberOfChatMembers(post.getChat()));
+        postDTO.setRegions(post.getRegions().stream().map(region -> region.getRegionName()).toList());
+        postDTO.setChatId(post.getChat().getId());
+        return postDTO;
     }
 
     // 사용자 ID로 게시물 조회 (작성한 게시글 조회)
