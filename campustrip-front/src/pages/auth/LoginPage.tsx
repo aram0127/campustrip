@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useMutation } from "@tanstack/react-query";
+import { loginUser } from "../../api/auth";
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 import Checkbox from "../../components/common/Checkbox";
@@ -68,47 +69,41 @@ const ErrorMessage = styled.p`
   min-height: 18px;
 `;
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 function LoginPage() {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const {
+    mutate: performLogin, // mutate 함수를 performLogin으로 이름 변경
+    isPending, // 로딩 상태 (isLoading 대신 isPending 사용)
+    error, // 에러 상태
+  } = useMutation({
+    mutationFn: loginUser, // API 함수 연결
+    onSuccess: (data) => {
+      // 성공 시 로직 (API 호출 성공 후 실행됨)
+      const { token } = data;
+      login(token); // AuthContext의 login 함수 실행
+      alert("로그인에 성공했습니다.");
+      navigate("/posts"); // 메인 페이지로 이동
+    },
+    onError: (err) => {
+      // 에러 시 로직 (네트워크 오류, 401 등)
+      // loginUser 함수에서 던진 에러나 axios 에러가 여기에 잡힘
+      console.error("로그인 실패:", err);
+      // 에러 메시지는 error 객체를 통해 자동으로 ErrorMessage 컴포넌트에 표시됨
+    },
+  });
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
 
     const formData = new FormData();
     formData.append("username", userId);
     formData.append("password", password);
 
-    try {
-      const response = await axios.post(`${API_BASE_URL}/login`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      const token = response.headers["authorization"];
-
-      if (token) {
-        login(token);
-        alert("로그인에 성공했습니다.");
-        navigate("/posts");
-      } else {
-        setError("로그인에 실패했습니다.");
-      }
-    } catch (err) {
-      console.error("로그인 실패:", err);
-      if (axios.isAxiosError(err) && err.response?.status === 401) {
-        setError("아이디 또는 비밀번호가 올바르지 않습니다.");
-      } else {
-        setError("로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
-      }
-    }
+    performLogin(formData);
   };
 
   return (
@@ -132,7 +127,9 @@ function LoginPage() {
         <OptionsContainer>
           <Checkbox label="로그인 상태 유지" />
         </OptionsContainer>
-        <ErrorMessage>{error}</ErrorMessage>
+        <ErrorMessage>
+          {error ? "아이디 또는 비밀번호가 올바르지 않습니다." : ""}
+        </ErrorMessage>
         <Button
           size="large"
           type="submit"

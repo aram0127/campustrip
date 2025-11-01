@@ -4,6 +4,8 @@ import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useMutation } from "@tanstack/react-query";
+import { signupUser } from "../../api/auth";
 
 const SignupPageContainer = styled.div`
   width: 100%;
@@ -46,19 +48,19 @@ const ValidationMessage = styled.p<{ isValid: boolean }>`
   text-align: left;
 `;
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 function SignupPage() {
   const navigate = useNavigate();
 
-  // 입력값 상태 관리
+  // 입력값 상태
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [schoolEmail, setSchoolEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [emailCode, setEmailCode] = useState("");
+  const [phoneCode, setPhoneCode] = useState("");
 
-  // 유효성 검사 상태 관리
+  // 유효성 검사 상태
   const [isUserIdValid, setIsUserIdValid] = useState(false);
   const [isPasswordValid, setIsPasswordValid] = useState(false);
   const [userIdMessage, setUserIdMessage] = useState("");
@@ -66,13 +68,13 @@ function SignupPage() {
   const [isSchoolEmailValid, setIsSchoolEmailValid] = useState(false);
   const [isPhoneNumberValid, setIsPhoneNumberValid] = useState(false);
 
-  // 인증코드 입력창 표시 여부
-  const [showSchoolEmailVerification, setShowSchoolEmailVerification] =
-    useState(false);
-  const [showPhoneVerification, setShowPhoneVerification] = useState(false);
-
-  // API 호출 로딩 및 에러 상태
-  const [error, setError] = useState("");
+  // 인증 절차 상태
+  const [emailCodeSent, setEmailCodeSent] = useState(false);
+  const [phoneCodeSent, setPhoneCodeSent] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
+  const [isPhoneLoading, setIsPhoneLoading] = useState(false);
 
   // 아이디 유효성 검사
   useEffect(() => {
@@ -115,63 +117,123 @@ function SignupPage() {
     setIsPhoneNumberValid(phoneRegex.test(phoneNumber));
   }, [phoneNumber]);
 
-  // 모든 폼 필드가 유효한지 확인 (임시 로직)
+  // 인증코드 발송 함수 (이메일)
+  const handleSendEmailCode = async () => {
+    setIsEmailLoading(true);
+    try {
+      // TODO: 백엔드에 이메일 인증 코드 발송 API 호출
+      alert("이메일로 인증코드가 발송되었습니다.");
+      setEmailCodeSent(true);
+    } catch (err) {
+      alert("인증코드 발송에 실패했습니다.");
+    } finally {
+      setIsEmailLoading(false);
+    }
+  };
+
+  // 인증코드 검증 함수 (이메일)
+  const handleVerifyEmailCode = async () => {
+    setIsEmailLoading(true);
+    try {
+      // TODO: 백엔드에 이메일 인증 코드 검증 API 호출
+      alert("이메일 인증에 성공했습니다.");
+      setIsEmailVerified(true);
+    } catch (err) {
+      alert("인증코드가 올바르지 않습니다.");
+    } finally {
+      setIsEmailLoading(false);
+    }
+  };
+
+  // 인증코드 발송 함수 (휴대폰)
+  const handleSendSmsCode = async () => {
+    setIsPhoneLoading(true);
+    try {
+      // TODO: 백엔드에 SMS 인증 코드 발송 API 호출
+      alert("휴대폰으로 인증코드가 발송되었습니다.");
+      setPhoneCodeSent(true);
+    } catch (err) {
+      alert("인증코드 발송에 실패했습니다.");
+    } finally {
+      setIsPhoneLoading(false);
+    }
+  };
+
+  // -인증코드 검증 함수 (휴대폰)
+  const handleVerifySmsCode = async () => {
+    setIsPhoneLoading(true);
+    try {
+      // TODO: 백엔드에 SMS 인증 코드 검증 API 호출
+      alert("휴대폰 인증에 성공했습니다.");
+      setIsPhoneVerified(true);
+    } catch (err) {
+      alert("인증코드가 올바르지 않습니다.");
+    } finally {
+      setIsPhoneLoading(false);
+    }
+  };
+
+  // 폼 유효성 검사
   const isFormValid =
     isUserIdValid &&
     isPasswordValid &&
     name &&
     isSchoolEmailValid &&
-    isPhoneNumberValid;
+    isPhoneNumberValid &&
+    isEmailVerified &&
+    isPhoneVerified;
+
+  const {
+    mutate: performSignup,
+    isPending, // 로딩 상태
+    error, // 에러 상태
+  } = useMutation({
+    mutationFn: signupUser, // auth.ts에 정의한 API 함수 연결
+    onSuccess: () => {
+      // 성공 시 로직
+      alert("회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.");
+      navigate("/login");
+    },
+    onError: (err) => {
+      // 실패 시 로직
+      console.error("회원가입 실패:", err);
+      // 에러 메시지는 error 객체를 통해 자동으로 ValidationMessage에 표시됨
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isFormValid) {
-      alert("입력 정보를 다시 확인해주세요.");
+      alert("모든 인증 절차를 완료해주세요.");
       return;
     }
 
-    try {
-      const userData = {
-        userId: userId,
-        password: password,
-        name: name,
-        schoolEmail: schoolEmail,
-        phoneNumber: phoneNumber,
-        email: schoolEmail,
-      };
+    // API로 보낼 데이터 준비
+    const userData = {
+      userId: userId,
+      password: password,
+      name: name,
+      schoolEmail: schoolEmail,
+      phoneNumber: phoneNumber,
+      email: schoolEmail,
+    };
 
-      // 백엔드 API 호출
-      await axios.post(`${API_BASE_URL}/api/users`, userData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      alert("회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.");
-      navigate("/login");
-    } catch (err) {
-      console.error("회원가입 실패:", err);
-      if (axios.isAxiosError(err) && err.response) {
-        setError(`회원가입 실패 (${err.response.status}): ${err.message}`);
-      } else {
-        setError(
-          "회원가입 중 오류가 발생했습니다. 네트워크 연결을 확인하거나 잠시 후 다시 시도해주세요."
-        );
-      }
-      alert(error);
-    }
+    // useMutation의 mutate 함수(performSignup) 호출
+    performSignup(userData);
   };
 
   return (
     <SignupPageContainer>
       <Title>회원가입</Title>
       <Form onSubmit={handleSubmit}>
+        {/* 아이디, 비밀번호, 이름 Input 필드 */}
         <Input
           type="text"
           placeholder="아이디"
           value={userId}
           onChange={(e) => setUserId(e.target.value)}
           required
+          disabled={isEmailVerified && isPhoneVerified}
         />
         {userIdMessage && (
           <ValidationMessage isValid={isUserIdValid}>
@@ -186,6 +248,7 @@ function SignupPage() {
           onChange={(e) => setPassword(e.target.value)}
           maxLength={20}
           required
+          disabled={isEmailVerified && isPhoneVerified}
         />
         {passwordMessage && (
           <ValidationMessage isValid={isPasswordValid}>
@@ -199,8 +262,10 @@ function SignupPage() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
+          disabled={isEmailVerified && isPhoneVerified}
         />
 
+        {/* 이메일 인증 섹션 */}
         <InputWithButtonContainer>
           <Input
             type="email"
@@ -209,30 +274,48 @@ function SignupPage() {
             value={schoolEmail}
             onChange={(e) => setSchoolEmail(e.target.value)}
             required
+            disabled={isEmailVerified}
           />
           <Button
             type="button"
-            onClick={() => setShowSchoolEmailVerification(true)}
-            disabled={!isSchoolEmailValid}
+            onClick={handleSendEmailCode}
+            disabled={!isSchoolEmailValid || emailCodeSent || isEmailVerified}
             style={{ width: "120px", padding: "12px 0" }}
           >
-            인증코드 받기
+            {isEmailLoading
+              ? "전송중..."
+              : emailCodeSent
+              ? "재전송"
+              : "인증코드 받기"}
           </Button>
         </InputWithButtonContainer>
-        {showSchoolEmailVerification && (
+        {emailCodeSent && !isEmailVerified && (
           <InputWithButtonContainer>
             <Input
               type="text"
               placeholder="인증코드"
               style={{ flex: 1 }}
+              value={emailCode}
+              onChange={(e) => setEmailCode(e.target.value)}
               required
             />
-            <Button type="button" style={{ width: "120px", padding: "12px 0" }}>
-              인증코드 확인
+            <Button
+              type="button"
+              onClick={handleVerifyEmailCode}
+              disabled={isEmailLoading}
+              style={{ width: "120px", padding: "12px 0" }}
+            >
+              {isEmailLoading ? "확인중..." : "인증코드 확인"}
             </Button>
           </InputWithButtonContainer>
         )}
+        {isEmailVerified && (
+          <ValidationMessage isValid={true}>
+            이메일 인증이 완료되었습니다.
+          </ValidationMessage>
+        )}
 
+        {/* 휴대폰 인증 섹션 */}
         <InputWithButtonContainer>
           <Input
             type="tel"
@@ -244,44 +327,68 @@ function SignupPage() {
               setPhoneNumber(cleanedPhone);
             }}
             required
+            disabled={isPhoneVerified}
           />
           <Button
             type="button"
-            onClick={() => setShowPhoneVerification(true)}
-            disabled={!isPhoneNumberValid}
+            onClick={handleSendSmsCode}
+            disabled={!isPhoneNumberValid || phoneCodeSent || isPhoneVerified}
             style={{ width: "120px", padding: "12px 0" }}
           >
-            인증코드 받기
+            {isPhoneLoading
+              ? "전송중..."
+              : phoneCodeSent
+              ? "재전송"
+              : "인증코드 받기"}
           </Button>
         </InputWithButtonContainer>
-        {showPhoneVerification && (
+        {phoneCodeSent && !isPhoneVerified && (
           <InputWithButtonContainer>
             <Input
               type="text"
               placeholder="인증코드"
               style={{ flex: 1 }}
+              value={phoneCode}
+              onChange={(e) => setPhoneCode(e.target.value)}
               required
             />
-            <Button type="button" style={{ width: "120px", padding: "12px 0" }}>
-              인증코드 확인
+            <Button
+              type="button"
+              onClick={handleVerifySmsCode}
+              disabled={isPhoneLoading}
+              style={{ width: "120px", padding: "12px 0" }}
+            >
+              {isPhoneLoading ? "확인중..." : "인증코드 확인"}
             </Button>
           </InputWithButtonContainer>
         )}
+        {isPhoneVerified && (
+          <ValidationMessage isValid={true}>
+            휴대폰 인증이 완료되었습니다.
+          </ValidationMessage>
+        )}
 
+        {/* useMutation의 error 객체를 사용하여 에러 메시지 표시 */}
         {error && (
-          <ValidationMessage isValid={false}>{error}</ValidationMessage>
+          <ValidationMessage isValid={false}>
+            {axios.isAxiosError(error)
+              ? `회원가입 실패 (${error.response?.status}): ${error.message}`
+              : "회원가입 중 오류가 발생했습니다."}
+          </ValidationMessage>
         )}
 
         <Button
           size="large"
           type="submit"
-          disabled={!isFormValid}
+          // isFormValid와 isPending 상태로 disabled 관리
+          disabled={!isFormValid || isPending}
           style={{
             width: "100%",
             marginTop: "24px",
           }}
         >
-          가입하기
+          {/* isPending 상태에 따라 버튼 텍스트 변경 */}
+          {isPending ? "가입 처리 중..." : "가입하기"}
         </Button>
       </Form>
     </SignupPageContainer>
