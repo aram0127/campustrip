@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import styled from "styled-components";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import styled, { css } from "styled-components";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getPostById } from "../../api/posts";
-import { createApplication } from "../../api/applications";
+import { createApplication, cancelApplication } from "../../api/applications";
 import { type Post } from "../../types/post";
+import { type Application } from "../../types/application";
 import { IoArrowBack } from "react-icons/io5";
 import { useAuth } from "../../context/AuthContext";
-import axios from "axios";
+import axios, { type AxiosError } from "axios";
 
 const PageContainer = styled.div`
   max-width: 480px;
@@ -122,17 +123,46 @@ const PostBody = styled.div`
   white-space: pre-wrap;
 `;
 
-const ActionButton = styled.button`
+type ButtonStatus = "apply" | "cancel" | "accepted" | "rejected";
+
+const ActionButton = styled.button<{ status: ButtonStatus }>`
   width: 100%;
   padding: 14px;
   border-radius: 8px;
   border: none;
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: white;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
+  transition: background-color 0.2s;
 
+  ${({ theme, status }) =>
+    status === "apply" &&
+    css`
+      background-color: ${theme.colors.primary};
+      color: white;
+      &:hover {
+        background-color: #0056b3; // 더 진한 파란색
+      }
+    `}
+
+  ${({ theme, status }) =>
+    status === "cancel" &&
+    css`
+      background-color: ${theme.colors.error}; // 취소 버튼은 빨간색
+      color: white;
+      &:hover {
+        background-color: #c82333; // 더 진한 빨간색
+      }
+    `}
+
+${({ theme, status }) =>
+    (status === "accepted" || status === "rejected") &&
+    css`
+      background-color: ${theme.colors.grey};
+      color: ${theme.colors.background};
+      cursor: not-allowed;
+    `}
+  
   &:disabled {
     background-color: ${({ theme }) => theme.colors.grey};
     cursor: not-allowed;
@@ -152,10 +182,23 @@ const ErrorMessage = styled.p`
   margin-bottom: 16px;
 `;
 
+interface ApplicationData {
+  post: { postId: number };
+  user: { userId: string };
+}
+
+interface CancelApplicationData {
+  userId: number;
+  postId: number;
+}
+
+type ApplicationStatus = "NOT_APPLIED" | "PENDING" | "ACCEPTED" | "REJECTED";
+
 const PostDetailPage: React.FC = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<"post" | "planner">("post");
 
@@ -173,15 +216,60 @@ const PostDetailPage: React.FC = () => {
     enabled: !!postId, // postId가 존재할 때만 쿼리를 실행
   });
 
+  // 현재 사용자의 신청 상태와 ID를 useMemo로 계산
+  const { applicationStatus, applicationId } = useMemo(() => {
+    if (!user || !post?.applications) {
+      return {
+        applicationStatus: "NOT_APPLIED" as ApplicationStatus,
+        applicationId: null,
+      };
+    }
+
+    const currentUserApplication = post.applications.find(
+      (app) => app.userId === user.userId
+    );
+
+    if (!currentUserApplication) {
+      return {
+        applicationStatus: "NOT_APPLIED" as ApplicationStatus,
+        applicationId: null,
+      };
+    }
+
+    // applicationStatus: true(수락), false(거절), null(대기중)
+    // 'true' (수락) 상태
+    if (currentUserApplication.applicationStatus === true) {
+      return {
+        applicationStatus: "ACCEPTED" as ApplicationStatus,
+        applicationId: currentUserApplication.id,
+      };
+    }
+    // 'false' (거절) 상태
+    if (currentUserApplication.applicationStatus === false) {
+      return {
+        applicationStatus: "REJECTED" as ApplicationStatus,
+        applicationId: currentUserApplication.id,
+      };
+    }
+    // 'null' (대기중)
+    return {
+      applicationStatus: "PENDING" as ApplicationStatus,
+      applicationId: currentUserApplication.id,
+    };
+  }, [post?.applications, user]);
+
+  // '동행 신청' useMutation
   const {
-    mutate: applyForTrip,
-    isPending: isApplying, // isPending을 isApplying으로 이름 변경
-    error: applyError, // error를 applyError로 이름 변경
-  } = useMutation({
+    mutate: applyForTrip, // isPending을 isApplying으로 이름 변경
+    isPending: isApplying, // error를 applyError로 이름 변경
+    error: applyError,
+  } = useMutation<Application, Error, ApplicationData>({
     mutationFn: createApplication, // API 함수 연결
     onSuccess: () => {
       // 성공 시 로직
       alert("동행 신청이 완료되었습니다.");
+      // 'post' 쿼리를 무효화하여 최신 데이터(신청 목록)를 다시 불러옴
+      queryClient.invalidateQueries({ queryKey: ["post", postId] });
     },
     onError: (err: Error) => {
       // 실패 시 로직
@@ -189,23 +277,48 @@ const PostDetailPage: React.FC = () => {
     },
   });
 
-  const handleApply = async () => {
-    if (!user || !post) {
-      alert("로그인 정보 또는 게시글 정보가 유효하지 않습니다.");
-      return;
-    }
+  // '신청 취소' useMutation
+  const {
+    mutate: cancelTripApplication,
+    isPending: isCanceling,
+    error: cancelError, // 신청 취소 에러
+  } = useMutation<void, Error, CancelApplicationData>({
+    mutationFn: cancelApplication,
+    onSuccess: () => {
+      alert("신청이 취소되었습니다.");
+      queryClient.invalidateQueries({ queryKey: ["post", postId] });
+    },
+    onError: (err: Error) => {
+      console.error("신청 취소 실패:", err);
+    },
+  });
+
+  // 버튼 클릭 핸들러: 현재 상태에 따라 다른 뮤테이션 호출
+  const handleButtonClick = () => {
+    if (!user || !post) return;
 
     if (user.id === post.user.id) {
-      alert("자신이 작성한 게시글에는 동행을 신청할 수 없습니다.");
+      alert("자신이 작성한 게시글입니다.");
       return;
     }
 
-    // useMutation의 mutate 함수(applyForTrip) 호출
-    const applicationData = {
-      post: { postId: post.postId },
-      user: { userId: user.userId },
-    };
-    applyForTrip(applicationData);
+    switch (applicationStatus) {
+      case "NOT_APPLIED":
+        applyForTrip({
+          post: { postId: post.postId },
+          user: { userId: user.userId },
+        });
+        break;
+      case "PENDING":
+        cancelTripApplication({
+          userId: user.id,
+          postId: post.postId,
+        });
+        break;
+      case "ACCEPTED":
+      case "REJECTED":
+        break;
+    }
   };
 
   if (isLoading) {
@@ -221,6 +334,55 @@ const PostDetailPage: React.FC = () => {
   }
 
   const isMyPost = user?.id === post.user.id;
+  const isMutationLoading = isApplying || isCanceling;
+
+  // 버튼 텍스트와 스타일 상태 결정
+  const getButtonProps = () => {
+    if (isMyPost) {
+      return {
+        text: "내 게시글",
+        status: "accepted" as ButtonStatus,
+        disabled: true,
+      };
+    }
+    if (isMutationLoading) {
+      return {
+        text: "처리 중...",
+        status: "accepted" as ButtonStatus,
+        disabled: true,
+      };
+    }
+
+    switch (applicationStatus) {
+      case "ACCEPTED":
+        return {
+          text: "신청 됨",
+          status: "accepted" as ButtonStatus,
+          disabled: true,
+        };
+      case "REJECTED":
+        return {
+          text: "거절됨",
+          status: "rejected" as ButtonStatus,
+          disabled: true,
+        };
+      case "PENDING":
+        return {
+          text: "신청 취소",
+          status: "cancel" as ButtonStatus,
+          disabled: false,
+        };
+      case "NOT_APPLIED":
+      default:
+        return {
+          text: "동행 신청하기",
+          status: "apply" as ButtonStatus,
+          disabled: false,
+        };
+    }
+  };
+
+  const buttonProps = getButtonProps();
 
   return (
     <PageContainer>
@@ -272,21 +434,19 @@ const PostDetailPage: React.FC = () => {
           </PostMeta>
 
           <PostBody>{post.body}</PostBody>
-          {applyError && (
-            <ErrorMessage>
-              {axios.isAxiosError(applyError) &&
-              applyError.response?.status === 500
-                ? "이미 신청했거나 처리 중 오류가 발생했습니다."
-                : "동행 신청 중 오류가 발생했습니다."}
-            </ErrorMessage>
+
+          {/* 신청/취소 에러 메시지 표시 */}
+          {(applyError || cancelError) && (
+            <ErrorMessage>신청 처리 중 오류가 발생했습니다.</ErrorMessage>
           )}
 
-          <ActionButton onClick={handleApply} disabled={isApplying || isMyPost}>
-            {isMyPost
-              ? "내 게시글"
-              : isApplying
-              ? "신청 중..."
-              : "동행 신청하기"}
+          {/* ActionButton에 동적 props 전달 */}
+          <ActionButton
+            onClick={handleButtonClick}
+            status={buttonProps.status}
+            disabled={buttonProps.disabled}
+          >
+            {buttonProps.text}
           </ActionButton>
         </ContentContainer>
       )}
