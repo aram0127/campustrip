@@ -297,8 +297,8 @@ const PostDetailPage: React.FC = () => {
   const handleButtonClick = () => {
     if (!user || !post) return;
 
-    if (user.id === post.user.id) {
-      alert("자신이 작성한 게시글입니다.");
+    if (isMyPost) {
+      navigate(`/posts/${post.postId}/applicants`);
       return;
     }
 
@@ -340,9 +340,9 @@ const PostDetailPage: React.FC = () => {
   const getButtonProps = () => {
     if (isMyPost) {
       return {
-        text: "내 게시글",
-        status: "accepted" as ButtonStatus,
-        disabled: true,
+        text: "동행 신청자 목록",
+        status: "apply" as ButtonStatus,
+        disabled: false,
       };
     }
     if (isMutationLoading) {
@@ -430,7 +430,10 @@ const PostDetailPage: React.FC = () => {
               📅 일정: <span>기간 정보 없음</span>
             </MetaItem>
             <MetaItem>
-              👥 모집 인원: <span>{post.memberSize} / {post.teamSize} 명</span>
+              👥 모집 인원:{" "}
+              <span>
+                {post.memberSize} / {post.teamSize} 명
+              </span>
             </MetaItem>
           </PostMeta>
 
