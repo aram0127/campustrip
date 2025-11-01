@@ -17,3 +17,16 @@ export const createApplication = async (
   );
   return response.data;
 };
+
+interface CancelApplicationData {
+  userId: number; // User의 membership_id
+  postId: number; // Post의 postId
+}
+
+/* 동행 신청 취소 */
+export const cancelApplication = async ({
+  userId,
+  postId,
+}: CancelApplicationData): Promise<void> => {
+  await apiClient.delete(`/api/applications/${userId}/${postId}`);
+};
