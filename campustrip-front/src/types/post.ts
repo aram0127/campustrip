@@ -7,11 +7,13 @@ export interface Post {
   createdAt: string;
   updatedAt?: string | null;
   teamSize: number;
+  memberSize: number;
   // User 정보
   user: {
     id: number;
     name: string;
     userId: string;
+    userScore: number;
   };
   // Region 정보
   regions: {

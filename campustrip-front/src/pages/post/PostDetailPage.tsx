@@ -413,6 +413,7 @@ const PostDetailPage: React.FC = () => {
           <AuthorInfo>
             <AuthorAvatar />
             <AuthorName>{post.user?.name || "작성자"}</AuthorName>
+            <span>여행 온도: 🌡{post.user.userScore}</span>
           </AuthorInfo>
 
           <PostTitle>{post.title}</PostTitle>
@@ -429,7 +430,7 @@ const PostDetailPage: React.FC = () => {
               📅 일정: <span>기간 정보 없음</span>
             </MetaItem>
             <MetaItem>
-              👥 모집 인원: <span>? / {post.teamSize} 명</span>
+              👥 모집 인원: <span>{post.memberSize} / {post.teamSize} 명</span>
             </MetaItem>
           </PostMeta>
 
