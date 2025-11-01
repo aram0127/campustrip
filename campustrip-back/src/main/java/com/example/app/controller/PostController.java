@@ -1,6 +1,7 @@
 package com.example.app.controller;
 
 import com.example.app.domain.Post;
+import com.example.app.dto.CreatePost;
 import com.example.app.service.PostService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +43,15 @@ public class PostController {
 
     // POST: 새 게시물 생성
     @PostMapping
-    public Post createPost(@RequestBody Post post) {
+    public Post createPost(@RequestBody CreatePost createPost) {
+        Post post = new Post();
+        post.setUser(createPost.getUser());
+        post.setTitle(createPost.getTitle());
+        post.setBody(createPost.getBody());
+        post.setCreatedAt(createPost.getCreatedAt());
+        post.setTeamSize(createPost.getTeamSize());
+        List<Integer> regions = createPost.getRegions();
+        postService.assignRegionsToPost(post, regions);
         postService.savePost(post);
         return post;
     }

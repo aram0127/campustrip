@@ -32,7 +32,7 @@ public class ChatMember {
     private Boolean role;
 
     // 복합키 클래스
-    @Data
+    @EqualsAndHashCode
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ChatMemberId implements Serializable {

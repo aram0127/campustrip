@@ -9,6 +9,6 @@ import java.io.Serializable;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class ApplicationId implements Serializable {
-    private Post post;
-    private User user;
+    private Integer post;
+    private Integer user;
 }
