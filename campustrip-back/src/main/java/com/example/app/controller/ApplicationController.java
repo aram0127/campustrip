@@ -2,6 +2,7 @@ package com.example.app.controller;
 
 import com.example.app.domain.User;
 import com.example.app.dto.CustomUserDetails;
+import com.example.app.dto.SearchApplication;
 import com.example.app.service.ApplicationService;
 import com.example.app.service.ChatService;
 import org.springframework.security.access.AccessDeniedException;
@@ -33,8 +34,12 @@ public class ApplicationController {
 
     // 게시물 ID로 동행 신청 조회
     @GetMapping("/post/{postId}")
-    public List<Application> getApplicationsByPostId(@PathVariable Integer postId) {
-        return applicationService.getApplicationsByPostId(postId);
+    public List<SearchApplication> getApplicationsByPostId(@PathVariable Integer postId) {
+        List<Application> applications = applicationService.getApplicationsByPostId(postId);
+        List<SearchApplication> searchApplications = applications.stream()
+                .map(app -> new SearchApplication(app.getUser().getUserId(), app.getUser().getName(), app.getUser().getUserScore(), app.getApplicationStatus()))
+                .toList();
+        return searchApplications;
     }
 
     // 새 동행 신청 생성
