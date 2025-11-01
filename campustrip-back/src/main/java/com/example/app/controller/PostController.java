@@ -32,15 +32,16 @@ public class PostController {
     public PostDTO getPostById(@PathVariable Integer postId) {
         Post post = postService.getPostById(postId);
         PostDTO postDTO = new PostDTO();
-        postDTO.setUserName(post.getUser().getName());
+        postDTO.setPostId(post.getPostId());
+        postDTO.setUser(post.getUser());
         postDTO.setUserScore(post.getUser().getUserScore());
         postDTO.setTitle(post.getTitle());
         postDTO.setBody(post.getBody());
         postDTO.setCreatedAt(post.getCreatedAt());
         postDTO.setUpdatedAt(post.getUpdatedAt());
         postDTO.setTeamSize(post.getTeamSize());
-        postDTO.setMemberNumber(chatService.getNumberOfChatMembers(post.getChat()));
-        postDTO.setRegions(post.getRegions().stream().map(region -> region.getRegionName()).toList());
+        postDTO.setMemberSize(chatService.getNumberOfChatMembers(post.getChat()));
+        postDTO.setRegions(post.getRegions());
         postDTO.setChatId(post.getChat().getId());
         return postDTO;
     }
