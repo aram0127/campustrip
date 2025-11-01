@@ -1,7 +1,7 @@
 package com.example.app.controller;
 
 import com.example.app.domain.Post;
-import com.example.app.domain.PostDTO;
+import com.example.app.dto.PostDTO;
 import com.example.app.dto.CreatePost;
 import com.example.app.service.ChatService;
 import com.example.app.service.PostService;
