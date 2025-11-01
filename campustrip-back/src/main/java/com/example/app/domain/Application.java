@@ -9,21 +9,19 @@ import lombok.AllArgsConstructor;
 
 @Entity
 @Table(name="Application")
+@IdClass(ApplicationId.class)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Application {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="application_id")
-    private Integer id;
-
     @ManyToOne
     @JoinColumn(name="post_id", nullable=false)
     @JsonBackReference("post-applications")  // 고유 이름 지정
     private Post post;
 
+    @Id
     @ManyToOne
     @JoinColumn(name="membership_id", nullable=false)
     @JsonBackReference("user-applications")  // 고유 이름 지정

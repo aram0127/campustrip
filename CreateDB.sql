@@ -213,7 +213,6 @@ CREATE TABLE Location (
 
 -- 모집 지원 테이블
 CREATE TABLE Application (
-    application_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     post_id INT NOT NULL,
     membership_id INT NOT NULL,
 --     application_id VARCHAR(255) NOT NULL PRIMARY KEY,
@@ -221,6 +220,7 @@ CREATE TABLE Application (
 --     membership_id VARCHAR(255) NOT NULL,
     application_date DATE NOT NULL,
     state TINYINT NOT NULL DEFAULT 0 COMMENT '1이면 승인',
+    PRIMARY KEY (membership_id, post_id),
     FOREIGN KEY (post_id) REFERENCES Post(post_id),
     FOREIGN KEY (membership_id) REFERENCES User(membership_id)
 ) ENGINE=InnoDB;
