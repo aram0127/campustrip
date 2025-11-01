@@ -1,10 +1,14 @@
 package com.example.app.controller;
 
+import com.example.app.domain.Post;
 import com.example.app.domain.User;
+import com.example.app.dto.AcceptApplication;
 import com.example.app.dto.CustomUserDetails;
 import com.example.app.dto.SearchApplication;
 import com.example.app.service.ApplicationService;
 import com.example.app.service.ChatService;
+import com.example.app.service.PostService;
+import com.example.app.service.UserService;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -19,11 +23,15 @@ import java.util.List;
 public class ApplicationController {
     private final ApplicationService applicationService;
     private final ChatService chatService;
+    private final PostService postService;
+    private final UserService userService;
 
     @Autowired
-    public ApplicationController(ApplicationService applicationService, ChatService chatService) {
+    public ApplicationController(ApplicationService applicationService, ChatService chatService, PostService postService, UserService userService) {
         this.applicationService = applicationService;
         this.chatService = chatService;
+        this.postService = postService;
+        this.userService = userService;
     }
 
     // 사용자 ID로 동행 신청 조회
@@ -51,27 +59,32 @@ public class ApplicationController {
 
     // 동행 신청 수락 (신청받은 사람이 수락)
     @PutMapping("/accept")
-    public Application acceptApplication(@RequestBody Application application, Authentication authentication) {
+    public Application acceptApplication(@RequestBody AcceptApplication application, Authentication authentication) {
         return updateApplicationStatus(application, authentication, true);
     }
 
     @PutMapping("/reject")
-    public Application rejectApplication(@RequestBody Application application, Authentication authentication) {
+    public Application rejectApplication(@RequestBody AcceptApplication application, Authentication authentication) {
         return updateApplicationStatus(application, authentication, false);
     }
 
-    private Application updateApplicationStatus(Application application, Authentication authentication, Boolean status) {
+    private Application updateApplicationStatus(AcceptApplication application, Authentication authentication, Boolean status) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         User currentUser = userDetails.getUser();
-        if (!currentUser.getUserId().equals(application.getPost().getUser().getUserId()) && currentUser.getRole() != 0) {
+        Post post = postService.getPostById(application.getPostId());
+        if (!currentUser.getUserId().equals(post.getUser().getUserId()) && currentUser.getRole() != 0) {
             throw new AccessDeniedException("권한이 없습니다.");
         }
-        application.setApplicationStatus(status);
-        applicationService.saveApplication(application);
+        User user = userService.getUserById(application.getUserId());
+        Application app = new Application();
+        app.setPost(post);
+        app.setUser(user);
+        app.setApplicationStatus(status);
+        applicationService.saveApplication(app);
         if(status) {
-            chatService.saveChatMember(new CreateChatMember(application.getPost(), application.getUser()));
+            chatService.saveChatMember(new CreateChatMember(app.getPost(), app.getUser()));
         }
-        return application;
+        return app;
     }
 
     // 동행 신청 삭제 (신청한 사람이 취소)
