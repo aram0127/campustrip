@@ -37,7 +37,7 @@ public class ApplicationController {
     public List<SearchApplication> getApplicationsByPostId(@PathVariable Integer postId) {
         List<Application> applications = applicationService.getApplicationsByPostId(postId);
         List<SearchApplication> searchApplications = applications.stream()
-                .map(app -> new SearchApplication(app.getUser().getUserId(), app.getUser().getName(), app.getUser().getUserScore(), app.getApplicationStatus()))
+                .map(app -> new SearchApplication(app.getUser().getId(), app.getUser().getUserId(), app.getUser().getName(), app.getUser().getUserScore(), app.getApplicationStatus()))
                 .toList();
         return searchApplications;
     }

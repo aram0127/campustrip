@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SearchApplication {
+    private Integer id;
     private String userId;
     private String name;
     private Float userScore;
