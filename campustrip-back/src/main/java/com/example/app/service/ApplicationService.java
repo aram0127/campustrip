@@ -8,6 +8,7 @@ import com.example.app.repository.ApplicationRepository;
 import com.example.app.repository.UserRepository;
 import com.example.app.repository.PostRepository;
 import com.example.app.domain.Application;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -52,9 +53,17 @@ public class ApplicationService {
         applicationRepository.save(application);
     }
 
+    @Transactional
     public void deleteApplication(Integer userId, Integer postId) {
-        User user = userRepository.findById(userId).orElseThrow();
-        Post post = postRepository.findById(postId).orElseThrow();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
+
+        applicationRepository.findByUserAndPost(user, post)
+                .orElseThrow(() -> new RuntimeException("신청 내역을 찾을 수 없습니다."));
+
         applicationRepository.deleteByUserAndPost(user, post);
     }
 }
