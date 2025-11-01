@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import styled from "styled-components";
 import PostListItem from "../../components/domain/PostListItem";
 import SearchBar from "../../components/common/SearchBar";
@@ -9,7 +9,9 @@ import LocationFilterModal, {
 import { IoFilter } from "react-icons/io5";
 import FloatingActionButton from "../../components/common/FloatingActionButton";
 import { type Post } from "../../types/post";
-import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
+import { getPosts } from "../../api/posts";
+import { useNavigate } from "react-router-dom";
 
 const PageContainer = styled.div`
   width: 100%;
@@ -47,34 +49,21 @@ const ErrorMessage = styled.p`
   color: ${({ theme }) => theme.colors.error};
 `;
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 function PostListPage() {
-  const [posts, setPosts] = useState<Post[]>([]); // 게시글 데이터 상태
-  const [isLoading, setIsLoading] = useState(true); // 로딩 상태
-  const [error, setError] = useState<string | null>(null); // 에러 상태
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("전체");
 
-  // 컴포넌트 마운트 시 게시글 목록 가져오기
-  useEffect(() => {
-    const fetchPosts = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await axios.get<Post[]>(`${API_BASE_URL}/api/posts`);
-        setPosts(response.data);
-      } catch (err) {
-        console.error("게시글 로딩 실패:", err);
-        setError("게시글을 불러오는 중 오류가 발생했습니다.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchPosts();
-  }, []); // 빈 배열을 전달하여 컴포넌트 마운트 시 1회만 실행
+  const navigate = useNavigate();
+
+  const {
+    data: posts = [], // posts 데이터가 없을 경우 빈 배열([])을 기본값으로 사용
+    isLoading,
+    error,
+  } = useQuery<Post[], Error>({
+    queryKey: ["posts"], // 이 쿼리의 고유 키 (캐싱에 사용됨)
+    queryFn: getPosts, // 데이터를 가져올 함수
+  });
 
   const handleApplyFilter = (location: string) => {
     setSelectedLocation(location);
@@ -136,8 +125,7 @@ function PostListPage() {
   }, [posts, searchQuery, selectedLocation]);
 
   const handleCreatePost = () => {
-    alert("새 모집 게시글 작성 페이지로 이동");
-    // navigate('/posts/new'); // 예시
+    navigate("/posts/new/region"); // 1단계(지역 선택) 페이지로 이동
   };
 
   return (
@@ -166,10 +154,12 @@ function PostListPage() {
 
       <PostListContainer>
         {isLoading && <LoadingMessage>게시글을 불러오는 중...</LoadingMessage>}
-        {error && <ErrorMessage>{error}</ErrorMessage>}
+        {error && <ErrorMessage>{error.message}</ErrorMessage>}
+
         {!isLoading && !error && filteredPosts.length === 0 && (
           <LoadingMessage>표시할 게시글이 없습니다.</LoadingMessage>
         )}
+
         {!isLoading &&
           !error &&
           filteredPosts.map((post) => (

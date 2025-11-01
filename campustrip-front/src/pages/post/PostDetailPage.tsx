@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import axios from "axios";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { getPostById } from "../../api/posts";
+import { createApplication } from "../../api/applications";
 import { type Post } from "../../types/post";
 import { IoArrowBack } from "react-icons/io5";
 import { useAuth } from "../../context/AuthContext";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import axios from "axios";
 
 const PageContainer = styled.div`
   max-width: 480px;
@@ -156,37 +157,37 @@ const PostDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [post, setPost] = useState<Post | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"post" | "planner">("post");
 
-  const [isApplying, setIsApplying] = useState(false);
-  const [applyError, setApplyError] = useState<string | null>(null);
+  const {
+    data: post,
+    isLoading,
+    error: queryError,
+  } = useQuery<Post, Error>({
+    // queryKey: 쿼리를 식별하는 고유한 키 배열
+    // postId가 바뀔 때마다 쿼리가 자동으로 다시 실행됨
+    queryKey: ["post", postId],
+    // queryFn: 데이터를 가져오는 함수
+    queryFn: () => getPostById(postId!), // '!'는 postId가 undefined가 아님을 단언
+    // enabled: 이 쿼리가 실행되어야 하는 조건
+    enabled: !!postId, // postId가 존재할 때만 쿼리를 실행
+  });
 
-  useEffect(() => {
-    if (!postId) {
-      setError("게시글 ID가 없습니다.");
-      setIsLoading(false);
-      return;
-    }
-
-    const fetchPost = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await axios.get(`${API_BASE_URL}/api/posts/${postId}`);
-        setPost(response.data);
-      } catch (err) {
-        console.error("게시글 상세 정보 로딩 실패:", err);
-        setError("게시글을 불러오는 중 오류가 발생했습니다.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPost();
-  }, [postId]);
+  const {
+    mutate: applyForTrip,
+    isPending: isApplying, // isPending을 isApplying으로 이름 변경
+    error: applyError, // error를 applyError로 이름 변경
+  } = useMutation({
+    mutationFn: createApplication, // API 함수 연결
+    onSuccess: () => {
+      // 성공 시 로직
+      alert("동행 신청이 완료되었습니다.");
+    },
+    onError: (err: Error) => {
+      // 실패 시 로직
+      console.error("동행 신청 실패:", err);
+    },
+  });
 
   const handleApply = async () => {
     if (!user || !post) {
@@ -199,44 +200,20 @@ const PostDetailPage: React.FC = () => {
       return;
     }
 
-    setIsApplying(true);
-    setApplyError(null);
-
-    try {
-      const applicationData = {
-        post: { postId: post.postId },
-        user: { userId: user.userId },
-      };
-
-      await axios.post(`${API_BASE_URL}/api/applications`, applicationData);
-
-      alert("동행 신청이 완료되었습니다.");
-    } catch (err) {
-      console.error("동행 신청 실패:", err);
-      let message =
-        "동행 신청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
-      if (axios.isAxiosError(err) && err.response) {
-        if (err.response.status === 500) {
-          message = "이미 신청했거나 처리 중 오류가 발생했습니다.";
-        } else {
-          message = `신청 실패 (${err.response.status}): ${
-            err.response.data?.message || err.message
-          }`;
-        }
-      }
-      setApplyError(message);
-      alert(message);
-    } finally {
-      setIsApplying(false);
-    }
+    // useMutation의 mutate 함수(applyForTrip) 호출
+    const applicationData = {
+      post: { postId: post.postId },
+      user: { userId: user.userId },
+    };
+    applyForTrip(applicationData);
   };
 
   if (isLoading) {
     return <Message>로딩 중...</Message>;
   }
 
-  if (error) {
-    return <Message>{error}</Message>;
+  if (queryError) {
+    return <Message>{queryError.message}</Message>;
   }
 
   if (!post) {
@@ -295,8 +272,14 @@ const PostDetailPage: React.FC = () => {
           </PostMeta>
 
           <PostBody>{post.body}</PostBody>
-
-          {applyError && <ErrorMessage>{applyError}</ErrorMessage>}
+          {applyError && (
+            <ErrorMessage>
+              {axios.isAxiosError(applyError) &&
+              applyError.response?.status === 500
+                ? "이미 신청했거나 처리 중 오류가 발생했습니다."
+                : "동행 신청 중 오류가 발생했습니다."}
+            </ErrorMessage>
+          )}
 
           <ActionButton onClick={handleApply} disabled={isApplying || isMyPost}>
             {isMyPost

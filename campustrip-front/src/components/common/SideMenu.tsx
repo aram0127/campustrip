@@ -1,8 +1,9 @@
-import React from 'react';
-import styled from 'styled-components';
-import { useSpring, animated } from 'react-spring';
-import { useDrag } from '@use-gesture/react';
-import { Link } from 'react-router-dom';
+import React from "react";
+import styled from "styled-components";
+import { useSpring, animated } from "react-spring";
+import { useDrag } from "@use-gesture/react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const Backdrop = styled(animated.div)`
   position: fixed;
@@ -94,8 +95,19 @@ interface SideMenuProps {
   toggleTheme: () => void;
 }
 
-const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, currentTheme, toggleTheme }) => {
-  const [{ x }, api] = useSpring(() => ({ x: -280, config: { tension: 250, friction: 25 } }));
+const SideMenu: React.FC<SideMenuProps> = ({
+  isOpen,
+  onClose,
+  currentTheme,
+  toggleTheme,
+}) => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const [{ x }, api] = useSpring(() => ({
+    x: -280,
+    config: { tension: 250, friction: 25 },
+  }));
 
   const openMenu = () => {
     api.start({ x: 0 });
@@ -121,33 +133,59 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, currentTheme, togg
     onClose();
   };
 
+  const handleLogout = () => {
+    logout();
+    onClose();
+    navigate("/login");
+  };
+
   return (
     <>
-      <Backdrop style={{ opacity: x.to([ -280, 0 ], [ 0, 1 ]), display: x.to(x => x > -280 ? 'block' : 'none') }} onClick={() => closeMenu()} />
-      <MenuContainer style={{ transform: x.to(x => `translateX(${x}px)`) }} {...bind()}>
-        <MenuProfile>
+      <Backdrop
+        style={{
+          opacity: x.to([-280, 0], [0, 1]),
+          display: x.to((x) => (x > -280 ? "block" : "none")),
+        }}
+        onClick={() => closeMenu()}
+      />
+      <MenuContainer
+        style={{ transform: x.to((x) => `translateX(${x}px)`) }}
+        {...bind()}
+      >
+        {user ? (
+          <MenuProfile>
             <ProfileAvatar />
-            <ProfileName>홍길동</ProfileName>
-            <ProfileId>@gildong_hong</ProfileId>
+            <ProfileName>{user.name}</ProfileName>
+            <ProfileId>@{user.userId}</ProfileId>
             <FollowInfo>
-                <span><b>6</b> 팔로잉</span>
-                <span><b>6</b> 팔로워</span>
+              <span>
+                <b>6</b> 팔로잉
+              </span>
+              <span>
+                <b>6</b> 팔로워
+              </span>
             </FollowInfo>
-        </MenuProfile>
+          </MenuProfile>
+        ) : (
+          <MenuProfile>
+            <ProfileName>로그인이 필요합니다</ProfileName>
+          </MenuProfile>
+        )}
 
         <MenuList>
-          <StyledLink to="/profile">
+          <StyledLink to={user ? `/profile/${user.id}` : "/login"}>
             <MenuItem onClick={onClose}>👤 프로필</MenuItem>
           </StyledLink>
           <StyledLink to="/settings/personal-info">
             <MenuItem onClick={onClose}>ℹ️ 개인정보</MenuItem>
           </StyledLink>
+          {user && <MenuItem onClick={handleLogout}>🚪 로그아웃</MenuItem>}
         </MenuList>
 
         <MenuFooter>
-            <DarkModeToggle onClick={handleThemeToggle}>
-                {currentTheme === 'light' ? '🌙' : '☀️'}
-            </DarkModeToggle>
+          <DarkModeToggle onClick={handleThemeToggle}>
+            {currentTheme === "light" ? "🌙" : "☀️"}
+          </DarkModeToggle>
         </MenuFooter>
       </MenuContainer>
     </>
