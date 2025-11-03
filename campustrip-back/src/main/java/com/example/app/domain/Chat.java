@@ -28,4 +28,8 @@ public class Chat {
     @JsonManagedReference("chat-chatMembers")  // 정방향 참조 (JSON에 포함)
     @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true)
     private java.util.List<ChatMember> chatMembers = new java.util.ArrayList<>();
+
+    public Chat(String title) {
+        this.title = title;
+    }
 }

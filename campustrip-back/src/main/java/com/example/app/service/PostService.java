@@ -1,13 +1,11 @@
 package com.example.app.service;
 
 import com.example.app.domain.User;
-import com.example.app.repository.PostRegionRepository;
-import com.example.app.repository.RegionRepository;
-import com.example.app.repository.UserRepository;
+import com.example.app.repository.*;
 import org.springframework.stereotype.Service;  // @Service 어노테이션
 import org.springframework.beans.factory.annotation.Autowired;  // 의존성 주입용 (선택적)
 import com.example.app.domain.Post;
-import com.example.app.repository.PostRepository;
+
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -15,15 +13,13 @@ import java.util.NoSuchElementException;
 public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
-    private final PostRegionRepository postRegionRepository;
     private final RegionRepository regionRepository;
 
     @Autowired
     public PostService(PostRepository postRepository,
-                       UserRepository userRepository, PostRegionRepository postRegionRepository, RegionRepository regionRepository) {
+                       UserRepository userRepository, RegionRepository regionRepository) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
-        this.postRegionRepository = postRegionRepository;
         this.regionRepository = regionRepository;
     }
 

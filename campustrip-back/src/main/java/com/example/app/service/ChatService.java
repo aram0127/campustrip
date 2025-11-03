@@ -26,11 +26,12 @@ public class ChatService {
         this.userRepository = userRepository;
     }
 
-    public void saveChat(CreateChat createChat) {
+    public Chat saveChat(CreateChat createChat) {
         Chat chat = chatRepository.save(createChat.toEntity());
         User user = userRepository.findById(createChat.getUserId()).orElseThrow();
         ChatMember member = new ChatMember(chat, user, true);
         chatMemberRepository.save(member);
+        return chat;
     }
 
     public void saveChatMember(CreateChatMember createChatMember) {
