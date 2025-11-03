@@ -1,6 +1,8 @@
 package com.example.app.controller;
 
+import com.example.app.domain.Chat;
 import com.example.app.domain.Post;
+import com.example.app.dto.CreateChat;
 import com.example.app.dto.PostDTO;
 import com.example.app.dto.CreatePost;
 import com.example.app.service.ChatService;
@@ -69,6 +71,8 @@ public class PostController {
         post.setTeamSize(createPost.getTeamSize());
         List<Integer> regions = createPost.getRegions();
         postService.assignRegionsToPost(post, regions);
+        Chat chat = chatService.saveChat(new CreateChat(post));
+        post.setChat(chat);
         postService.savePost(post);
         return post;
     }
