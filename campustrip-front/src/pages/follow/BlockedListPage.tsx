@@ -1,6 +1,6 @@
-import React from 'react';
-import styled from 'styled-components';
-import { IoArrowBack } from 'react-icons/io5';
+import React from "react";
+import styled from "styled-components";
+import { IoArrowBack } from "react-icons/io5";
 
 const PageContainer = styled.div`
   width: 100%;
@@ -8,7 +8,7 @@ const PageContainer = styled.div`
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
   background-color: ${({ theme }) => theme.colors.background};
 `;
 
@@ -87,19 +87,21 @@ const UnblockButton = styled.button`
 
 // --- 임시 데이터 ---
 const dummyBlockedUsers = [
-  { id: 10, name: '사용자7'},
-  { id: 11, name: '사용자11'},
+  { id: 10, name: "사용자7" },
+  { id: 11, name: "사용자11" },
 ];
 
 function BlockedListPage() {
   return (
     <PageContainer>
       <Header>
-        <BackButton><IoArrowBack /></BackButton>
+        <BackButton>
+          <IoArrowBack />
+        </BackButton>
         <Title>차단된 계정</Title>
       </Header>
       <UserList>
-        {dummyBlockedUsers.map(user => (
+        {dummyBlockedUsers.map((user) => (
           <UserItem key={user.id}>
             <Avatar />
             <UserInfo>
