@@ -1,6 +1,6 @@
-import React from 'react';
-import styled from 'styled-components';
-import { IoArrowBack, IoMenu, IoAdd, IoSend } from 'react-icons/io5';
+import React from "react";
+import styled from "styled-components";
+import { IoArrowBack, IoMenu, IoAdd, IoSend } from "react-icons/io5";
 
 const PageContainer = styled.div`
   width: 100%;
@@ -8,7 +8,7 @@ const PageContainer = styled.div`
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
   background-color: ${({ theme }) => theme.colors.background};
 `;
 
@@ -49,16 +49,17 @@ const MessageBubble = styled.div<{ isMe?: boolean }>`
   padding: 10px 14px;
   border-radius: 18px;
   margin-bottom: 4px;
-  align-self: ${({ isMe }) => (isMe ? 'flex-end' : 'flex-start')};
-  background-color: ${({ isMe, theme }) => (isMe ? theme.colors.primary : theme.colors.inputBackground)};
-  color: ${({ isMe, theme }) => (isMe ? 'white' : theme.colors.text)};
+  align-self: ${({ isMe }) => (isMe ? "flex-end" : "flex-start")};
+  background-color: ${({ isMe, theme }) =>
+    isMe ? theme.colors.primary : theme.colors.inputBackground};
+  color: ${({ isMe, theme }) => (isMe ? "white" : theme.colors.text)};
 `;
 
 const Timestamp = styled.span<{ isMe?: boolean }>`
   font-size: 10px;
   color: ${({ theme }) => theme.colors.secondaryTextColor};
   margin-bottom: 12px;
-  align-self: ${({ isMe }) => (isMe ? 'flex-end' : 'flex-start')};
+  align-self: ${({ isMe }) => (isMe ? "flex-end" : "flex-start")};
 `;
 
 const InputContainer = styled.div`
@@ -85,7 +86,7 @@ const MessageInput = styled.input`
 const MessageContainer = styled.div<{ isMe?: boolean }>`
   display: flex;
   flex-direction: column;
-  align-items: ${({ isMe }) => (isMe ? 'flex-end' : 'flex-start')};
+  align-items: ${({ isMe }) => (isMe ? "flex-end" : "flex-start")};
   margin-bottom: 12px;
 `;
 
@@ -113,7 +114,7 @@ const BubbleContainer = styled.div<{ isMe?: boolean }>`
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  align-self: ${({ isMe }) => (isMe ? 'flex-end' : 'flex-start')};
+  align-self: ${({ isMe }) => (isMe ? "flex-end" : "flex-start")};
 `;
 
 const SendButton = styled(HeaderButton)`
@@ -129,24 +130,56 @@ const DateSeparator = styled.div`
 
 // --- 임시 데이터 ---
 const dummyMessages = [
-  { id: 1, user: '사용자 3', text: '안녕하세요, 동행 신청합니다!', date: '2025년 9월 29일', time: '오후 2:30', isMe: false },
-  { id: 2, user: '나', text: '네, 안녕하세요!', date: '2025년 9월 29일', time: '오후 2:32', isMe: true },
-  { id: 3, user: '사용자 5', text: '저도 같이 가도 될까요?', date: '2025년 9월 30일', time: '오전 11:15', isMe: false },
-  { id: 4, user: '나', text: '네 그럼요! 환영합니다.', date: '2025년 9월 30일', time: '오전 11:16', isMe: true },
+  {
+    id: 1,
+    user: "사용자 3",
+    text: "안녕하세요, 동행 신청합니다!",
+    date: "2025년 9월 29일",
+    time: "오후 2:30",
+    isMe: false,
+  },
+  {
+    id: 2,
+    user: "나",
+    text: "네, 안녕하세요!",
+    date: "2025년 9월 29일",
+    time: "오후 2:32",
+    isMe: true,
+  },
+  {
+    id: 3,
+    user: "사용자 5",
+    text: "저도 같이 가도 될까요?",
+    date: "2025년 9월 30일",
+    time: "오전 11:15",
+    isMe: false,
+  },
+  {
+    id: 4,
+    user: "나",
+    text: "네 그럼요! 환영합니다.",
+    date: "2025년 9월 30일",
+    time: "오전 11:16",
+    isMe: true,
+  },
 ];
 
 function ChatRoomPage() {
-  let lastDate: string | null = null
-    
+  let lastDate: string | null = null;
+
   return (
     <PageContainer>
       <Header>
-        <HeaderButton><IoArrowBack /></HeaderButton>
+        <HeaderButton>
+          <IoArrowBack />
+        </HeaderButton>
         <Title>부산 여행 채팅방</Title>
-        <HeaderButton><IoMenu /></HeaderButton>
+        <HeaderButton>
+          <IoMenu />
+        </HeaderButton>
       </Header>
       <MessageList>
-        {dummyMessages.map(msg => {
+        {dummyMessages.map((msg) => {
           let dateSeparator = null;
           if (msg.date !== lastDate) {
             dateSeparator = <DateSeparator>{msg.date}</DateSeparator>;
@@ -157,27 +190,30 @@ function ChatRoomPage() {
             <React.Fragment key={msg.id}>
               {dateSeparator}
               <MessageContainer isMe={msg.isMe}>
-            {!msg.isMe && (
-              <SenderInfo>
-                <Avatar />
-                <UserName>{msg.user}</UserName>
-              </SenderInfo>
-            )}
-            <BubbleContainer isMe={msg.isMe}>
-                {msg.isMe && <Timestamp>{msg.time}</Timestamp>}
-                <MessageBubble isMe={msg.isMe}>{msg.text}</MessageBubble>
-                {!msg.isMe && <Timestamp>{msg.time}</Timestamp>}
-            </BubbleContainer>
+                {!msg.isMe && (
+                  <SenderInfo>
+                    <Avatar />
+                    <UserName>{msg.user}</UserName>
+                  </SenderInfo>
+                )}
+                <BubbleContainer isMe={msg.isMe}>
+                  {msg.isMe && <Timestamp>{msg.time}</Timestamp>}
+                  <MessageBubble isMe={msg.isMe}>{msg.text}</MessageBubble>
+                  {!msg.isMe && <Timestamp>{msg.time}</Timestamp>}
+                </BubbleContainer>
               </MessageContainer>
             </React.Fragment>
           );
         })}
-
       </MessageList>
       <InputContainer>
-        <HeaderButton><IoAdd /></HeaderButton>
+        <HeaderButton>
+          <IoAdd />
+        </HeaderButton>
         <MessageInput placeholder="메세지 입력" />
-        <SendButton><IoSend /></SendButton>
+        <SendButton>
+          <IoSend />
+        </SendButton>
       </InputContainer>
     </PageContainer>
   );
