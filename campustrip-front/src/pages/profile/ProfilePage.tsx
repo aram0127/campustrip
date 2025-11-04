@@ -145,6 +145,25 @@ const Message = styled.p`
   color: ${({ theme }) => theme.colors.secondaryTextColor};
 `;
 
+const ActionButton = styled.button`
+  width: 100%;
+  padding: 12px;
+  margin-top: 16px; 
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.primary || '#0056b3'};
+    opacity: 0.85;
+  }
+`;
+
 // 임시 여행 성향 태그 (preference 비트마스크에 따라 파싱)
 const parsePreferences = (preference: number | null) => {
   if (preference === null) return ["정보 없음"];
@@ -195,6 +214,11 @@ function ProfilePage() {
 
   // 사용자 온도를 0-100% 사이 값으로 변환 (100도 기준)
   const tempPercentage = Math.max(0, Math.min(100, profileUser.userScore || 0));
+ 
+  // 여행 성향 검사 페이지로 이동
+  const handleStartTest = () => {
+    navigate(`/test/travel-test-page`); 
+  };
 
   return (
     <PageContainer>
@@ -239,6 +263,10 @@ function ProfilePage() {
             <Tag key={tag}>{tag}</Tag>
           ))}
         </TagContainer>
+      
+        <ActionButton onClick={handleStartTest}>
+            여행 성향 검사 시작
+        </ActionButton>
       </Section>
 
       <TabMenu>
