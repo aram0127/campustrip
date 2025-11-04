@@ -67,31 +67,14 @@ public class PostController {
     // POST: 새 게시물 생성
     @PostMapping
     public Post createPost(@RequestBody CreatePost createPost) {
-        Post post = new Post();
-        post.setUser(createPost.getUser());
-        post.setTitle(createPost.getTitle());
-        post.setBody(createPost.getBody());
-        post.setCreatedAt(createPost.getCreatedAt());
-        post.setTeamSize(createPost.getTeamSize());
-        List<Integer> regions = createPost.getRegions();
-        postService.assignRegionsToPost(post, regions);
-        Chat chat = chatService.saveChat(new CreateChat(post));
-        post.setChat(chat);
-        postService.savePost(post);
+        Post post = postService.savePost(createPost, chatService);
         return post;
     }
 
     // PUT: 게시물 정보 수정
     @PutMapping("/{postId}")
-    public Post updatePost(@PathVariable Integer postId, @RequestBody CreatePost createPost) {
-        Post post = postService.getPostById(postId);
-        post.setTitle(createPost.getTitle());
-        post.setBody(createPost.getBody());
-        post.setTeamSize(createPost.getTeamSize());
-        post.setUpdatedAt(LocalDateTime.now());
-        List<Integer> regions = createPost.getRegions();
-        postService.assignRegionsToPost(post, regions);
-        postService.savePost(post);
+    public Post updatePost(@RequestBody CreatePost createPost) {
+        Post post = postService.updatePost(createPost);
         return post;
     }
 

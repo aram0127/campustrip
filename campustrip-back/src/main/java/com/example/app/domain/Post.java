@@ -56,10 +56,10 @@ public class Post {
     @OneToOne
     @JoinColumn(name="chat_id", nullable=false)
     private Chat chat;
-//
-//    @ManyToOne
-//    @JoinColumn(name="planner_id", nullable=false)
-//    private Planner planner;
+
+    @ManyToOne
+    @JoinColumn(name="planner_id", nullable=false)
+    private Planner planner;
 
     // 기본 생성자, getter, setter 생략
 }
