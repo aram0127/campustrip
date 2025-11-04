@@ -1,4 +1,3 @@
-import React from "react";
 import styled from "styled-components";
 import {
   IoArrowBack,
@@ -55,27 +54,6 @@ const NotificationText = styled.p`
 const Timestamp = styled.span`
   font-size: 12px;
   color: ${({ theme }) => theme.colors.secondaryTextColor};
-`;
-
-const BackButton = styled.button`
-  background: none;
-  border: none;
-  color: inherit;
-  font-size: 24px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-`;
-
-const HeaderActions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  justify-self: end;
 `;
 
 const Header = styled.header`

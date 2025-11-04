@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { usePostCreate } from "../../../context/PostCreateContext";
 import Button from "../../../components/common/Button";
-import { IoArrowBack, IoClose } from "react-icons/io5";
+import { IoArrowBack } from "react-icons/io5";
 
 const PageContainer = styled.div`
   max-width: 480px;
@@ -44,19 +44,6 @@ const FormContainer = styled.main`
   padding: 20px;
   flex-grow: 1;
   overflow-y: auto;
-`;
-
-const SelectedLocation = styled.div`
-  background-color: ${({ theme }) => theme.colors.inputBackground};
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 24px;
-  color: ${({ theme }) => theme.colors.secondaryTextColor};
-
-  span {
-    color: ${({ theme }) => theme.colors.text};
-    font-weight: 500;
-  }
 `;
 
 const FormGroup = styled.div`

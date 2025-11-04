@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import styled from "styled-components";
 import PostListItem from "../../components/domain/PostListItem";
 import SearchBar from "../../components/common/SearchBar";
