@@ -1,7 +1,10 @@
-import React from "react";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
 import FloatingActionButton from "../../components/common/FloatingActionButton";
+import { useQuery } from "@tanstack/react-query";
+import { getMyPlanners } from "../../api/planners";
+import { useAuth } from "../../context/AuthContext";
+import { type Planner } from "../../types/planner";
 
 const PageContainer = styled.div`
   width: 100%;
@@ -42,38 +45,65 @@ const PlannerInfo = styled.p`
   color: ${({ theme }) => theme.colors.secondaryTextColor};
 `;
 
-// --- 임시 데이터 ---
-const dummyPlanners = [
-  {
-    id: 1,
-    title: "부산 2박 3일 여행",
-    period: "2025.10.10 ~ 2025.10.12",
-    members: "홍길동, 김영희",
-  },
-  {
-    id: 2,
-    title: "경주 당일치기",
-    period: "2025.11.01",
-    members: "나, 김철수, 박민지",
-  },
-  { id: 3, title: "서울 맛집 탐방 계획", period: "미정", members: "나" },
-];
+const Message = styled.p`
+  text-align: center;
+  padding: 40px 20px;
+  color: ${({ theme }) => theme.colors.secondaryTextColor};
+`;
 
 function PlannerListPage() {
+  const { user } = useAuth();
+
+  // useQuery로 플래너 목록 가져오기
+  const {
+    data: planners = [],
+    isLoading,
+    error,
+  } = useQuery<Planner[], Error>({
+    queryKey: ["myPlanners", user?.id],
+    queryFn: () => getMyPlanners(user!.id),
+    enabled: !!user,
+  });
+
   const handleCreatePlanner = () => {
     alert("새 플래너 생성 페이지로 이동합니다.");
   };
 
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <Message>플래너 목록을 불러오는 중...</Message>
+      </PageContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageContainer>
+        <Message>오류가 발생했습니다: {error.message}</Message>
+      </PageContainer>
+    );
+  }
+
   return (
     <PageContainer>
       <PlannerListContainer>
-        {dummyPlanners.map((planner) => (
-          <PlannerItem to={`/planner/${planner.id}`} key={planner.id}>
-            <PlannerTitle>{planner.title}</PlannerTitle>
-            <PlannerInfo>📅 기간: {planner.period}</PlannerInfo>
-            <PlannerInfo>👥 참여자: {planner.members}</PlannerInfo>
-          </PlannerItem>
-        ))}
+        {planners.length === 0 ? (
+          <Message>생성된 플래너가 없습니다.</Message>
+        ) : (
+          planners.map((planner) => (
+            <PlannerItem
+              to={`/planner/${planner.plannerId}`}
+              key={planner.plannerId}
+            >
+              <PlannerTitle>{planner.title}</PlannerTitle>
+              <PlannerInfo>
+                📅 기간: {planner.startDate} ~ {planner.endDate}
+              </PlannerInfo>
+              <PlannerInfo>👥 제작자: {planner.user.name}</PlannerInfo>
+            </PlannerItem>
+          ))
+        )}
       </PlannerListContainer>
       <FloatingActionButton onClick={handleCreatePlanner} />
     </PageContainer>

@@ -540,8 +540,7 @@ const PostDetailPage: React.FC = () => {
             <MetaItem>
               📍 지역:{" "}
               <span>
-                {post.regions?.map((r) => r.regionName).join(", ") ||
-                  "정보 없음"}
+                {post.regions?.map((r) => r.name).join(", ") || "정보 없음"}
               </span>
             </MetaItem>
             <MetaItem>
