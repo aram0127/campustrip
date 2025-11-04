@@ -45,19 +45,15 @@ const getDummyPeriod = (postId: number): string => {
   return "10/25 ~ 10/30 (5박 6일)";
 };
 
-const getDummyCurrentMembers = (postId: number, teamSize: number): string => {
-  const current = Math.min(Math.floor(postId / 2) + 1, teamSize);
-  return `모집 인원 [${current}/${teamSize}]`;
-};
-
 const PostListItem: React.FC<PostListItemProps> = ({ post }) => {
+  console.log(post);
   return (
     <ListItemContainer to={`/posts/${post.postId}`}>
       <PostTitle>{post.title}</PostTitle>
       <PostInfo>📍 {getRegionNames(post.regions)}</PostInfo>
       <PostInfo>📅 {getDummyPeriod(post.postId)}</PostInfo>
       <PostInfo>
-        👥 {getDummyCurrentMembers(post.postId, post.teamSize)}
+        👥 모집 인원 [{post.memberSize}/{post.teamSize}]
       </PostInfo>
     </ListItemContainer>
   );

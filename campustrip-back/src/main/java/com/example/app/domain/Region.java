@@ -1,5 +1,6 @@
 package com.example.app.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,6 +25,7 @@ public class Region {
     @Column(name="region_name", nullable=false, length=50)
     private String regionName;
 
+    @JsonBackReference
     @ManyToMany(mappedBy = "regions")
     private List<Post> posts = new ArrayList<>();
     // 기본 생성자, getter, setter 생략
