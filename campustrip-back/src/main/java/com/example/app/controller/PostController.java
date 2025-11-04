@@ -10,6 +10,8 @@ import com.example.app.service.PostService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -23,41 +25,38 @@ public class PostController {
         this.chatService = chatService;
     }
 
-    // GET: 전체 게시물 조회
+    // GET: 전체 게시물 조회 (DTO 리스트를 반환하도록 수정)
     @GetMapping
-    public List<Post> getAllPosts() {
-        return postService.getAllPosts();
+    public List<PostDTO> getAllPosts() {
+        List<Post> posts = postService.getAllPosts();
+
+        // 엔티티 리스트를 DTO 리스트로 변환
+        return posts.stream().map(this::convertPostToDTO).collect(Collectors.toList());
     }
 
-    // GET: ID로 게시물 조회
+    // GET: ID로 게시물 조회 (기존 로직을 DTO 변환 메서드로 분리)
     @GetMapping("/{postId}")
     public PostDTO getPostById(@PathVariable Integer postId) {
         Post post = postService.getPostById(postId);
-        PostDTO postDTO = new PostDTO();
-        postDTO.setPostId(post.getPostId());
-        postDTO.setUser(post.getUser());
-        postDTO.setUserScore(post.getUser().getUserScore());
-        postDTO.setTitle(post.getTitle());
-        postDTO.setBody(post.getBody());
-        postDTO.setCreatedAt(post.getCreatedAt());
-        postDTO.setUpdatedAt(post.getUpdatedAt());
-        postDTO.setTeamSize(post.getTeamSize());
-        postDTO.setMemberSize(chatService.getNumberOfChatMembers(post.getChat()));
-        postDTO.setRegions(post.getRegions());
-        postDTO.setChatId(post.getChat().getId());
-        return postDTO;
+        return convertPostToDTO(post);
     }
 
-    // 사용자 ID로 게시물 조회 (작성한 게시글 조회)
+    // 사용자 ID로 게시물 조회 (DTO 리스트 반환)
     @GetMapping("/user/{membershipId}")
-    public List<Post> getPostsByUserId(@PathVariable Integer membershipId) {
-        return postService.getPostsByMembershipId(membershipId);
+    public List<PostDTO> getPostsByUserId(@PathVariable Integer membershipId) {
+        List<Post> posts = postService.getPostsByMembershipId(membershipId);
+        return posts.stream().map(this::convertPostToDTO).collect(Collectors.toList());
     }
 
-    // 지역 ID들로 게시물 조회 (지역별 게시글 조회)
+    // 지역 ID들로 게시물 조회 (DTO 리스트 반환)
     @GetMapping("/regions")
-    public List<Post> getPostsByRegionIds(@RequestParam List<Integer> regionIds) {
-        return postService.getPostsByRegionIds(regionIds);
+    public List<PostDTO> getPostsByRegionIds(@RequestParam List<Integer> regionIds) {
+        // 지역 ID가 비어있으면 전체 목록 반환
+        if (regionIds == null || regionIds.isEmpty()) {
+            return getAllPosts();
+        }
+        List<Post> posts = postService.getPostsByRegionIds(regionIds);
+        return posts.stream().map(this::convertPostToDTO).collect(Collectors.toList());
     }
 
     // POST: 새 게시물 생성
@@ -79,8 +78,14 @@ public class PostController {
 
     // PUT: 게시물 정보 수정
     @PutMapping("/{postId}")
-    public Post updatePost(@PathVariable Integer postId, @RequestBody Post post) {
-        post.setPostId(postId);
+    public Post updatePost(@PathVariable Integer postId, @RequestBody CreatePost createPost) {
+        Post post = postService.getPostById(postId);
+        post.setTitle(createPost.getTitle());
+        post.setBody(createPost.getBody());
+        post.setTeamSize(createPost.getTeamSize());
+        post.setUpdatedAt(LocalDateTime.now());
+        List<Integer> regions = createPost.getRegions();
+        postService.assignRegionsToPost(post, regions);
         postService.savePost(post);
         return post;
     }
@@ -91,6 +96,20 @@ public class PostController {
         postService.deletePost(postId);
     }
 
-    // 추후 추가할 것
-    // 채팅방과 연결된 게시물 조회
+    // Post 엔티티를 PostDTO로 변환하는 공통 메서드
+    private PostDTO convertPostToDTO(Post post) {
+        PostDTO postDTO = new PostDTO();
+        postDTO.setPostId(post.getPostId());
+        postDTO.setUser(post.getUser());
+        postDTO.setUserScore(post.getUser().getUserScore());
+        postDTO.setTitle(post.getTitle());
+        postDTO.setBody(post.getBody());
+        postDTO.setCreatedAt(post.getCreatedAt());
+        postDTO.setUpdatedAt(post.getUpdatedAt());
+        postDTO.setTeamSize(post.getTeamSize());
+        postDTO.setMemberSize(chatService.getNumberOfChatMembers(post.getChat()));
+        postDTO.setRegions(post.getRegions());
+        postDTO.setChatId(post.getChat().getId());
+        return postDTO;
+    }
 }
