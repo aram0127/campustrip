@@ -59,7 +59,8 @@ public class SecurityConfig {
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/", "/index.html", "/login", "/api/login", "/api/users").permitAll()
+                    .requestMatchers("/", "/index.html", "/login", "/api/login", "/api/users",
+                            "assets/**", "/vite.svg", "manifest.webmanifest", "/registerSW.js", "/*.ico", "/*.png", "/*jpg").permitAll()
                     .requestMatchers("/api/admin/**").hasRole("ADMIN")
                     .anyRequest().authenticated()
             )
