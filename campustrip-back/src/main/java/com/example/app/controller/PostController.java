@@ -2,11 +2,14 @@ package com.example.app.controller;
 
 import com.example.app.domain.Chat;
 import com.example.app.domain.Post;
+import com.example.app.domain.Region;
 import com.example.app.dto.CreateChat;
 import com.example.app.dto.PostDTO;
 import com.example.app.dto.CreatePost;
+import com.example.app.dto.RegionDTO;
 import com.example.app.service.ChatService;
 import com.example.app.service.PostService;
+import com.example.app.service.RegionService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
@@ -18,11 +21,13 @@ import java.time.LocalDateTime;
 public class PostController {
     private final PostService postService;
     private final ChatService chatService;
+    private final RegionService regionService;
 
     @Autowired
-    public PostController(PostService postService, ChatService chatService) {
+    public PostController(PostService postService, ChatService chatService, RegionService regionService) {
         this.postService = postService;
         this.chatService = chatService;
+        this.regionService = regionService;
     }
 
     // GET: 전체 게시물 조회 (DTO 리스트를 반환하도록 수정)
@@ -108,8 +113,28 @@ public class PostController {
         postDTO.setUpdatedAt(post.getUpdatedAt());
         postDTO.setTeamSize(post.getTeamSize());
         postDTO.setMemberSize(chatService.getNumberOfChatMembers(post.getChat()));
-        postDTO.setRegions(post.getRegions());
         postDTO.setChatId(post.getChat().getId());
+
+        // 지역 이름 조합 로직
+        List<RegionDTO> fullRegionNamesDTOs = post.getRegions().stream().map(region -> {
+            Integer id = region.getRegionId();
+            String name = region.getRegionName();
+
+            if (id % 100 != 0 && id > 100) {
+                Integer parentId = (id / 100) * 100;
+
+                Region parentRegion = regionService.getRegionById(parentId);
+
+                if (parentRegion != null) {
+                    String fullName = parentRegion.getRegionName() + " " + name;
+                    return new RegionDTO(fullName, id);
+                }
+            }
+            return new RegionDTO(name, id);
+        }).collect(Collectors.toList());
+
+        postDTO.setRegions(fullRegionNamesDTOs);
+
         return postDTO;
     }
 }

@@ -159,8 +159,17 @@ const LocationFilterModal: React.FC<LocationFilterModalProps> = ({
   const handleApply = () => {
     // "전체"가 선택된 경우
     if (finalSelection.id === null) {
-      onApply(null);
-
+      if (activeTab === "domestic") {
+        const allDomesticIds = getAllIdsFromRegionList(domesticRegions);
+        // 국내 모든 ID (100, 101, ..., 1702) 배열 전달
+        onApply(allDomesticIds.length > 0 ? allDomesticIds : null);
+      } else if (activeTab === "overseas") {
+        const allOverseasIds = getAllIdsFromRegionList(overseasRegions);
+        // 해외 모든 ID (2000, 2001, ...) 배열 전달
+        onApply(allOverseasIds.length > 0 ? allOverseasIds : null);
+      } else {
+        onApply(null); // (필터 해제와 동일)
+      }
       onClose();
       return;
     }
