@@ -7,8 +7,8 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 @Entity
 @Table(name="Post")
@@ -47,11 +47,11 @@ public class Post {
         joinColumns = @JoinColumn(name = "post_id"),
         inverseJoinColumns = @JoinColumn(name = "region_id")
     )
-    private List<Region> regions = new ArrayList<>();
+    private Set<Region> regions = new HashSet<>();
 
     @JsonManagedReference("post-applications")
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private java.util.List<Application> applications = new java.util.ArrayList<>();
+    private java.util.Set<Application> applications = new java.util.HashSet<>();
 
     @OneToOne
     @JoinColumn(name="chat_id", nullable=false)

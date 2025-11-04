@@ -21,6 +21,6 @@ public class PostDTO {
     private Integer teamSize;
     private Integer memberSize;
     private List<RegionDTO> regions;
-    private Application application;
+    private List<ApplicationSimpleDTO> applications;
     private Integer chatId;
 }

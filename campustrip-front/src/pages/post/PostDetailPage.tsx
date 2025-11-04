@@ -288,20 +288,20 @@ const PostDetailPage: React.FC = () => {
     if (currentUserApplication.applicationStatus === true) {
       return {
         applicationStatus: "ACCEPTED" as ApplicationStatus,
-        applicationId: currentUserApplication.id,
+        applicationId: null,
       };
     }
     // 'false' (거절) 상태
     if (currentUserApplication.applicationStatus === false) {
       return {
         applicationStatus: "REJECTED" as ApplicationStatus,
-        applicationId: currentUserApplication.id,
+        applicationId: null,
       };
     }
     // 'null' (대기중)
     return {
       applicationStatus: "PENDING" as ApplicationStatus,
-      applicationId: currentUserApplication.id,
+      applicationId: null,
     };
   }, [post?.applications, user]);
 
