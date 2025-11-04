@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { usePostCreate } from "../../../context/PostCreateContext";
 import Button from "../../../components/common/Button";
-import { IoArrowBack } from "react-icons/io5";
+import { IoArrowBack, IoClose } from "react-icons/io5";
 
 const PageContainer = styled.div`
   max-width: 480px;
@@ -159,6 +159,28 @@ const PrevButton = styled(FooterButton)`
   }
 `;
 
+const SelectedRegionsContainer = styled.div`
+  background-color: ${({ theme }) => theme.colors.inputBackground};
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  color: ${({ theme }) => theme.colors.secondaryTextColor};
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+const RegionTag = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 14px;
+`;
+
 const PostCreateDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const { formData, updateFormData } = usePostCreate();
@@ -171,7 +193,7 @@ const PostCreateDetailsPage: React.FC = () => {
   const [teamSize, setTeamSize] = useState(formData.teamSize);
 
   // 1단계(지역 선택)를 건너뛰고 이 페이지로 바로 온 경우, 1단계로 보냄
-  if (!formData.region) {
+  if (formData.regions.length === 0) {
     navigate("/posts/new/region", { replace: true });
     return null;
   }
@@ -213,9 +235,12 @@ const PostCreateDetailsPage: React.FC = () => {
       </Header>
 
       <FormContainer>
-        <SelectedLocation>
-          선택한 지역: <span>{formData.region}</span>
-        </SelectedLocation>
+        <SelectedRegionsContainer>
+          선택한 지역:
+          {formData.regions.map((region) => (
+            <RegionTag key={region.id}>{region.name}</RegionTag>
+          ))}
+        </SelectedRegionsContainer>
 
         <FormGroup>
           <FormLabel htmlFor="title">제목</FormLabel>

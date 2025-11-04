@@ -3,15 +3,13 @@ import styled from "styled-components";
 import PostListItem from "../../components/domain/PostListItem";
 import SearchBar from "../../components/common/SearchBar";
 import Button from "../../components/common/Button";
-import LocationFilterModal, {
-  locationsData,
-} from "../../components/domain/LocationFilterModal";
+import LocationFilterModal from "../../components/domain/LocationFilterModal";
 import { IoFilter } from "react-icons/io5";
 import FloatingActionButton from "../../components/common/FloatingActionButton";
 import { type Post } from "../../types/post";
 import { useQuery } from "@tanstack/react-query";
-import { getPosts } from "../../api/posts";
 import { useNavigate } from "react-router-dom";
+import { getPosts, getPostsByRegion } from "../../api/posts";
 
 const PageContainer = styled.div`
   width: 100%;
@@ -52,77 +50,44 @@ const ErrorMessage = styled.p`
 function PostListPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("전체");
+  const [selectedRegionIds, setSelectedRegionIds] = useState<number[] | null>(
+    null
+  );
 
   const navigate = useNavigate();
 
   const {
-    data: posts = [], // posts 데이터가 없을 경우 빈 배열([])을 기본값으로 사용
+    data: posts = [],
     isLoading,
     error,
   } = useQuery<Post[], Error>({
-    queryKey: ["posts"], // 이 쿼리의 고유 키 (캐싱에 사용됨)
-    queryFn: getPosts, // 데이터를 가져올 함수
+    // queryKey가 selectedRegionIds 배열 자체를 참조하도록 변경
+    queryKey: ["posts", selectedRegionIds],
+    queryFn: () => {
+      if (selectedRegionIds && selectedRegionIds.length > 0) {
+        // ID 배열 전체를 백엔드로 전달
+        return getPostsByRegion(selectedRegionIds);
+      }
+      // ID가 없으면 (전체) 모든 목록 요청
+      return getPosts();
+    },
   });
 
-  const handleApplyFilter = (location: string) => {
-    setSelectedLocation(location);
-    // TODO: 선택된 지역으로 API 다시 호출 또는 프론트엔드 필터링 로직 강화
-    console.log("선택된 지역:", location);
+  const handleApplyFilter = (regionIds: number[] | null) => {
+    setSelectedRegionIds(regionIds);
+    console.log("선택된 지역 ID 목록:", regionIds);
   };
 
-  // 검색어와 지역 필터링 로직 (API 연동 후 필요시 백엔드 필터링으로 변경 고려)
+  // 검색어 로직
   const filteredPosts = useMemo(() => {
     return posts.filter((post) => {
       const matchesSearch = post.title
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
 
-      // 지역 필터링 로직 (locationsData와 API 응답의 regions 정보를 활용하여 개선 필요)
-      let matchesLocation = true;
-      if (selectedLocation !== "전체") {
-        // 현재 regions는 객체 배열이므로, regionName만 추출하여 비교
-        const postRegionNames = post.regions.map((r) => r.regionName);
-
-        if (selectedLocation === "국내 전체") {
-          // domestic의 모든 지역 이름을 가져와 포함되는지 확인
-          const allDomesticRegions = Object.values(locationsData.domestic)
-            .flat()
-            .concat(Object.keys(locationsData.domestic));
-          matchesLocation = postRegionNames.some((name) =>
-            allDomesticRegions.includes(name)
-          );
-        } else if (selectedLocation === "해외 전체") {
-          matchesLocation = postRegionNames.some((name) =>
-            locationsData.overseas.includes(name)
-          );
-        } else {
-          // 특정 지역 또는 하위 지역 선택 시
-          const isDomesticKey = Object.prototype.hasOwnProperty.call(
-            locationsData.domestic,
-            selectedLocation
-          );
-          if (isDomesticKey) {
-            const subRegions =
-              locationsData.domestic[
-                selectedLocation as keyof typeof locationsData.domestic
-              ];
-            if (subRegions.length > 0) {
-              matchesLocation = postRegionNames.some(
-                (name) => subRegions.includes(name) || name === selectedLocation
-              );
-            } else {
-              matchesLocation = postRegionNames.includes(selectedLocation);
-            }
-          } else {
-            matchesLocation = postRegionNames.includes(selectedLocation);
-          }
-        }
-      }
-
-      return matchesSearch && matchesLocation;
+      return matchesSearch;
     });
-  }, [posts, searchQuery, selectedLocation]);
+  }, [posts, searchQuery]);
 
   const handleCreatePost = () => {
     navigate("/posts/new/region"); // 1단계(지역 선택) 페이지로 이동
