@@ -72,10 +72,7 @@ public class ApplicationController {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         User currentUser = userDetails.getUser();
         Post post = postService.getPostById(application.getPostId());
-        System.out.println("Current User ID: " + currentUser.getId());
-        System.out.println("Current User Role: " + currentUser.getRole());
-        System.out.println("Current User UserID: " + currentUser.getUserId());
-        if (!currentUser.getId().equals(post.getUser().getId()) && currentUser.getRole() != 0) {
+        if (!currentUser.getUserId().equals(post.getUser().getUserId()) && currentUser.getRole() != 0) {
             throw new AccessDeniedException("권한이 없습니다.");
         }
         User user = userService.getUserById(application.getUserId());
