@@ -56,9 +56,7 @@ export const createPost = async ({
     teamSize: formData.teamSize,
     // Context에서 가져온 regionId를 리스트에 담아 전송
     regions: formData.regions.map((region) => region.id),
-
-    // CreatePost.java에서 plannerId는 아직 주석
-    // plannerId: formData.plannerId,
+    plannerId: formData.plannerId,
   };
 
   // POST /api/posts 로 데이터 전송
