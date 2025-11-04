@@ -73,7 +73,8 @@ public class PostController {
 
     // PUT: 게시물 정보 수정
     @PutMapping("/{postId}")
-    public Post updatePost(@RequestBody CreatePost createPost) {
+    public Post updatePost(@PathVariable Integer postId, @RequestBody CreatePost createPost) {
+        createPost.setPostId(postId);
         Post post = postService.updatePost(createPost);
         return post;
     }

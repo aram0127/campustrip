@@ -61,8 +61,8 @@ public class PostService {
         newPost.setChat(chat);
         List<Integer> regions = createPost.getRegions();
         newPost.setRegions(regionRepository.findByRegionIdIn(regions));
-        newPost.setPlanner(plannerRepository.findById(1)
-                .orElseThrow(() -> new NoSuchElementException("Planner not found with id: 1"))
+        newPost.setPlanner(plannerRepository.findById(createPost.getPlannerId())
+                .orElseThrow(() -> new NoSuchElementException("Planner not found with id: " + createPost.getPlannerId()))
         );
         return postRepository.save(newPost);
     }
