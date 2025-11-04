@@ -3,15 +3,14 @@ package com.example.app.controller;
 import com.example.app.domain.Chat;
 import com.example.app.domain.Post;
 import com.example.app.domain.Region;
-import com.example.app.dto.CreateChat;
-import com.example.app.dto.PostDTO;
-import com.example.app.dto.CreatePost;
-import com.example.app.dto.RegionDTO;
+import com.example.app.dto.*;
 import com.example.app.service.ChatService;
 import com.example.app.service.PostService;
 import com.example.app.service.RegionService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.time.LocalDateTime;
@@ -117,6 +116,16 @@ public class PostController {
         }).collect(Collectors.toList());
 
         postDTO.setRegions(fullRegionNamesDTOs);
+
+        // Application 리스트 변환
+        if (post.getApplications() != null) {
+            List<ApplicationSimpleDTO> appDTOs = post.getApplications().stream()
+                    .map(ApplicationSimpleDTO::new) // Application -> ApplicationSimpleDTO
+                    .collect(Collectors.toList());
+            postDTO.setApplications(appDTOs);
+        } else {
+            postDTO.setApplications(new ArrayList<>()); // 빈 리스트 보장
+        }
 
         return postDTO;
     }
