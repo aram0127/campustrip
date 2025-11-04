@@ -1,5 +1,4 @@
 import axios from "axios";
-import { apiClient } from "./client";
 import { type User } from "../types/user";
 
 // API 기본 URL

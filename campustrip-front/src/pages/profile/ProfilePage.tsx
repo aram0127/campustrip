@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import styled from "styled-components";
 import { IoArrowBack, IoEllipsisHorizontal } from "react-icons/io5";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getUserProfile } from "../../api/users";
 import { type User } from "../../types/user";
-import { useAuth } from "../../context/AuthContext";
 
 const PageContainer = styled.div`
   width: 100%;
@@ -148,7 +147,7 @@ const Message = styled.p`
 const ActionButton = styled.button`
   width: 100%;
   padding: 12px;
-  margin-top: 16px; 
+  margin-top: 16px;
   background-color: ${({ theme }) => theme.colors.primary};
   color: white;
   border: none;
@@ -159,7 +158,7 @@ const ActionButton = styled.button`
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.primary || '#0056b3'};
+    background-color: ${({ theme }) => theme.colors.primary || "#0056b3"};
     opacity: 0.85;
   }
 `;
@@ -181,7 +180,6 @@ const parsePreferences = (preference: number | null) => {
 function ProfilePage() {
   const { userId } = useParams<{ userId: string }>(); // URL에서 userId 가져오기
   const navigate = useNavigate();
-  const { user: currentUser } = useAuth(); // 현재 로그인한 사용자
 
   const [activeTab, setActiveTab] = useState("여행 기록"); // 탭 상태
 
@@ -214,10 +212,10 @@ function ProfilePage() {
 
   // 사용자 온도를 0-100% 사이 값으로 변환 (100도 기준)
   const tempPercentage = Math.max(0, Math.min(100, profileUser.userScore || 0));
- 
+
   // 여행 성향 검사 페이지로 이동
   const handleStartTest = () => {
-    navigate(`/test/travel-test-page`); 
+    navigate(`/test/travel-test-page`);
   };
 
   return (
@@ -263,9 +261,9 @@ function ProfilePage() {
             <Tag key={tag}>{tag}</Tag>
           ))}
         </TagContainer>
-      
+
         <ActionButton onClick={handleStartTest}>
-            여행 성향 검사 시작
+          여행 성향 검사 시작
         </ActionButton>
       </Section>
 

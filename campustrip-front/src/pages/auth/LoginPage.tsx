@@ -77,7 +77,6 @@ function LoginPage() {
 
   const {
     mutate: performLogin, // mutate 함수를 performLogin으로 이름 변경
-    isPending, // 로딩 상태 (isLoading 대신 isPending 사용)
     error, // 에러 상태
   } = useMutation({
     mutationFn: loginUser, // API 함수 연결
