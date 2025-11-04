@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;  // @Service 어노테이션
 import org.springframework.beans.factory.annotation.Autowired;  // 의존성 주입용 (선택적)
 import com.example.app.domain.Post;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -60,9 +61,9 @@ public class PostService {
         Chat chat = chatService.saveChat(new CreateChat(newPost));
         newPost.setChat(chat);
         List<Integer> regions = createPost.getRegions();
-        newPost.setRegions(regionRepository.findByRegionIdIn(regions));
-        newPost.setPlanner(plannerRepository.findById(createPost.getPlannerId())
-                .orElseThrow(() -> new NoSuchElementException("Planner not found with id: " + createPost.getPlannerId()))
+        newPost.setRegions(new HashSet<>(regionRepository.findByRegionIdIn(regions)));
+        newPost.setPlanner(plannerRepository.findById(1)
+                .orElseThrow(() -> new NoSuchElementException("Planner not found with id: 1"))
         );
         return postRepository.save(newPost);
     }
@@ -77,7 +78,7 @@ public class PostService {
         existingPost.setTeamSize(updateData.getTeamSize());
 
         List<Integer> regions = updateData.getRegions();
-        existingPost.setRegions(regionRepository.findByRegionIdIn(regions));
+        existingPost.setRegions(new HashSet<>(regionRepository.findByRegionIdIn(regions)));
 
         return postRepository.save(existingPost);
     }
@@ -87,6 +88,6 @@ public class PostService {
     }
 
     public void assignRegionsToPost(Post post, List<Integer> regions) {
-        post.setRegions(regionRepository.findByRegionIdIn(regions));
+        post.setRegions(new HashSet<>(regionRepository.findByRegionIdIn(regions)));
     }
 }

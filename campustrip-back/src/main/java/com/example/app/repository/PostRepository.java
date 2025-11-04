@@ -30,7 +30,7 @@ public interface PostRepository extends JpaRepository<Post,Integer>
      * @param postId 조회할 게시글의 ID
      * @return Post 객체를 담은 Optional
      */
-    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.chat LEFT JOIN FETCH p.regions WHERE p.postId = :postId")
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.chat LEFT JOIN FETCH p.regions LEFT JOIN FETCH p.applications app LEFT JOIN FETCH app.user WHERE p.postId = :postId")
     Optional<Post> findByIdWithDetails(@Param("postId") Integer postId);
 
     // membershipId로 Post 찾기 - 삭제

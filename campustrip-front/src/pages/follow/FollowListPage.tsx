@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import styled from "styled-components";
 import { IoArrowBack } from "react-icons/io5";
 import Button from "../../components/common/Button";

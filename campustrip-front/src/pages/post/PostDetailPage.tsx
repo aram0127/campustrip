@@ -8,7 +8,6 @@ import { type Post } from "../../types/post";
 import { type Application } from "../../types/application";
 import { IoArrowBack, IoEllipsisHorizontal } from "react-icons/io5";
 import { useAuth } from "../../context/AuthContext";
-import axios, { type AxiosError } from "axios";
 
 const PageContainer = styled.div`
   max-width: 480px;
@@ -271,6 +270,7 @@ const PostDetailPage: React.FC = () => {
         applicationId: null,
       };
     }
+    console.log(applicationId);
 
     const currentUserApplication = post.applications.find(
       (app) => app.userId === user.userId
@@ -288,20 +288,20 @@ const PostDetailPage: React.FC = () => {
     if (currentUserApplication.applicationStatus === true) {
       return {
         applicationStatus: "ACCEPTED" as ApplicationStatus,
-        applicationId: currentUserApplication.id,
+        applicationId: null,
       };
     }
     // 'false' (거절) 상태
     if (currentUserApplication.applicationStatus === false) {
       return {
         applicationStatus: "REJECTED" as ApplicationStatus,
-        applicationId: currentUserApplication.id,
+        applicationId: null,
       };
     }
     // 'null' (대기중)
     return {
       applicationStatus: "PENDING" as ApplicationStatus,
-      applicationId: currentUserApplication.id,
+      applicationId: null,
     };
   }, [post?.applications, user]);
 
