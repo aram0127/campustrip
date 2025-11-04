@@ -45,6 +45,9 @@ public class PostController {
         postDTO.setMemberSize(chatService.getNumberOfChatMembers(post.getChat()));
         postDTO.setRegions(post.getRegions());
         postDTO.setChatId(post.getChat().getId());
+
+        postDTO.setApplications(post.getApplications());
+
         return postDTO;
     }
 
