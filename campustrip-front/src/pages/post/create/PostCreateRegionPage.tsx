@@ -1,8 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { usePostCreate } from "../../../context/PostCreateContext";
-import { locationsData } from "../../../components/domain/LocationFilterModal";
+import { useQuery } from "@tanstack/react-query";
+import {
+  getAllRegions,
+  type RegionList,
+  type RegionDTO,
+} from "../../../api/regions";
 import Button from "../../../components/common/Button";
 import { IoArrowBack } from "react-icons/io5";
 
@@ -109,6 +114,12 @@ const Footer = styled.footer`
   flex-shrink: 0;
 `;
 
+const Message = styled.p`
+  text-align: center;
+  padding: 40px 20px;
+  color: ${({ theme }) => theme.colors.secondaryTextColor};
+`;
+
 const PostCreateRegionPage: React.FC = () => {
   const navigate = useNavigate();
   const { formData, updateFormData } = usePostCreate();
@@ -116,58 +127,123 @@ const PostCreateRegionPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"domestic" | "overseas">(
     "domestic"
   );
-  // 현재 선택 중인 대분류 (예: "경상북도")
+
+  // 현재 선택 중인 대분류 (예: "경기도", "아시아")
   const [selectedMain, setSelectedMain] = useState<string | null>(
-    formData.region // Context에 저장된 값으로 초기화
-  );
-  // 최종 선택된 지역 (예: "구미시" 또는 "경상북도")
-  const [finalSelection, setFinalSelection] = useState<string | null>(
-    formData.region
+    // 컨텍스트의 이름으로 초기화 시도
+    formData.regionName
+      ? (formData.regionId ?? 0) % 100 === 0
+        ? formData.regionName
+        : null
+      : null
   );
 
-  const mainRegions = Object.keys(locationsData.domestic);
-  const subRegions = selectedMain
-    ? locationsData.domestic[
-        selectedMain as keyof typeof locationsData.domestic
-      ]
-    : [];
+  // 최종 선택된 지역 (ID와 이름 모두 저장)
+  const [finalSelection, setFinalSelection] = useState<{
+    id: number | null;
+    name: string | null;
+  }>({
+    id: formData.regionId,
+    name: formData.regionName,
+  });
 
+  // API 호출
+  const {
+    data: regionData,
+    isLoading,
+    error,
+  } = useQuery<RegionList[], Error>({
+    queryKey: ["regions"],
+    queryFn: getAllRegions,
+  });
+
+  // API 응답 데이터를 국내/해외로 분리
+  const { domesticRegions, overseasRegions } = useMemo(() => {
+    const domestic: RegionList[] = [];
+    const overseas: RegionList[] = [];
+
+    // DB기준: 100~1702는 국내, 2000 이상은 해외
+    regionData?.forEach((province) => {
+      const firstRegionId = province.regions[0]?.id ?? 0;
+      if (firstRegionId < 2000) {
+        domestic.push(province);
+      } else {
+        overseas.push(province);
+      }
+    });
+    return { domesticRegions: domestic, overseasRegions: overseas };
+  }, [regionData]);
+
+  // 현재 선택된 대분류(selectedMain)에 해당하는 하위 지역 목록
+  const subRegions = useMemo(() => {
+    if (!selectedMain) return [];
+
+    const dataList =
+      activeTab === "domestic" ? domesticRegions : overseasRegions;
+    const found = dataList.find((p) => p.province === selectedMain);
+    return found ? found.regions : [];
+  }, [selectedMain, domesticRegions, overseasRegions, activeTab]);
+
+  // 핸들러 함수 (ID, Name 동시 관리)
   const handleNext = () => {
-    if (!finalSelection) {
+    if (!finalSelection.id || !finalSelection.name) {
       alert("지역을 선택해주세요.");
       return;
     }
-    // Context에 최종 선택 지역 저장
-    updateFormData({ region: finalSelection });
+    // Context에 최종 선택 지역 ID와 이름 저장
+    updateFormData({
+      regionId: finalSelection.id,
+      regionName: finalSelection.name,
+    });
     // 2단계(상세 작성) 페이지로 이동
     navigate("/posts/new/details");
   };
 
-  const handleSelectMain = (region: string) => {
-    setSelectedMain(region);
-    // 하위 지역이 없으면, 대분류 자체가 최종 선택임
-    if (locationsData.domestic[region]?.length === 0) {
-      setFinalSelection(region);
-    } else {
-      // 하위 지역이 있으면, '전체' (즉, 대분류)를 기본 선택으로 둠
-      setFinalSelection(region);
+  // 1차 지역 (시/도 또는 대륙) 선택
+  const handleSelectMain = (province: RegionList) => {
+    setSelectedMain(province.province);
+
+    // 1차 지역의 ID (예: 서울특별시 100, 아시아 2000)
+    // 1차 지역은 DB에서 `region_id`가 100 단위로 끝남
+    const provinceDTO = province.regions.find((r) => r.id % 100 === 0);
+
+    if (provinceDTO) {
+      setFinalSelection({ id: provinceDTO.id, name: provinceDTO.name });
+    } else if (province.regions.length > 0) {
+      // (예외 처리) 1차 지역 DTO가 없다면(DB 데이터 오류 시) 첫 번째 하위 지역이라도 선택
+      setFinalSelection({
+        id: province.regions[0].id,
+        name: province.regions[0].name,
+      });
     }
   };
 
-  const handleSelectSub = (subRegion: string) => {
-    setFinalSelection(subRegion);
-  };
-
-  const handleSelectOverseas = (country: string) => {
-    setSelectedMain(country); // 해외는 대분류=최종선택
-    setFinalSelection(country);
+  // 2차 지역 (시/군/구 또는 국가) 선택
+  const handleSelectSub = (subRegion: RegionDTO) => {
+    setFinalSelection({ id: subRegion.id, name: subRegion.name });
   };
 
   const handleTabClick = (tab: "domestic" | "overseas") => {
     setActiveTab(tab);
     setSelectedMain(null);
-    setFinalSelection(null);
+    setFinalSelection({ id: null, name: null });
   };
+
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <Message>지역 목록을 불러오는 중...</Message>
+      </PageContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageContainer>
+        <Message>오류가 발생했습니다: {error.message}</Message>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
@@ -195,36 +271,46 @@ const PostCreateRegionPage: React.FC = () => {
         </TabContainer>
 
         <FilterContainer>
+          {/* 국내 탭 렌더링 */}
           {activeTab === "domestic" && (
             <>
               <RegionList>
-                {mainRegions.map((region) => (
+                {domesticRegions.map((province) => (
                   <RegionItem
-                    key={region}
-                    isSelected={selectedMain === region}
-                    onClick={() => handleSelectMain(region)}
+                    key={province.province} // "경기도"
+                    isSelected={selectedMain === province.province}
+                    onClick={() => handleSelectMain(province)}
                   >
-                    {region}
+                    {province.province}
                   </RegionItem>
                 ))}
               </RegionList>
 
-              {/* 하위 지역 목록 (선택되었고, 하위 지역이 있을 때만 표시) */}
-              {selectedMain && subRegions.length > 0 && (
+              {/* 하위 지역 목록 */}
+              {selectedMain && (
                 <RegionList>
+                  {/* '전체' 버튼 (1차 지역 자신을 선택) */}
                   <RegionItem
-                    isSelected={finalSelection === selectedMain} // (예: "경상북도" 전체)
-                    onClick={() => setFinalSelection(selectedMain)}
+                    isSelected={finalSelection.name === selectedMain} // (예: "경기도" 전체)
+                    onClick={() =>
+                      handleSelectMain(
+                        domesticRegions.find(
+                          (p) => p.province === selectedMain
+                        )!
+                      )
+                    }
                   >
                     전체
                   </RegionItem>
+
+                  {/* 2차 지역 목록 (시/군/구) */}
                   {subRegions.map((subRegion) => (
                     <RegionItem
-                      key={subRegion}
-                      isSelected={finalSelection === subRegion}
+                      key={subRegion.id}
+                      isSelected={finalSelection.id === subRegion.id}
                       onClick={() => handleSelectSub(subRegion)}
                     >
-                      {subRegion}
+                      {subRegion.name}
                     </RegionItem>
                   ))}
                 </RegionList>
@@ -232,18 +318,49 @@ const PostCreateRegionPage: React.FC = () => {
             </>
           )}
 
+          {/* 해외 탭 렌더링 */}
           {activeTab === "overseas" && (
-            <RegionList>
-              {locationsData.overseas.map((country) => (
-                <RegionItem
-                  key={country}
-                  isSelected={finalSelection === country}
-                  onClick={() => handleSelectOverseas(country)}
-                >
-                  {country}
-                </RegionItem>
-              ))}
-            </RegionList>
+            <>
+              <RegionList>
+                {overseasRegions.map((continent) => (
+                  <RegionItem
+                    key={continent.province} // "아시아"
+                    isSelected={selectedMain === continent.province}
+                    onClick={() => handleSelectMain(continent)}
+                  >
+                    {continent.province}
+                  </RegionItem>
+                ))}
+              </RegionList>
+
+              {/* 하위 지역 목록 (국가) */}
+              {selectedMain && (
+                <RegionList>
+                  <RegionItem
+                    isSelected={finalSelection.name === selectedMain} // (예: "아시아" 전체)
+                    onClick={() =>
+                      handleSelectMain(
+                        overseasRegions.find(
+                          (p) => p.province === selectedMain
+                        )!
+                      )
+                    }
+                  >
+                    전체
+                  </RegionItem>
+
+                  {subRegions.map((country) => (
+                    <RegionItem
+                      key={country.id}
+                      isSelected={finalSelection.id === country.id}
+                      onClick={() => handleSelectSub(country)}
+                    >
+                      {country.name}
+                    </RegionItem>
+                  ))}
+                </RegionList>
+              )}
+            </>
           )}
         </FilterContainer>
       </Content>
@@ -251,11 +368,11 @@ const PostCreateRegionPage: React.FC = () => {
       <Footer>
         <Button
           onClick={handleNext}
-          disabled={!finalSelection}
+          disabled={!finalSelection.id}
           style={{ width: "100%" }}
         >
-          {finalSelection
-            ? `"${finalSelection}" 선택하고 다음`
+          {finalSelection.name
+            ? `"${finalSelection.name}" 선택하고 다음`
             : "지역을 선택하세요"}
         </Button>
       </Footer>
