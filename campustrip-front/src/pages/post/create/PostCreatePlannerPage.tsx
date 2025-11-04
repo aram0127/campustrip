@@ -124,7 +124,7 @@ const PostCreatePlannerPage: React.FC = () => {
     error: queryError,
   } = useQuery<Planner[], Error>({
     queryKey: ["myPlanners", user?.id], // 내 플래너
-    queryFn: getMyPlanners,
+    queryFn: () => getMyPlanners(user!.id),
     enabled: !!user, // 로그인한 사용자만 실행
   });
 
@@ -177,15 +177,6 @@ const PostCreatePlannerPage: React.FC = () => {
     });
   };
 
-  // 백엔드 의존성 경고 (Planner)
-  // Post.java에서 Planner가 주석처리 되어있음을 경고
-  if (true) {
-    // TODO: 나중에 백엔드 수정 시 이 경고문 제거
-    console.warn(
-      "백엔드 경고: Post.java 엔티티의 planner 필드가 주석 처리되어 있어, 플래너 ID가 저장되지 않을 수 있음."
-    );
-  }
-
   return (
     <PageContainer>
       <Header>
@@ -217,9 +208,7 @@ const PostCreatePlannerPage: React.FC = () => {
             <PlannerInfo>
               📅 기간: {planner.startDate} ~ {planner.endDate}
             </PlannerInfo>
-            <PlannerInfo>
-              👥 참여자: {planner.members || "정보 없음"}
-            </PlannerInfo>
+            <PlannerInfo>👥 제작자: {planner.user.name}</PlannerInfo>
           </PlannerItem>
         ))}
 
