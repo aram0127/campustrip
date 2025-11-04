@@ -1,12 +1,12 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styled, { css } from "styled-components";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getPostById } from "../../api/posts";
+import { getPostById, deletePost } from "../../api/posts";
 import { createApplication, cancelApplication } from "../../api/applications";
 import { type Post } from "../../types/post";
 import { type Application } from "../../types/application";
-import { IoArrowBack } from "react-icons/io5";
+import { IoArrowBack, IoEllipsisHorizontal } from "react-icons/io5";
 import { useAuth } from "../../context/AuthContext";
 import axios, { type AxiosError } from "axios";
 
@@ -182,6 +182,50 @@ const ErrorMessage = styled.p`
   margin-bottom: 16px;
 `;
 
+const HeaderMenuButton = styled.button`
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  margin-left: auto; /* 헤더 오른쪽 끝으로 밀어냄 */
+  position: relative; /* 드롭다운의 기준점이 됨 */
+`;
+
+// 2. 드롭다운 메뉴 스타일 추가
+const DropdownMenu = styled.div`
+  position: absolute;
+  top: 110%; /* 버튼 바로 아래 */
+  right: 0;
+  background-color: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 20;
+  overflow: hidden;
+  width: 120px;
+`;
+
+const DropdownItem = styled.button<{ isDelete?: boolean }>`
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  color: ${({ theme, isDelete }) =>
+    isDelete ? theme.colors.error : theme.colors.text};
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.inputBackground};
+  }
+`;
+
 interface ApplicationData {
   post: { postId: number };
   user: { userId: string };
@@ -201,6 +245,9 @@ const PostDetailPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<"post" | "planner">("post");
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLButtonElement>(null);
 
   const {
     data: post,
@@ -293,6 +340,41 @@ const PostDetailPage: React.FC = () => {
     },
   });
 
+  // 삭제를 위한 useMutation
+  const { mutate: performDelete, isPending: isDeleting } = useMutation<
+    void,
+    Error,
+    string // postId (string)를 받음
+  >({
+    mutationFn: deletePost,
+    onSuccess: () => {
+      alert("게시글이 삭제되었습니다.");
+      // 포스트 목록 캐시를 무효화하여 목록 페이지가 새로고침되도록 함
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      // 목록 페이지로 이동
+      navigate("/posts", { replace: true });
+    },
+    onError: (err) => {
+      console.error("삭제 실패:", err);
+      alert(`삭제에 실패했습니다: ${err.message}`);
+    },
+  });
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // 메뉴가 열려있고, 클릭된 영역이 메뉴 버튼(ref)의 바깥쪽일 때
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    // 이벤트 리스너 등록
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      // 컴포넌트 언마운트 시 리스너 제거
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuRef]); // ref가 변경될 때만 effect 재실행
+
   // 버튼 클릭 핸들러: 현재 상태에 따라 다른 뮤테이션 호출
   const handleButtonClick = () => {
     if (!user || !post) return;
@@ -321,6 +403,22 @@ const PostDetailPage: React.FC = () => {
     }
   };
 
+  const handleEditClick = () => {
+    // TODO: 게시글 수정 페이지로 이동 (PostCreateFlow 재사용 또는 수정용 페이지 신규 생성)
+    alert("게시글 수정 기능은 준비 중입니다.");
+    setIsMenuOpen(false);
+    // 예: navigate(`/posts/edit/${postId}`);
+  };
+
+  const handleDeleteClick = () => {
+    setIsMenuOpen(false);
+    if (isDeleting) return; // 중복 삭제 방지
+
+    if (window.confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
+      performDelete(postId!);
+    }
+  };
+
   if (isLoading) {
     return <Message>로딩 중...</Message>;
   }
@@ -334,7 +432,7 @@ const PostDetailPage: React.FC = () => {
   }
 
   const isMyPost = user?.id === post.user.id;
-  const isMutationLoading = isApplying || isCanceling;
+  const isMutationLoading = isApplying || isCanceling || isDeleting;
 
   // 버튼 텍스트와 스타일 상태 결정
   const getButtonProps = () => {
@@ -391,6 +489,26 @@ const PostDetailPage: React.FC = () => {
           <IoArrowBack />
         </BackButton>
         <HeaderTitle>게시글</HeaderTitle>
+
+        {/* isMyPost일 때만 메뉴 버튼 표시 */}
+        {isMyPost && (
+          <HeaderMenuButton
+            ref={menuRef}
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            <IoEllipsisHorizontal />
+
+            {/* isMenuOpen일 때 드롭다운 메뉴 표시 */}
+            {isMenuOpen && (
+              <DropdownMenu>
+                <DropdownItem onClick={handleEditClick}>수정</DropdownItem>
+                <DropdownItem onClick={handleDeleteClick} isDelete>
+                  {isDeleting ? "삭제 중..." : "삭제"}
+                </DropdownItem>
+              </DropdownMenu>
+            )}
+          </HeaderMenuButton>
+        )}
       </Header>
 
       <TabMenu>
@@ -448,9 +566,9 @@ const PostDetailPage: React.FC = () => {
           <ActionButton
             onClick={handleButtonClick}
             status={buttonProps.status}
-            disabled={buttonProps.disabled}
+            disabled={buttonProps.disabled || isDeleting}
           >
-            {buttonProps.text}
+            {isDeleting ? "삭제 중..." : buttonProps.text}
           </ActionButton>
         </ContentContainer>
       )}

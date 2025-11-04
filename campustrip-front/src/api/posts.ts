@@ -73,3 +73,8 @@ export const createPost = async ({
     throw new Error("게시글 생성에 실패했습니다.");
   }
 };
+
+/* 특정 ID의 게시글을 삭제 */
+export const deletePost = async (postId: string): Promise<void> => {
+  await apiClient.delete(`/api/posts/${postId}`);
+};
