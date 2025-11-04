@@ -4,11 +4,11 @@ import React, {
   useState,
   type ReactNode,
 } from "react";
+import { type RegionDTO } from "../api/regions";
 
 // 3단계에 걸쳐 수집할 데이터 타입 정의
 interface PostCreateData {
-  regionId: number | null; // 1단계: 지역
-  regionName: string | null;
+  regions: RegionDTO[]; // 1단계: 지역
   title: string; // 2단계: 제목
   body: string; // 2단계: 본문
   startDate: string | null; // 2단계: 시작일
@@ -28,8 +28,7 @@ interface PostCreateContextType {
 
 // 초기 폼 데이터
 const initialData: PostCreateData = {
-  regionId: null,
-  regionName: null,
+  regions: [],
   title: "",
   body: "",
   startDate: null,

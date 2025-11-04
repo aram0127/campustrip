@@ -1,8 +1,5 @@
 import { apiClient } from "./client";
 import { type Post } from "../types/post";
-import { type User } from "../types/user";
-import { type Region } from "../types/region";
-import { type Chat } from "../types/chat";
 import { type UserInfo } from "../context/AuthContext";
 
 /* 모든 게시글 목록을 가져옴 */
@@ -34,7 +31,7 @@ export const getPostsByRegion = async (
 // createPost 함수가 받는 데이터 타입 (Context의 formData + user)
 export interface CreatePostData {
   formData: {
-    regionId: number | null;
+    regions: { id: number; name: string }[];
     title: string;
     body: string;
     startDate: string | null;
@@ -58,7 +55,7 @@ export const createPost = async ({
     body: formData.body,
     teamSize: formData.teamSize,
     // Context에서 가져온 regionId를 리스트에 담아 전송
-    regions: formData.regionId ? [formData.regionId] : [],
+    regions: formData.regions.map((region) => region.id),
 
     // CreatePost.java에서 plannerId는 아직 주석
     // plannerId: formData.plannerId,
