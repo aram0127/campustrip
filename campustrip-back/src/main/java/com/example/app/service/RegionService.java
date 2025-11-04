@@ -50,4 +50,9 @@ public class RegionService {
         }
         return regionLists;
     }
+
+    // Region ID로 Region 엔티티를 조회
+    public Region getRegionById(Integer regionId) {
+        return regionRepository.findByRegionId(regionId);
+    }
 }

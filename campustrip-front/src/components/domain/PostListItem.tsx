@@ -36,7 +36,8 @@ const getRegionNames = (regions: Post["regions"]): string => {
   if (!regions || regions.length === 0) {
     return "지역 정보 없음";
   }
-  return regions.map((r) => r.regionName).join(", ");
+
+  return regions.map((r) => r.name).join(", ");
 };
 
 const getDummyPeriod = (postId: number): string => {
@@ -53,7 +54,7 @@ const PostListItem: React.FC<PostListItemProps> = ({ post }) => {
       <PostInfo>📍 {getRegionNames(post.regions)}</PostInfo>
       <PostInfo>📅 {getDummyPeriod(post.postId)}</PostInfo>
       <PostInfo>
-        👥 모집 인원 [{post.memberSize}/{post.teamSize}]
+        👥 모집 인원 [{post.memberSize ?? 0}/{post.teamSize}]
       </PostInfo>
     </ListItemContainer>
   );

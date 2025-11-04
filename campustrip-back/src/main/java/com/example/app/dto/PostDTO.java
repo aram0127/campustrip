@@ -1,7 +1,6 @@
 package com.example.app.dto;
 
 import com.example.app.domain.Application;
-import com.example.app.domain.Region;
 import com.example.app.domain.User;
 import lombok.*;
 
@@ -21,7 +20,7 @@ public class PostDTO {
     private java.time.LocalDateTime updatedAt;
     private Integer teamSize;
     private Integer memberSize;
-    private List<Region> regions;
+    private List<RegionDTO> regions;
     private Application application;
     private Integer chatId;
 }
