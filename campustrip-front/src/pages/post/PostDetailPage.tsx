@@ -263,14 +263,13 @@ const PostDetailPage: React.FC = () => {
   });
 
   // 현재 사용자의 신청 상태와 ID를 useMemo로 계산
-  const { applicationStatus, applicationId } = useMemo(() => {
+  const { applicationStatus } = useMemo(() => {
     if (!user || !post?.applications) {
       return {
         applicationStatus: "NOT_APPLIED" as ApplicationStatus,
         applicationId: null,
       };
     }
-    console.log(applicationId);
 
     const currentUserApplication = post.applications.find(
       (app) => app.userId === user.userId
