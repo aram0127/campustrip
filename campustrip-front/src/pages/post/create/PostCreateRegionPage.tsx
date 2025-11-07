@@ -9,45 +9,12 @@ import {
   type RegionDTO,
 } from "../../../api/regions";
 import Button from "../../../components/common/Button";
-import { IoArrowBack, IoClose } from "react-icons/io5";
+import { IoClose } from "react-icons/io5";
+import PageLayout, {
+  ScrollingContent,
+} from "../../../components/layout/PageLayout";
 
-const PageContainer = styled.div`
-  max-width: 480px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: ${({ theme }) => theme.colors.background};
-`;
-
-const Header = styled.header`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 12px 20px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
-  position: relative;
-  flex-shrink: 0;
-`;
-
-const BackButton = styled.button`
-  position: absolute;
-  left: 16px;
-  background: none;
-  border: none;
-  color: ${({ theme }) => theme.colors.text};
-  font-size: 24px;
-  cursor: pointer;
-`;
-
-const HeaderTitle = styled.h1`
-  font-size: 18px;
-  font-weight: bold;
-  margin: 0;
-`;
-
-const Content = styled.main`
-  flex-grow: 1;
+const ScrollableContent = styled(ScrollingContent)`
   display: flex;
   flex-direction: column;
 `;
@@ -156,16 +123,13 @@ const RemoveTagButton = styled.button`
 const PostCreateRegionPage: React.FC = () => {
   const navigate = useNavigate();
   const { formData, updateFormData } = usePostCreate();
-
   const [activeTab, setActiveTab] = useState<"domestic" | "overseas">(
     "domestic"
   );
   const [selectedMain, setSelectedMain] = useState<string | null>(null);
-
   const [selectedRegions, setSelectedRegions] = useState<RegionDTO[]>(
     formData.regions // 컨텍스트에서 초기값 로드
   );
-
   const {
     data: regionData,
     isLoading,
@@ -348,30 +312,23 @@ const PostCreateRegionPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <PageContainer>
+      <PageLayout title="지역 선택 (1/3)" showBackButton={false}>
         <Message>지역 목록을 불러오는 중...</Message>
-      </PageContainer>
+      </PageLayout>
     );
   }
 
   if (error) {
     return (
-      <PageContainer>
+      <PageLayout title="지역 선택 (1/3)" showBackButton={false}>
         <Message>오류가 발생했습니다: {error.message}</Message>
-      </PageContainer>
+      </PageLayout>
     );
   }
 
   return (
-    <PageContainer>
-      <Header>
-        <BackButton onClick={() => navigate("/posts")}>
-          <IoArrowBack />
-        </BackButton>
-        <HeaderTitle>지역 선택 (1/3)</HeaderTitle>
-      </Header>
-
-      <Content>
+    <PageLayout title="지역 선택 (1/3)">
+      <ScrollableContent>
         <TabContainer>
           <TabButton
             isActive={activeTab === "domestic"}
@@ -456,7 +413,7 @@ const PostCreateRegionPage: React.FC = () => {
             </RegionList>
           )}
         </FilterContainer>
-      </Content>
+      </ScrollableContent>
 
       <SelectedRegionsContainer>
         {selectedRegions.map((region) => (
@@ -480,7 +437,7 @@ const PostCreateRegionPage: React.FC = () => {
             : "지역을 선택하세요"}
         </Button>
       </Footer>
-    </PageContainer>
+    </PageLayout>
   );
 };
 

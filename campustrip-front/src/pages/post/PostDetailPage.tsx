@@ -1,50 +1,15 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import styled, { css } from "styled-components";
+import styled from "styled-components";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getPostById, deletePost } from "../../api/posts";
 import { createApplication, cancelApplication } from "../../api/applications";
 import { type Post } from "../../types/post";
 import { type Application } from "../../types/application";
-import { IoArrowBack, IoEllipsisHorizontal } from "react-icons/io5";
+import { IoEllipsisHorizontal } from "react-icons/io5";
 import { useAuth } from "../../context/AuthContext";
-
-const PageContainer = styled.div`
-  max-width: 480px;
-  margin: 0 auto;
-  background-color: ${({ theme }) => theme.colors.background};
-  color: ${({ theme }) => theme.colors.text};
-  min-height: 100vh;
-`;
-
-const Header = styled.header`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 20px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
-  position: sticky;
-  top: 0;
-  background-color: ${({ theme }) => theme.colors.background};
-  z-index: 10;
-`;
-
-const BackButton = styled.button`
-  background: none;
-  border: none;
-  color: inherit;
-  font-size: 24px;
-  cursor: pointer;
-  padding: 0;
-  display: flex;
-  align-items: center;
-`;
-
-const HeaderTitle = styled.h1`
-  font-size: 20px;
-  font-weight: bold;
-  margin: 0;
-`;
+import PageLayout from "../../components/layout/PageLayout";
+import Button from "../../components/common/Button";
 
 const TabMenu = styled.div`
   display: flex;
@@ -67,6 +32,11 @@ const TabButton = styled.button<{ active?: boolean }>`
   border-bottom: 2px solid
     ${({ theme, active }) => (active ? theme.colors.primary : "transparent")};
   font-weight: ${({ active }) => (active ? "bold" : "normal")};
+`;
+
+const ScrollingBody = styled.div`
+  flex-grow: 1;
+  overflow-y: auto;
 `;
 
 const ContentContainer = styled.main`
@@ -122,52 +92,6 @@ const PostBody = styled.div`
   white-space: pre-wrap;
 `;
 
-type ButtonStatus = "apply" | "cancel" | "accepted" | "rejected";
-
-const ActionButton = styled.button<{ status: ButtonStatus }>`
-  width: 100%;
-  padding: 14px;
-  border-radius: 8px;
-  border: none;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s;
-
-  ${({ theme, status }) =>
-    status === "apply" &&
-    css`
-      background-color: ${theme.colors.primary};
-      color: white;
-      &:hover {
-        background-color: #0056b3; // 더 진한 파란색
-      }
-    `}
-
-  ${({ theme, status }) =>
-    status === "cancel" &&
-    css`
-      background-color: ${theme.colors.error}; // 취소 버튼은 빨간색
-      color: white;
-      &:hover {
-        background-color: #c82333; // 더 진한 빨간색
-      }
-    `}
-
-${({ theme, status }) =>
-    (status === "accepted" || status === "rejected") &&
-    css`
-      background-color: ${theme.colors.grey};
-      color: ${theme.colors.background};
-      cursor: not-allowed;
-    `}
-  
-  &:disabled {
-    background-color: ${({ theme }) => theme.colors.grey};
-    cursor: not-allowed;
-  }
-`;
-
 const Message = styled.p`
   text-align: center;
   padding: 40px 20px;
@@ -190,11 +114,13 @@ const HeaderMenuButton = styled.button`
   padding: 0;
   display: flex;
   align-items: center;
-  margin-left: auto; /* 헤더 오른쪽 끝으로 밀어냄 */
-  position: relative; /* 드롭다운의 기준점이 됨 */
+  margin-left: auto;
+  position: relative;
+  width: 44px;
+  height: 44px;
+  justify-content: flex-end;
 `;
 
-// 2. 드롭다운 메뉴 스타일 추가
 const DropdownMenu = styled.div`
   position: absolute;
   top: 110%; /* 버튼 바로 아래 */
@@ -237,6 +163,12 @@ interface CancelApplicationData {
 
 type ApplicationStatus = "NOT_APPLIED" | "PENDING" | "ACCEPTED" | "REJECTED";
 
+type ButtonProps = {
+  text: string;
+  variant: "primary" | "danger";
+  disabled: boolean;
+};
+
 const PostDetailPage: React.FC = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
@@ -244,7 +176,6 @@ const PostDetailPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<"post" | "planner">("post");
-
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLButtonElement>(null);
 
@@ -270,7 +201,6 @@ const PostDetailPage: React.FC = () => {
         applicationId: null,
       };
     }
-    console.log(applicationId);
 
     const currentUserApplication = post.applications.find(
       (app) => app.userId === user.userId
@@ -420,33 +350,45 @@ const PostDetailPage: React.FC = () => {
   };
 
   if (isLoading) {
-    return <Message>로딩 중...</Message>;
+    return (
+      <PageLayout title="로딩 중...">
+        <Message>로딩 중...</Message>
+      </PageLayout>
+    );
   }
 
   if (queryError) {
-    return <Message>{queryError.message}</Message>;
+    return (
+      <PageLayout title="오류">
+        <Message>{queryError.message}</Message>
+      </PageLayout>
+    );
   }
 
   if (!post) {
-    return <Message>게시글 정보를 찾을 수 없습니다.</Message>;
+    return (
+      <PageLayout title="오류">
+        <Message>게시글 정보를 찾을 수 없습니다.</Message>
+      </PageLayout>
+    );
   }
 
   const isMyPost = user?.id === post.user.id;
   const isMutationLoading = isApplying || isCanceling || isDeleting;
 
   // 버튼 텍스트와 스타일 상태 결정
-  const getButtonProps = () => {
+  const getButtonProps = (): ButtonProps => {
     if (isMyPost) {
       return {
         text: "동행 신청자 목록",
-        status: "apply" as ButtonStatus,
+        variant: "primary",
         disabled: false,
       };
     }
     if (isMutationLoading) {
       return {
         text: "처리 중...",
-        status: "accepted" as ButtonStatus,
+        variant: "primary",
         disabled: true,
       };
     }
@@ -455,26 +397,26 @@ const PostDetailPage: React.FC = () => {
       case "ACCEPTED":
         return {
           text: "신청 됨",
-          status: "accepted" as ButtonStatus,
+          variant: "primary",
           disabled: true,
         };
       case "REJECTED":
         return {
           text: "거절됨",
-          status: "rejected" as ButtonStatus,
+          variant: "primary",
           disabled: true,
         };
       case "PENDING":
         return {
           text: "신청 취소",
-          status: "cancel" as ButtonStatus,
+          variant: "danger",
           disabled: false,
         };
       case "NOT_APPLIED":
       default:
         return {
           text: "동행 신청하기",
-          status: "apply" as ButtonStatus,
+          variant: "primary",
           disabled: false,
         };
     }
@@ -483,22 +425,15 @@ const PostDetailPage: React.FC = () => {
   const buttonProps = getButtonProps();
 
   return (
-    <PageContainer>
-      <Header>
-        <BackButton onClick={() => navigate(-1)}>
-          <IoArrowBack />
-        </BackButton>
-        <HeaderTitle>게시글</HeaderTitle>
-
-        {/* isMyPost일 때만 메뉴 버튼 표시 */}
-        {isMyPost && (
+    <PageLayout
+      title="게시글"
+      headerRight={
+        isMyPost ? (
           <HeaderMenuButton
             ref={menuRef}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             <IoEllipsisHorizontal />
-
-            {/* isMenuOpen일 때 드롭다운 메뉴 표시 */}
             {isMenuOpen && (
               <DropdownMenu>
                 <DropdownItem onClick={handleEditClick}>수정</DropdownItem>
@@ -508,9 +443,9 @@ const PostDetailPage: React.FC = () => {
               </DropdownMenu>
             )}
           </HeaderMenuButton>
-        )}
-      </Header>
-
+        ) : null
+      }
+    >
       <TabMenu>
         <TabButton
           active={activeTab === "post"}
@@ -526,58 +461,61 @@ const PostDetailPage: React.FC = () => {
         </TabButton>
       </TabMenu>
 
-      {activeTab === "post" && (
-        <ContentContainer>
-          <AuthorInfo>
-            <AuthorAvatar />
-            <AuthorName>{post.user?.name || "작성자"}</AuthorName>
-            <span>여행 온도: 🌡{post.user.userScore}</span>
-          </AuthorInfo>
+      {/* 스크롤 영역 */}
+      <ScrollingBody>
+        {activeTab === "post" && (
+          <ContentContainer>
+            <AuthorInfo>
+              <AuthorAvatar />
+              <AuthorName>{post.user?.name || "작성자"}</AuthorName>
+              <span>여행 온도: 🌡{post.user.userScore}</span>
+            </AuthorInfo>
 
-          <PostTitle>{post.title}</PostTitle>
+            <PostTitle>{post.title}</PostTitle>
 
-          <PostMeta>
-            <MetaItem>
-              📍 지역:{" "}
-              <span>
-                {post.regions?.map((r) => r.name).join(", ") || "정보 없음"}
-              </span>
-            </MetaItem>
-            <MetaItem>
-              📅 일정: <span>기간 정보 없음</span>
-            </MetaItem>
-            <MetaItem>
-              👥 모집 인원:{" "}
-              <span>
-                {post.memberSize} / {post.teamSize} 명
-              </span>
-            </MetaItem>
-          </PostMeta>
+            <PostMeta>
+              <MetaItem>
+                📍 지역:{" "}
+                <span>
+                  {post.regions?.map((r) => r.name).join(", ") || "정보 없음"}
+                </span>
+              </MetaItem>
+              <MetaItem>
+                📅 일정: <span>기간 정보 없음</span>
+              </MetaItem>
+              <MetaItem>
+                👥 모집 인원:{" "}
+                <span>
+                  {post.memberSize} / {post.teamSize} 명
+                </span>
+              </MetaItem>
+            </PostMeta>
 
-          <PostBody>{post.body}</PostBody>
+            <PostBody>{post.body}</PostBody>
 
-          {/* 신청/취소 에러 메시지 표시 */}
-          {(applyError || cancelError) && (
-            <ErrorMessage>신청 처리 중 오류가 발생했습니다.</ErrorMessage>
-          )}
+            {(applyError || cancelError) && (
+              <ErrorMessage>신청 처리 중 오류가 발생했습니다.</ErrorMessage>
+            )}
 
-          {/* ActionButton에 동적 props 전달 */}
-          <ActionButton
-            onClick={handleButtonClick}
-            status={buttonProps.status}
-            disabled={buttonProps.disabled || isDeleting}
-          >
-            {isDeleting ? "삭제 중..." : buttonProps.text}
-          </ActionButton>
-        </ContentContainer>
-      )}
+            <Button
+              onClick={handleButtonClick}
+              variant={buttonProps.variant}
+              disabled={buttonProps.disabled || isDeleting}
+              size="large"
+              style={{ width: "100%" }}
+            >
+              {isDeleting ? "삭제 중..." : buttonProps.text}
+            </Button>
+          </ContentContainer>
+        )}
 
-      {activeTab === "planner" && (
-        <ContentContainer>
-          <p>플래너 기능은 준비 중</p>
-        </ContentContainer>
-      )}
-    </PageContainer>
+        {activeTab === "planner" && (
+          <ContentContainer>
+            <p>플래너 기능은 준비 중</p>
+          </ContentContainer>
+        )}
+      </ScrollingBody>
+    </PageLayout>
   );
 };
 
