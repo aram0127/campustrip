@@ -1,6 +1,6 @@
 package com.example.app.config;
 
-import com.example.app.dto.ChatMessage;
+import com.example.app.dto.ChatMessageDTO;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -22,7 +22,7 @@ public class KafkaConfig {
 
     // Producer 설정 (메시지 발행)
     @Bean
-    public ProducerFactory<String, ChatMessage> producerFactory() {
+    public ProducerFactory<String, ChatMessageDTO> producerFactory() {
         Map<String, Object> config = new HashMap<>();
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "3.35.239.90:9092");
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -31,13 +31,13 @@ public class KafkaConfig {
     }
 
     @Bean
-    public KafkaTemplate<String, ChatMessage> kafkaTemplate() {
+    public KafkaTemplate<String, ChatMessageDTO> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
 
     // Consumer 설정 (메시지 수신)
     @Bean
-    public ConsumerFactory<String, ChatMessage> consumerFactory() {
+    public ConsumerFactory<String, ChatMessageDTO> consumerFactory() {
         Map<String, Object> config = new HashMap<>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "3.35.239.90:9092");
 //        config.put(ConsumerConfig.GROUP_ID_CONFIG, "chat-group");
@@ -48,9 +48,9 @@ public class KafkaConfig {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, ChatMessage>
+    public ConcurrentKafkaListenerContainerFactory<String, ChatMessageDTO>
     kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, ChatMessage> factory =
+        ConcurrentKafkaListenerContainerFactory<String, ChatMessageDTO> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         return factory;

@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
-public class ChatMessage {
+public class ChatMessageDTO {
     private MessageType messageType;
     private Integer roomId;
     private Integer membershipId;
