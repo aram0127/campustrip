@@ -9,47 +9,12 @@ import { createPost, type CreatePostData } from "../../../api/posts";
 import { type Planner } from "../../../types/planner";
 import { type Post } from "../../../types/post";
 import Button from "../../../components/common/Button";
-import { IoArrowBack } from "react-icons/io5";
 import axios from "axios";
+import PageLayout, {
+  ScrollingContent,
+} from "../../../components/layout/PageLayout";
 
-const PageContainer = styled.div`
-  max-width: 480px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: ${({ theme }) => theme.colors.background};
-`;
-
-const Header = styled.header`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 12px 20px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
-  position: relative;
-  flex-shrink: 0;
-`;
-
-const BackButton = styled.button`
-  position: absolute;
-  left: 16px;
-  background: none;
-  border: none;
-  color: ${({ theme }) => theme.colors.text};
-  font-size: 24px;
-  cursor: pointer;
-`;
-
-const HeaderTitle = styled.h1`
-  font-size: 18px;
-  font-weight: bold;
-  margin: 0;
-`;
-
-const PlannerListContainer = styled.main`
-  flex-grow: 1;
-  overflow-y: auto;
+const ScrollingListContainer = styled(ScrollingContent)`
   padding: 16px;
 `;
 
@@ -178,15 +143,8 @@ const PostCreatePlannerPage: React.FC = () => {
   };
 
   return (
-    <PageContainer>
-      <Header>
-        <BackButton onClick={handlePrev}>
-          <IoArrowBack />
-        </BackButton>
-        <HeaderTitle>플래너 선택 (3/3)</HeaderTitle>
-      </Header>
-
-      <PlannerListContainer>
+    <PageLayout title="플래너 선택 (3/3)">
+      <ScrollingListContainer>
         {isLoading && <Message>플래너 목록을 불러오는 중...</Message>}
         {queryError && <Message>오류: {queryError.message}</Message>}
 
@@ -219,7 +177,7 @@ const PostCreatePlannerPage: React.FC = () => {
               : `작성 실패: ${mutationError.message}`}
           </Message>
         )}
-      </PlannerListContainer>
+      </ScrollingListContainer>
 
       <Footer>
         <PrevButton onClick={handlePrev} disabled={isPending}>
@@ -232,7 +190,7 @@ const PostCreatePlannerPage: React.FC = () => {
           {isPending ? "생성 중..." : "작성 완료"}
         </FooterButton>
       </Footer>
-    </PageContainer>
+    </PageLayout>
   );
 };
 

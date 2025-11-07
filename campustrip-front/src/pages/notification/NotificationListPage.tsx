@@ -1,27 +1,16 @@
 import styled from "styled-components";
 import {
-  IoArrowBack,
   IoChatbubble,
   IoHeart,
   IoPersonAdd,
   IoTrashOutline,
   IoSettingsOutline,
 } from "react-icons/io5";
+import PageLayout, {
+  ScrollingContent,
+} from "../../components/layout/PageLayout";
 
-const PageContainer = styled.div`
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: ${({ theme }) => theme.colors.background};
-`;
-
-const NotificationList = styled.div`
-  overflow-y: auto;
-  flex-grow: 1;
-`;
+const NotificationList = styled.div``;
 
 const NotificationItem = styled.div`
   display: flex;
@@ -56,45 +45,7 @@ const Timestamp = styled.span`
   color: ${({ theme }) => theme.colors.secondaryTextColor};
 `;
 
-const Header = styled.header`
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  padding: 0 16px;
-  flex-shrink: 0;
-  height: 56px;
-  box-sizing: border-box;
-  background-color: ${({ theme }) =>
-    theme.colors.background === "#FFFFFF" ? "#f8f9fa" : "#2c2c2e"};
-  color: ${({ theme }) => theme.colors.text};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
-`;
-
-const HeaderSection = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const LeftSection = styled(HeaderSection)`
-  justify-content: flex-start;
-`;
-
-const CenterSection = styled(HeaderSection)`
-  justify-content: center;
-`;
-
-const RightSection = styled(HeaderSection)`
-  justify-content: flex-end;
-  gap: 16px;
-`;
-
-const Title = styled.h1`
-  font-size: 18px;
-  font-weight: bold;
-  margin: 0;
-`;
-
-const ActionButton = styled.button`
+const HeaderActionButton = styled.button`
   background: none;
   border: none;
   color: inherit;
@@ -104,8 +55,15 @@ const ActionButton = styled.button`
   align-items: center;
   justify-content: center;
   padding: 0;
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
+`;
+
+const RightHeaderGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: -12px; /* 패딩 조정 */
 `;
 
 // --- 임시 데이터 ---
@@ -155,41 +113,37 @@ const getIcon = (type: string) => {
 
 function NotificationListPage() {
   return (
-    <PageContainer>
-      <Header>
-        <LeftSection>
-          <ActionButton>
-            <IoArrowBack />
-          </ActionButton>
-        </LeftSection>
-        <CenterSection>
-          <Title>알림</Title>
-        </CenterSection>
-        <RightSection>
-          <ActionButton>
+    <PageLayout
+      title="알림"
+      headerRight={
+        <RightHeaderGroup>
+          <HeaderActionButton>
             <IoSettingsOutline />
-          </ActionButton>
-          <ActionButton>
+          </HeaderActionButton>
+          <HeaderActionButton>
             <IoTrashOutline />
-          </ActionButton>
-        </RightSection>
-      </Header>
-      <NotificationList>
-        {dummyNotifications.map((noti) => (
-          <NotificationItem key={noti.id}>
-            <IconWrapper type={noti.type as any}>
-              {getIcon(noti.type)}
-            </IconWrapper>
-            <NotificationContent>
-              <NotificationText>
-                <b>{noti.from}</b>님이 {noti.text}
-              </NotificationText>
-              <Timestamp>{noti.time}</Timestamp>
-            </NotificationContent>
-          </NotificationItem>
-        ))}
-      </NotificationList>
-    </PageContainer>
+          </HeaderActionButton>
+        </RightHeaderGroup>
+      }
+    >
+      <ScrollingContent>
+        <NotificationList>
+          {dummyNotifications.map((noti) => (
+            <NotificationItem key={noti.id}>
+              <IconWrapper type={noti.type as any}>
+                {getIcon(noti.type)}
+              </IconWrapper>
+              <NotificationContent>
+                <NotificationText>
+                  <b>{noti.from}</b>님이 {noti.text}
+                </NotificationText>
+                <Timestamp>{noti.time}</Timestamp>
+              </NotificationContent>
+            </NotificationItem>
+          ))}
+        </NotificationList>
+      </ScrollingContent>
+    </PageLayout>
   );
 }
 
