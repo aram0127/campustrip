@@ -13,8 +13,6 @@ import { getPosts, getPostsByRegion } from "../../api/posts";
 
 const PageContainer = styled.div`
   width: 100%;
-  max-width: 390px;
-  margin: 0 auto;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -22,9 +20,9 @@ const PageContainer = styled.div`
 `;
 
 const ControlsContainer = styled.div`
-  padding: 16px;
+  padding: ${({ theme }) => theme.spacings.medium};
   display: flex;
-  gap: 8px;
+  gap: ${({ theme }) => theme.spacings.xsmall};
   border-bottom: 1px solid ${({ theme }) => theme.colors.grey};
   align-items: center;
   flex-shrink: 0;
@@ -37,13 +35,13 @@ const PostListContainer = styled.div`
 
 const LoadingMessage = styled.p`
   text-align: center;
-  padding: 20px;
+  padding: ${({ theme }) => theme.spacings.large};
   color: ${({ theme }) => theme.colors.secondaryTextColor};
 `;
 
 const ErrorMessage = styled.p`
   text-align: center;
-  padding: 20px;
+  padding: ${({ theme }) => theme.spacings.large};
   color: ${({ theme }) => theme.colors.error};
 `;
 

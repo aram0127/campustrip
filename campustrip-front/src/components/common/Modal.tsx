@@ -1,5 +1,5 @@
-import React from 'react';
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
 const ModalBackdrop = styled.div`
   position: fixed;
@@ -15,8 +15,8 @@ const ModalBackdrop = styled.div`
 
 const ModalContent = styled.div`
   background-color: ${({ theme }) => theme.colors.background};
-  padding: 20px;
-  border-radius: 8px;
+  padding: ${({ theme }) => theme.spacings.medium}; /* 16px  */
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
   width: 90%;
   max-width: 400px;
 `;

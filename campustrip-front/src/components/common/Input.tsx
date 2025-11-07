@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
+import React, { useState } from "react";
+import styled from "styled-components";
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 
 const InputContainer = styled.div`
   position: relative;
@@ -9,9 +9,10 @@ const InputContainer = styled.div`
 
 const StyledInput = styled.input`
   width: 100%;
-  padding: 12px 14px;
+  padding: ${({ theme }) => theme.spacings.small}
+    ${({ theme }) => theme.spacings.medium}; /* 12px 16px */
   border: 1px solid ${({ theme }) => theme.colors.borderColor};
-  border-radius: 8px;
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
   font-size: ${({ theme }) => theme.fontSizes.body};
   box-sizing: border-box;
 
@@ -28,13 +29,13 @@ const StyledInput = styled.input`
 // 비밀번호 토글 버튼 스타일
 const ToggleButton = styled.button`
   position: absolute;
-  right: 0px;
+  right: ${({ theme }) => theme.spacings.small}; /* 12px */
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 20px;
+  font-size: ${({ theme }) => theme.fontSizes.subtitle}; /* 20px */
   color: ${({ theme }) => theme.colors.grey};
   display: flex;
   align-items: center;
@@ -50,10 +51,13 @@ const Input: React.FC<InputProps> = (props) => {
   };
 
   // type이 'password'일 때만 토글 기능 활성화
-  if (props.type === 'password') {
+  if (props.type === "password") {
     return (
       <InputContainer>
-        <StyledInput {...props} type={isPasswordVisible ? 'text' : 'password'} />
+        <StyledInput
+          {...props}
+          type={isPasswordVisible ? "text" : "password"}
+        />
         <ToggleButton type="button" onClick={togglePasswordVisibility}>
           {isPasswordVisible ? <AiFillEyeInvisible /> : <AiFillEye />}
         </ToggleButton>
