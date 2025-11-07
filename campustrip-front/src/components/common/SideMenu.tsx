@@ -26,6 +26,9 @@ const MenuContainer = styled(animated.div)`
   display: flex;
   flex-direction: column;
   box-shadow: 4px 0px 15px rgba(0, 0, 0, 0.1);
+  padding-top: env(safe-area-inset-top); /* 상단 노치 영역 패딩 */
+  padding-bottom: env(safe-area-inset-bottom); /* 하단 홈바 영역 패딩 */
+  box-sizing: border-box; /* 패딩을 높이에 포함 */
 `;
 
 const MenuProfile = styled.div`

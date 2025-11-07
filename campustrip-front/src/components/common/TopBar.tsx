@@ -1,7 +1,7 @@
-import React from 'react';
-import styled from 'styled-components';
-import { Link } from 'react-router-dom';
-import { IoNotificationsOutline } from 'react-icons/io5';
+import React from "react";
+import styled from "styled-components";
+import { Link } from "react-router-dom";
+import { IoNotificationsOutline } from "react-icons/io5";
 
 const TopBarContainer = styled.header`
   display: grid;
@@ -29,14 +29,16 @@ const RightSection = styled.div`
   justify-content: flex-end;
 `;
 
-
 const ProfileBtn = styled.button`
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background-color: ${({ theme }) => theme.colors.secondaryTextColor};
   border: none;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const Logo = styled(Link)`
@@ -50,8 +52,8 @@ const NotificationBtn = styled.button`
   background: none;
   border: none;
   font-size: 24px;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   color: ${({ theme }) => theme.colors.text};
   cursor: pointer;
@@ -74,7 +76,9 @@ const TopBar: React.FC<TopBarProps> = ({ onProfileClick }) => {
         <Logo to="/">Campus Trip</Logo>
       </CenterSection>
       <RightSection>
-        <NotificationBtn><IoNotificationsOutline /></NotificationBtn>
+        <NotificationBtn>
+          <IoNotificationsOutline />
+        </NotificationBtn>
       </RightSection>
     </TopBarContainer>
   );
