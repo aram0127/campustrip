@@ -3,31 +3,7 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
-
-const PageContainer = styled.div`
-  width: 100%;
-  max-width: 390px;
-  margin: 0 auto;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  min-height: 100vh;
-`;
-
-const Title = styled.h1`
-  font-size: 24px;
-  color: ${({ theme }) => theme.colors.primary};
-  margin-bottom: 8px;
-`;
-
-const Subtitle = styled.p`
-  font-size: 14px;
-  color: ${({ theme }) => theme.colors.secondaryTextColor};
-  margin-bottom: 24px;
-`;
+import AuthLayout from "../../components/layout/AuthLayout";
 
 const Form = styled.form`
   width: 100%;
@@ -55,9 +31,10 @@ function SetNewPasswordPage() {
   };
 
   return (
-    <PageContainer>
-      <Title>새 비밀번호 설정</Title>
-      <Subtitle>새롭게 사용하실 비밀번호를 입력해주세요.</Subtitle>
+    <AuthLayout
+      title="새 비밀번호 설정"
+      subtitle="새롭게 사용하실 비밀번호를 입력해주세요."
+    >
       <Form onSubmit={handleSubmit}>
         <Input type="password" placeholder="새 비밀번호" required />
         <Input type="password" placeholder="새 비밀번호 확인" required />
@@ -68,7 +45,7 @@ function SetNewPasswordPage() {
           비밀번호 변경
         </Button>
       </Form>
-    </PageContainer>
+    </AuthLayout>
   );
 }
 
