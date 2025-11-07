@@ -3,31 +3,7 @@ import styled from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
-
-const PageContainer = styled.div`
-  width: 100%;
-  max-width: 390px;
-  margin: 0 auto;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  min-height: 100vh;
-`;
-
-const Title = styled.h1`
-  font-size: 24px;
-  color: ${({ theme }) => theme.colors.primary};
-  margin-bottom: 8px;
-`;
-
-const Subtitle = styled.p`
-  font-size: 14px;
-  color: ${({ theme }) => theme.colors.secondaryTextColor};
-  margin-bottom: 24px;
-`;
+import AuthLayout from "../../components/layout/AuthLayout";
 
 const Form = styled.form`
   width: 100%;
@@ -57,9 +33,10 @@ function FindIdPage() {
   };
 
   return (
-    <PageContainer>
-      <Title>아이디 찾기</Title>
-      <Subtitle>가입 시 등록한 이메일을 입력해주세요.</Subtitle>
+    <AuthLayout
+      title="아이디 찾기"
+      subtitle="가입 시 등록한 이메일을 입력해주세요."
+    >
       <Form onSubmit={handleSubmit}>
         <Input
           type="email"
@@ -73,7 +50,7 @@ function FindIdPage() {
         </Button>
       </Form>
       <StyledLink to="/login">로그인 하러 가기</StyledLink>
-    </PageContainer>
+    </AuthLayout>
   );
 }
 
