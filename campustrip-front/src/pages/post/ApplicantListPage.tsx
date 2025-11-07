@@ -9,45 +9,7 @@ import {
 } from "../../api/applications";
 import { type Applicant } from "../../types/applicant";
 import { IoArrowBack, IoCheckmark, IoClose } from "react-icons/io5";
-
-const PageContainer = styled.div`
-  max-width: 480px;
-  margin: 0 auto;
-  background-color: ${({ theme }) => theme.colors.background};
-  color: ${({ theme }) => theme.colors.text};
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-`;
-
-const Header = styled.header`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 20px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
-  position: sticky;
-  top: 0;
-  background-color: ${({ theme }) => theme.colors.background};
-  z-index: 10;
-`;
-
-const BackButton = styled.button`
-  background: none;
-  border: none;
-  color: inherit;
-  font-size: 24px;
-  cursor: pointer;
-  padding: 0;
-  display: flex;
-  align-items: center;
-`;
-
-const HeaderTitle = styled.h1`
-  font-size: 20px;
-  font-weight: bold;
-  margin: 0;
-`;
+import PageLayout from "../../components/layout/PageLayout";
 
 const ApplicantList = styled.main`
   flex-grow: 1;
@@ -222,13 +184,7 @@ const ApplicantListPage: React.FC = () => {
   }
 
   return (
-    <PageContainer>
-      <Header>
-        <BackButton onClick={() => navigate(-1)}>
-          <IoArrowBack />
-        </BackButton>
-        <HeaderTitle>동행 신청자 목록</HeaderTitle>
-      </Header>
+    <PageLayout title="동행 신청자 목록" showBackButton>
       <ApplicantList>
         {applicants.length === 0 && <Message>아직 신청자가 없습니다.</Message>}
         {applicants.map((applicant) => (
@@ -271,7 +227,7 @@ const ApplicantListPage: React.FC = () => {
           </ApplicantItem>
         ))}
       </ApplicantList>
-    </PageContainer>
+    </PageLayout>
   );
 };
 

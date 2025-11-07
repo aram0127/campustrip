@@ -1,41 +1,10 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { IoArrowBack, IoSearch } from "react-icons/io5";
-
-const PageContainer = styled.div`
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: ${({ theme }) => theme.colors.background};
-`;
-
-const Header = styled.header`
-  display: flex;
-  align-items: center;
-  padding: 10px 16px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
-  flex-shrink: 0;
-`;
-
-const BackButton = styled.button`
-  background: none;
-  border: none;
-  color: ${({ theme }) => theme.colors.text};
-  font-size: 24px;
-  cursor: pointer;
-  margin-right: 16px;
-`;
-
-const Title = styled.h1`
-  font-size: 18px;
-  font-weight: bold;
-  margin: 0;
-  color: ${({ theme }) => theme.colors.text};
-`;
+import { IoSearch } from "react-icons/io5";
+import PageLayout, {
+  ScrollingContent,
+} from "../../components/layout/PageLayout";
 
 const CreateButton = styled.button`
   background: none;
@@ -45,6 +14,7 @@ const CreateButton = styled.button`
   font-weight: bold;
   cursor: pointer;
   margin-left: auto;
+  flex-shrink: 0;
 
   &:disabled {
     color: ${({ theme }) => theme.colors.grey};
@@ -55,6 +25,7 @@ const CreateButton = styled.button`
 const SearchContainer = styled.div`
   padding: 16px;
   position: relative;
+  flex-shrink: 0;
 `;
 
 const SearchInput = styled.input`
@@ -75,10 +46,7 @@ const SearchIcon = styled(IoSearch)`
   color: ${({ theme }) => theme.colors.grey};
 `;
 
-const UserList = styled.div`
-  overflow-y: auto;
-  flex-grow: 1;
-`;
+const UserList = styled.div``;
 
 const UserItem = styled.label`
   display: flex;
@@ -137,33 +105,34 @@ function NewChatPage() {
   };
 
   return (
-    <PageContainer>
-      <Header>
-        <BackButton onClick={() => navigate(-1)}>
-          <IoArrowBack />
-        </BackButton>
-        <Title>새로운 채팅</Title>
+    <PageLayout
+      title="새로운 채팅"
+      headerRight={
         <CreateButton
           onClick={handleCreateChat}
           disabled={selectedUsers.length === 0}
         >
           생성
         </CreateButton>
-      </Header>
+      }
+    >
       <SearchContainer>
         <SearchIcon />
         <SearchInput placeholder="사용자 검색" />
       </SearchContainer>
-      <UserList>
-        {dummyUsers.map((user) => (
-          <UserItem key={user.id}>
-            <Avatar />
-            <UserName>{user.name}</UserName>
-            <Checkbox onChange={() => handleUserSelect(user.id)} />
-          </UserItem>
-        ))}
-      </UserList>
-    </PageContainer>
+
+      <ScrollingContent>
+        <UserList>
+          {dummyUsers.map((user) => (
+            <UserItem key={user.id}>
+              <Avatar />
+              <UserName>{user.name}</UserName>
+              <Checkbox onChange={() => handleUserSelect(user.id)} />
+            </UserItem>
+          ))}
+        </UserList>
+      </ScrollingContent>
+    </PageLayout>
   );
 }
 

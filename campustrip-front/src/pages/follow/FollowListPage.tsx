@@ -1,43 +1,9 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { IoArrowBack } from "react-icons/io5";
 import Button from "../../components/common/Button";
-
-const PageContainer = styled.div`
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: ${({ theme }) => theme.colors.background};
-`;
-
-const Header = styled.header`
-  display: flex;
-  align-items: center;
-  padding: 10px 16px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
-  flex-shrink: 0;
-  position: relative;
-`;
-
-const BackButton = styled.button`
-  background: none;
-  border: none;
-  color: ${({ theme }) => theme.colors.text};
-  font-size: 24px;
-  cursor: pointer;
-`;
-
-const Title = styled.h1`
-  font-size: 18px;
-  font-weight: bold;
-  margin: 0;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-`;
+import PageLayout, {
+  ScrollingContent,
+} from "../../components/layout/PageLayout";
 
 const TabMenu = styled.div`
   display: flex;
@@ -59,10 +25,7 @@ const TabButton = styled.button<{ active?: boolean }>`
     ${({ theme, active }) => (active ? theme.colors.primary : "transparent")};
 `;
 
-const UserList = styled.div`
-  overflow-y: auto;
-  flex-grow: 1;
-`;
+const UserList = styled.div``;
 
 const UserItem = styled.div`
   display: flex;
@@ -130,13 +93,7 @@ function FollowListPage() {
   };
 
   return (
-    <PageContainer>
-      <Header>
-        <BackButton>
-          <IoArrowBack />
-        </BackButton>
-        <Title>홍길동</Title>
-      </Header>
+    <PageLayout title="홍길동">
       <TabMenu>
         <TabButton
           active={activeTab === "followers"}
@@ -157,8 +114,10 @@ function FollowListPage() {
           검색
         </TabButton>
       </TabMenu>
-      <UserList>{renderList()}</UserList>
-    </PageContainer>
+      <ScrollingContent>
+        <UserList>{renderList()}</UserList>
+      </ScrollingContent>
+    </PageLayout>
   );
 }
 
