@@ -1,6 +1,5 @@
 package com.example.app.controller;
 
-import com.example.app.domain.Chat;
 import com.example.app.domain.Post;
 import com.example.app.domain.Region;
 import com.example.app.dto.*;
@@ -13,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -72,7 +70,8 @@ public class PostController {
 
     // PUT: 게시물 정보 수정
     @PutMapping("/{postId}")
-    public Post updatePost(@RequestBody CreatePost createPost) {
+    public Post updatePost(@PathVariable Integer postId, @RequestBody CreatePost createPost) {
+        createPost.setPostId(postId);
         Post post = postService.updatePost(createPost);
         return post;
     }
