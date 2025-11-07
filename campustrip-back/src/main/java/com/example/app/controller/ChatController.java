@@ -28,8 +28,7 @@ public class ChatController {
 
     @MessageMapping("/chat/message")  // 클라이언트가 /pub/chat/message로 전송
     public void sendMessage(ChatMessageDTO message) {
-        System.out.println("메시지 수신: {}" + message);
-
+        message.setTimestamp(java.time.LocalDateTime.now());
         // ❌ 기존: SimpMessagingTemplate으로 직접 전송
         // messagingTemplate.convertAndSend("/sub/chat/room/" + roomId, message);
 
