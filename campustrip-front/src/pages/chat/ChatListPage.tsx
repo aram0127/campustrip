@@ -1,6 +1,10 @@
 import styled from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
 import FloatingActionButton from "../../components/common/FloatingActionButton";
+import { useQuery } from "@tanstack/react-query";
+import { getMyChats } from "../../api/chats";
+import { type Chat } from "../../types/chat";
+import { useAuth } from "../../context/AuthContext";
 
 const PageContainer = styled.div`
   width: 100%;
@@ -66,49 +70,70 @@ const Timestamp = styled.div`
   flex-shrink: 0;
 `;
 
-// --- 임시 데이터 ---
-const dummyChats = [
-  {
-    id: 1,
-    userName: "제주도 여행",
-    lastMessage: "사진 너무 잘 찍어주셔서 감사해요!",
-    timestamp: "오후 2:30",
-  },
-  {
-    id: 2,
-    userName: "홍길동",
-    lastMessage: "네, 그럼 그때 뵐게요!",
-    timestamp: "7월 6일",
-  },
-  {
-    id: 3,
-    userName: "김철수",
-    lastMessage: "혹시 일정 변경 가능할까요?",
-    timestamp: "7월 3일",
-  },
-];
+const Message = styled.p`
+  text-align: center;
+  padding: 40px 20px;
+  color: ${({ theme }) => theme.colors.secondaryTextColor};
+`;
 
 function ChatListPage() {
   const navigate = useNavigate();
+  const { user } = useAuth(); // 현재 사용자 정보
+
+  const {
+    data: chats = [],
+    isLoading,
+    error,
+  } = useQuery<Chat[], Error>({
+    queryKey: ["myChats", user?.id], // user.id를 queryKey에 포함
+    queryFn: () => getMyChats(user!.id), // API 호출
+    enabled: !!user, // user가 있을 때만 실행
+  });
 
   const handleNewChat = () => {
     navigate("/chat/new");
   };
 
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <Message>채팅 목록을 불러오는 중...</Message>
+        <FloatingActionButton onClick={handleNewChat} />
+      </PageContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageContainer>
+        <Message>오류가 발생했습니다: {error.message}</Message>
+        <FloatingActionButton onClick={handleNewChat} />
+      </PageContainer>
+    );
+  }
+
   return (
     <PageContainer>
       <ChatList>
-        {dummyChats.map((chat) => (
+        {chats.length === 0 && <Message>참여중인 채팅방이 없습니다.</Message>}
+        {chats.map((chat) => (
           <ChatItem to={`/chat/${chat.id}`} key={chat.id}>
             <Avatar />
             <ChatInfo>
-              <UserName>{chat.userName}</UserName>
-              <LastMessage>{chat.lastMessage}</LastMessage>
+              <UserName>{chat.title}</UserName>
+              <LastMessage>
+                {/* TODO: 마지막 메시지는 Kafka/Socket으로 실시간 수신 필요 */}
+                마지막 메시지...
+              </LastMessage>
             </ChatInfo>
-            <Timestamp>{chat.timestamp}</Timestamp>
+            <Timestamp>
+              {/* TODO: 마지막 메시지 시간 */}
+              {new Date(chat.createdAt).toLocaleDateString("ko-KR")}
+            </Timestamp>
           </ChatItem>
         ))}
       </ChatList>
+
       <FloatingActionButton onClick={handleNewChat} />
     </PageContainer>
   );

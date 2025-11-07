@@ -3,47 +3,12 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { usePostCreate } from "../../../context/PostCreateContext";
 import Button from "../../../components/common/Button";
-import { IoArrowBack } from "react-icons/io5";
+import PageLayout, {
+  ScrollingContent,
+} from "../../../components/layout/PageLayout";
 
-const PageContainer = styled.div`
-  max-width: 480px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: ${({ theme }) => theme.colors.background};
-`;
-
-const Header = styled.header`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 12px 20px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
-  position: relative;
-  flex-shrink: 0;
-`;
-
-const BackButton = styled.button`
-  position: absolute;
-  left: 16px;
-  background: none;
-  border: none;
-  color: ${({ theme }) => theme.colors.text};
-  font-size: 24px;
-  cursor: pointer;
-`;
-
-const HeaderTitle = styled.h1`
-  font-size: 18px;
-  font-weight: bold;
-  margin: 0;
-`;
-
-const FormContainer = styled.main`
+const ScrollingFormContainer = styled(ScrollingContent)`
   padding: 20px;
-  flex-grow: 1;
-  overflow-y: auto;
 `;
 
 const FormGroup = styled.div`
@@ -213,15 +178,8 @@ const PostCreateDetailsPage: React.FC = () => {
   };
 
   return (
-    <PageContainer>
-      <Header>
-        <BackButton onClick={handlePrev}>
-          <IoArrowBack />
-        </BackButton>
-        <HeaderTitle>새 게시글 작성 (2/3)</HeaderTitle>
-      </Header>
-
-      <FormContainer>
+    <PageLayout title="새 게시글 작성 (2/3)">
+      <ScrollingFormContainer>
         <SelectedRegionsContainer>
           선택한 지역:
           {formData.regions.map((region) => (
@@ -278,7 +236,7 @@ const PostCreateDetailsPage: React.FC = () => {
             </NumberButton>
           </NumberInputContainer>
         </FormGroup>
-      </FormContainer>
+      </ScrollingFormContainer>
 
       <Footer>
         <PrevButton onClick={handlePrev}>이전</PrevButton>
@@ -286,7 +244,7 @@ const PostCreateDetailsPage: React.FC = () => {
           다음
         </FooterButton>
       </Footer>
-    </PageContainer>
+    </PageLayout>
   );
 };
 
