@@ -11,6 +11,8 @@ import com.example.app.domain.User;
 import com.example.app.dto.CreateChat;
 import com.example.app.dto.CreateChatMember;
 
+import java.util.List;
+
 @Service
 public class ChatService {
     ChatRepository chatRepository;
@@ -52,5 +54,13 @@ public class ChatService {
 
     public Integer getNumberOfChatMembers(Chat chat) {
         return chatMemberRepository.findAllByChat(chat).size();
+    }
+
+    public List<Chat> getMyChatRoom(Integer userId) {
+        User user = userRepository.findById(userId).orElseThrow();
+        List<ChatMember> chatMembers = chatMemberRepository.findAllByUser(user);
+        return chatMembers.stream()
+                          .map(ChatMember::getChat)
+                          .toList();
     }
 }
