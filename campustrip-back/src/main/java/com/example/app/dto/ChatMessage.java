@@ -9,7 +9,8 @@ import java.time.LocalDateTime;
 @Builder
 public class ChatMessage {
     private MessageType messageType;
-    private String roomId;
+    private Integer roomId;
+    private Integer membershipId;
     private String userName;
     private String message;
     private LocalDateTime timestamp;
