@@ -21,7 +21,7 @@ public class KafkaConsumerService {
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void consumeMessage(ChatMessageDTO message) {
-        log.info("Kafka 메시지 수신: {}", message);
+        log.info("Kafka 메시지 수신: {}", message.getMessage());
 
         // WebSocket으로 해당 채팅방 구독자들에게 브로드캐스트
         messagingTemplate.convertAndSend(
