@@ -11,8 +11,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class ChatMessageDTO {
     private MessageType messageType;
     private Integer roomId;
