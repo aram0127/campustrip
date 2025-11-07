@@ -16,6 +16,7 @@ public class ChatMessage {
     private String id; // mongodb가 생성할 메시지 고유 ID
     private Integer chatId; // 채팅방 ID
     private Integer senderId; // 메시지 보낸 사람 ID
+    private String senderName; // 메시지 보낸 사람 이름
     private String content; // 메시지 내용
     private java.time.LocalDateTime timestamp; // 메시지 전송 시간
 
