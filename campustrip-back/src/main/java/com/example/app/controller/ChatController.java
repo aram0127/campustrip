@@ -50,4 +50,8 @@ public class ChatController {
         )).toList();
     }
 
+    @GetMapping("/chat/{chatId}/messages")
+    public List<ChatMessageDTO> getChatMessages(@PathVariable Integer chatId) {
+        return chatMessageService.getChatHistory(chatId);
+    }
 }
