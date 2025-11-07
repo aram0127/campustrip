@@ -6,22 +6,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useMutation } from "@tanstack/react-query";
 import { signupUser } from "../../api/auth";
-
-const SignupPageContainer = styled.div`
-  width: 100%;
-  max-width: 390px;
-  margin: 0 auto;
-  box-sizing: border-box;
-
-  padding: 40px 20px;
-`;
-
-const Title = styled.h1`
-  font-size: ${({ theme }) => theme.fontSizes.title};
-  color: ${({ theme }) => theme.colors.primary};
-  font-weight: bold;
-  margin-bottom: 24px;
-`;
+import AuthLayout from "../../components/layout/AuthLayout";
 
 const Form = styled.form`
   width: 100%;
@@ -44,7 +29,6 @@ const ValidationMessage = styled.p<{ isValid: boolean }>`
     isValid ? theme.colors.secondary : theme.colors.error};
   margin: -8px 0 8px 0;
   width: 100%;
-  max-width: 300px;
   text-align: left;
 `;
 
@@ -223,8 +207,7 @@ function SignupPage() {
   };
 
   return (
-    <SignupPageContainer>
-      <Title>회원가입</Title>
+    <AuthLayout title="회원가입">
       <Form onSubmit={handleSubmit}>
         {/* 아이디, 비밀번호, 이름 Input 필드 */}
         <Input
@@ -391,7 +374,7 @@ function SignupPage() {
           {isPending ? "가입 처리 중..." : "가입하기"}
         </Button>
       </Form>
-    </SignupPageContainer>
+    </AuthLayout>
   );
 }
 
