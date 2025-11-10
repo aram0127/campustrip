@@ -8,8 +8,6 @@ import { useAuth } from "../../context/AuthContext";
 
 const PageContainer = styled.div`
   width: 100%;
-  max-width: 390px;
-  margin: 0 auto;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;

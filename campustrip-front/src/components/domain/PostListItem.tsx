@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 const ListItemContainer = styled(Link)`
   display: block;
-  padding: 16px;
+  padding: ${({ theme }) => theme.spacings.medium};
   border-bottom: 1px solid ${({ theme }) => theme.colors.grey};
   cursor: pointer;
   text-decoration: none;
@@ -17,14 +17,15 @@ const ListItemContainer = styled(Link)`
 `;
 
 const PostTitle = styled.h2`
-  font-size: 18px;
-  margin: 0 0 8px 0;
+  font-size: ${({ theme }) => theme.fontSizes.body}; /* 16px */
+  font-weight: ${({ theme }) => theme.fontWeights.bold};
+  margin: 0 0 ${({ theme }) => theme.spacings.xsmall} 0;
   color: ${({ theme }) => theme.colors.text};
 `;
 
 const PostInfo = styled.p`
-  font-size: 14px;
-  margin: 4px 0 0 0;
+  font-size: ${({ theme }) => theme.fontSizes.caption}; /* 12px  */
+  margin: ${({ theme }) => theme.spacings.xxsmall} 0 0 0;
   color: ${({ theme }) => theme.colors.grey};
 `;
 

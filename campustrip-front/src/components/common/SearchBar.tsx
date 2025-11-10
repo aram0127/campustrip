@@ -1,6 +1,6 @@
-import React from 'react';
-import styled from 'styled-components';
-import { AiOutlineSearch } from 'react-icons/ai';
+import React from "react";
+import styled from "styled-components";
+import { AiOutlineSearch } from "react-icons/ai";
 
 const SearchContainer = styled.div`
   position: relative;
@@ -9,10 +9,11 @@ const SearchContainer = styled.div`
 
 const SearchInput = styled.input`
   width: 100%;
-  padding: 10px 14px;
+  padding: ${({ theme }) => theme.spacings.small}
+    ${({ theme }) => theme.spacings.medium};
   padding-left: 40px;
   border: 1px solid ${({ theme }) => theme.colors.grey};
-  border-radius: 8px;
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
   background-color: ${({ theme }) => theme.colors.background};
   color: ${({ theme }) => theme.colors.text};
   box-sizing: border-box;
@@ -20,13 +21,13 @@ const SearchInput = styled.input`
 
 const SearchIcon = styled(AiOutlineSearch)`
   position: absolute;
-  left: 12px;
+  left: ${({ theme }) => theme.spacings.small}; /* 12px */
   top: 0;
   height: 100%;
   display: flex;
   align-items: center;
   color: ${({ theme }) => theme.colors.grey};
-  font-size: 20px;
+  font-size: ${({ theme }) => theme.fontSizes.subtitle}; /* 20px */
 `;
 
 interface SearchBarProps {
@@ -34,7 +35,10 @@ interface SearchBarProps {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ placeholder = "검색...", onChange }) => {
+const SearchBar: React.FC<SearchBarProps> = ({
+  placeholder = "검색...",
+  onChange,
+}) => {
   return (
     <SearchContainer>
       <SearchIcon />

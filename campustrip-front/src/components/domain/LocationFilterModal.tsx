@@ -16,11 +16,12 @@ const Title = styled.h2`
 const TabContainer = styled.div`
   display: flex;
   border-bottom: 1px solid ${({ theme }) => theme.colors.grey};
-  margin-bottom: 16px;
+  margin-bottom: ${({ theme }) => theme.spacings.medium};
 `;
 
 const TabButton = styled.button<{ isActive: boolean }>`
-  padding: 10px 16px;
+  padding: ${({ theme }) => theme.spacings.small}
+    ${({ theme }) => theme.spacings.medium}; /* 12px 16px */
   border: none;
   background-color: transparent;
   color: ${({ theme, isActive }) =>
@@ -29,12 +30,12 @@ const TabButton = styled.button<{ isActive: boolean }>`
     ${({ theme, isActive }) =>
       isActive ? theme.colors.primary : "transparent"};
   cursor: pointer;
-  font-size: 16px;
+  font-size: ${({ theme }) => theme.fontSizes.body};
 `;
 
 const FilterContainer = styled.div`
   display: flex;
-  gap: 16px;
+  gap: ${({ theme }) => theme.spacings.medium};
   height: 300px;
 `;
 
@@ -52,8 +53,8 @@ const RegionList = styled.ul`
 `;
 
 const RegionItem = styled.li<{ isSelected: boolean }>`
-  padding: 10px;
-  border-radius: 4px;
+  padding: ${({ theme }) => theme.spacings.small}; /* 12px */
+  border-radius: ${({ theme }) => theme.borderRadius.small};
   cursor: pointer;
   background-color: ${({ theme, isSelected }) =>
     isSelected ? theme.colors.primary : "transparent"};
@@ -69,13 +70,14 @@ const RegionItem = styled.li<{ isSelected: boolean }>`
 
 const ButtonContainer = styled.div`
   display: flex;
-  gap: 8px;
-  margin-top: 20px;
+  gap: ${({ theme }) => theme.spacings.xsmall};
+  margin-top: ${({ theme }) => theme.spacings.medium}; /* 16px */
 `;
 
 const Message = styled.p`
   text-align: center;
-  padding: 40px 20px;
+  padding: ${({ theme }) => theme.spacings.xlarge}
+    ${({ theme }) => theme.spacings.medium}; /* 32px 16px */
   color: ${({ theme }) => theme.colors.secondaryTextColor};
 `;
 
