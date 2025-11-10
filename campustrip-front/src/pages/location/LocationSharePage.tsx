@@ -82,7 +82,6 @@ const LocationSharePage: React.FC = () => {
   const [companions, setCompanions] = useState<Map<number, Companion>>(
     new Map()
   );
-  const [mapRef, setMapRef] = useState<google.maps.Map | null>(null);
   const [error, setError] = useState<string | null>(null);
   // 맵이 처음 로드될 때 중심을 잡았는지 확인하는 state
   const [mapCenter, setMapCenter] = useState<google.maps.LatLngLiteral | null>(
@@ -96,6 +95,7 @@ const LocationSharePage: React.FC = () => {
   // state를 참조하기 위한 ref
   const isSharingRef = useRef(isSharing);
   const myPositionRef = useRef(myPosition);
+  const userRef = useRef(user);
 
   // state가 변경될 때마다 ref의 .current 값을 업데이트
   useEffect(() => {
@@ -105,6 +105,10 @@ const LocationSharePage: React.FC = () => {
   useEffect(() => {
     myPositionRef.current = myPosition;
   }, [myPosition]);
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
@@ -127,32 +131,37 @@ const LocationSharePage: React.FC = () => {
   }, [isLoaded]);
 
   // 지도 제어 함수
-  const onLoad = useCallback((map: google.maps.Map) => setMapRef(map), []);
-  const onUnmount = useCallback(() => setMapRef(null), []);
-  const centerOn = (position: google.maps.LatLngLiteral) => {
-    mapRef?.panTo(position);
-    mapRef?.setZoom(15);
+  const centerOnMe = () => {
+    if (myPositionRef.current) {
+      setMapCenter(myPositionRef.current);
+    }
+  };
+  const centerOnCompanion = (position: google.maps.LatLngLiteral) => {
+    setMapCenter(position);
   };
 
   // WebSocket 메시지 전송 함수
   const sendMessage = useCallback(
     (type: LocationMessage["type"], position: google.maps.LatLngLiteral) => {
-      if (!stompClientRef.current?.connected || !user || !chatRoomId) return;
+      const currentUser = userRef.current;
+      if (!stompClientRef.current?.connected || !currentUser || !chatRoomId) {
+        return;
+      }
 
       const message: LocationMessage = {
         type: type,
         chatRoomId: chatRoomId,
-        userId: user.id,
-        username: user.name,
+        userId: currentUser.id,
+        username: currentUser.name,
         lat: position.lat,
         lng: position.lng,
       };
       stompClientRef.current.publish({
-        destination: `/app/location/share/${chatRoomId}`,
+        destination: `/app/location/${chatRoomId}`,
         body: JSON.stringify(message),
       });
     },
-    [user, chatRoomId]
+    [chatRoomId]
   );
 
   // WebSocket 연결 및 구독 설정
@@ -183,8 +192,8 @@ const LocationSharePage: React.FC = () => {
           (message) => {
             const newLocation: LocationMessage = JSON.parse(message.body);
 
-            // 본인 위치는 watchPosition이 처리하므로 무시
-            if (newLocation.userId === user.id) return;
+            const currentUserId = userRef.current?.id;
+            if (newLocation.userId === currentUserId) return;
 
             setCompanions((prev) => {
               const newMap = new Map(prev);
@@ -244,7 +253,7 @@ const LocationSharePage: React.FC = () => {
       client?.deactivate();
       console.log("STOMP 연결 종료");
     };
-  }, [chatRoomId, user, isLoaded, sendMessage]);
+  }, [chatRoomId, user?.id, isLoaded, sendMessage]);
 
   // 실시간 위치 추적
   useEffect(() => {
@@ -316,24 +325,18 @@ const LocationSharePage: React.FC = () => {
       // 공유 시작
       // 'TALK' 메시지는 watchPosition useEffect가 보낼 것임
       console.log("위치 공유 시작");
-      if (myPosition) {
-        centerOn(myPosition);
+      if (myPositionRef.current) {
+        setMapCenter(myPositionRef.current);
       }
     } else {
       // 공유 중지
       console.log("위치 공유 중지");
       // 공유를 끄는 시점에 'LEAVE' 메시지를 명시적으로 전송
-      if (myPosition) {
-        sendMessage("LEAVE", myPosition);
+      if (myPositionRef.current) {
+        sendMessage("LEAVE", myPositionRef.current);
       }
     }
     setIsSharing(newStatus); // watchPosition useEffect 트리거
-  };
-
-  const handleCenterOnMe = () => {
-    if (myPosition) {
-      setMapCenter(myPosition);
-    }
   };
 
   // 렌더링 로직
@@ -354,8 +357,6 @@ const LocationSharePage: React.FC = () => {
         center={mapCenter}
         zoom={15}
         options={mapOptions}
-        onLoad={onLoad}
-        onUnmount={onUnmount}
       >
         {myPosition && <MarkerF position={myPosition} icon={myLocationIcon} />}
         {companionsArray.map((c) => (
@@ -376,11 +377,7 @@ const LocationSharePage: React.FC = () => {
         >
           {isSharing ? "공유 중 (ON)" : "내 위치 공유"}
         </Button>
-        <Button
-          onClick={handleCenterOnMe}
-          disabled={!myPosition}
-          style={{ flex: 1 }}
-        >
+        <Button onClick={centerOnMe} disabled={!myPosition} style={{ flex: 1 }}>
           내 위치
         </Button>
       </ControlsWrapper>
@@ -395,7 +392,10 @@ const LocationSharePage: React.FC = () => {
           companionsArray.map((c) => (
             <CompanionItem key={c.userId}>
               <span>{c.username}</span>
-              <Button onClick={() => setMapCenter(c.position)} size="small">
+              <Button
+                onClick={() => centerOnCompanion(c.position)}
+                size="small"
+              >
                 위치
               </Button>
             </CompanionItem>
