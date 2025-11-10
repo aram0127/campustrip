@@ -72,7 +72,7 @@ public class FollowService {
         return List.of();
     }
 
-    public List<User> getFollowing(Integer userId) {
+    public List<User> getFollowings(Integer userId) {
         User user = userRepository.findById(userId).orElseThrow(null);
         if (user != null) {
             return followRepository.findByTarget(user).stream()
