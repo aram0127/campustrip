@@ -10,15 +10,16 @@ const Button = styled.button<ButtonProps>`
   /* 공통 스타일 */
   cursor: pointer;
   border: none;
-  border-radius: 8px;
-  font-weight: bold;
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  font-weight: ${({ theme }) => theme.fontWeights.bold};
   transition: background-color 0.2s ease-in-out;
 
   /* 사이즈 variants */
   ${({ size = "medium" }) =>
     size === "large" &&
     css`
-      padding: 14px 24px;
+      padding: ${({ theme }) => theme.spacings.medium}
+        ${({ theme }) => theme.spacings.large};
       font-size: ${({ theme }) => theme.fontSizes.body};
     `}
 

@@ -7,7 +7,8 @@ const TopBarContainer = styled.header`
   display: grid;
   grid-template-columns: 50px 1fr 50px;
   align-items: center;
-  padding: 10px 16px;
+  padding: ${({ theme }) => theme.spacings.small}
+    ${({ theme }) => theme.spacings.medium};
   border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
   flex-shrink: 0;
   height: 56px;
@@ -32,7 +33,7 @@ const RightSection = styled.div`
 const ProfileBtn = styled.button`
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: ${({ theme }) => theme.borderRadius.circle};
   background-color: ${({ theme }) => theme.colors.secondaryTextColor};
   border: none;
   cursor: pointer;
@@ -42,8 +43,8 @@ const ProfileBtn = styled.button`
 `;
 
 const Logo = styled(Link)`
-  font-size: 20px;
-  font-weight: bold;
+  font-size: ${({ theme }) => theme.fontSizes.subtitle};
+  font-weight: ${({ theme }) => theme.fontWeights.bold};
   color: ${({ theme }) => theme.colors.primary};
   text-decoration: none;
 `;
@@ -51,7 +52,7 @@ const Logo = styled(Link)`
 const NotificationBtn = styled.button`
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: ${({ theme }) => theme.fontSizes.title};
   width: 44px;
   height: 44px;
   padding: 0;

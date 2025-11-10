@@ -14,7 +14,7 @@ const NavButton = styled(NavLink)`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 0;
+  padding: ${({ theme }) => theme.spacings.xsmall} 0;
   text-decoration: none;
   color: ${({ theme }) => theme.colors.secondaryTextColor};
 
@@ -24,11 +24,11 @@ const NavButton = styled(NavLink)`
 `;
 
 const NavIcon = styled.span`
-  font-size: 24px;
+  font-size: ${({ theme }) => theme.fontSizes.title};
 `;
 
 const NavText = styled.span`
-  font-size: 10px;
+  font-size: ${({ theme }) => theme.fontSizes.caption};
 `;
 
 const BottomNav = () => {
