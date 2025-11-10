@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 @Table(name="Follow")
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 public class Follow {
     @EmbeddedId
@@ -28,6 +27,10 @@ public class Follow {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    public Follow() {
+        this.createdAt = LocalDateTime.now();
+    }
 
     @Embeddable
     @EqualsAndHashCode
