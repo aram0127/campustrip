@@ -28,6 +28,7 @@ import NotificationListPage from "./pages/notification/NotificationListPage";
 import PostDetailPage from "./pages/post/PostDetailPage";
 import PostCreateFlow from "./pages/post/create/PostCreateFlow";
 import ApplicantListPage from "./pages/post/ApplicantListPage";
+import LocationSharePage from "./pages/location/LocationSharePage";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 import ChatTestPage from "./test/ChatTestPage"; // 채팅테스트
@@ -93,6 +94,7 @@ function App() {
               path="/posts/:postId/applicants"
               element={<ApplicantListPage />}
             />
+            <Route path="/location" element={<LocationSharePage />} />
 
             <Route path="/test/chat" element={<ChatTestPage />} />
 
