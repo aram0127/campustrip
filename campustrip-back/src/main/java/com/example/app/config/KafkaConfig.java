@@ -36,12 +36,26 @@ public class KafkaConfig {
         return new KafkaTemplate<>(producerFactory());
     }
 
+    // 위치 정보용 추가 (String)
+    @Bean
+    public ProducerFactory<String, String> locationProducerFactory() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "3.35.239.90:9092");
+        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        return new DefaultKafkaProducerFactory<>(config);
+    }
+
+    @Bean
+    public KafkaTemplate<String, String> locationKafkaTemplate() {
+        return new KafkaTemplate<>(locationProducerFactory());
+    }
+
     // Consumer 설정 (메시지 수신)
     @Bean
     public ConsumerFactory<String, ChatMessageDTO> consumerFactory() {
         Map<String, Object> config = new HashMap<>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "3.35.239.90:9092");
-//        config.put(ConsumerConfig.GROUP_ID_CONFIG, "chat-group");
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);

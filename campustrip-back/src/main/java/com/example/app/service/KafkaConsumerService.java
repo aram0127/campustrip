@@ -1,9 +1,14 @@
 package com.example.app.service;
 
 import com.example.app.dto.ChatMessageDTO;
+import com.example.app.dto.LocationMessage;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +18,7 @@ import org.springframework.stereotype.Service;
 public class KafkaConsumerService {
 
     private final SimpMessagingTemplate messagingTemplate;
+    private final ObjectMapper objectMapper;
 
     // Kafka에서 메시지를 수신하여 WebSocket 구독자들에게 전송
     @KafkaListener(
@@ -28,5 +34,21 @@ public class KafkaConsumerService {
                 "/sub/chat/room/" + message.getRoomId(),
                 message
         );
+    }
+
+    @KafkaListener(topicPattern = "location-*", groupId = "campustrip-group")
+    public void consumeLocation(String message, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            LocationMessage location = objectMapper.readValue(message, LocationMessage.class);
+            String groupId = location.getGroupId();
+
+            // 해당 그룹을 구독한 클라이언트들에게 전송
+            messagingTemplate.convertAndSend(
+                    "/topic/locations/" + groupId,
+                    location
+            );
+        } catch (JsonProcessingException e) {
+            // 에러 처리
+        }
     }
 }
