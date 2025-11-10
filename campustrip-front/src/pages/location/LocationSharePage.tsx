@@ -67,6 +67,8 @@ const mapOptions = {
   zoomControl: true,
 };
 
+const LOCATION_UPDATE_INTERVAL = 5000;
+
 const LocationSharePage: React.FC = () => {
   // React-Router 및 Auth Context 훅
   const { chatRoomId } = useParams<{ chatRoomId: string }>();
@@ -87,6 +89,8 @@ const LocationSharePage: React.FC = () => {
   const stompClientRef = useRef<Client | null>(null);
   // Geolocation watch ID Ref
   const watchIdRef = useRef<number | null>(null);
+  // 마지막으로 서버에 전송한 시간을 기억할 ref
+  const lastSendTimeRef = useRef<number>(Date.now());
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
@@ -175,31 +179,39 @@ const LocationSharePage: React.FC = () => {
                 lng: newLocation.lng,
               };
 
-              if (newLocation.type === "LEAVE") {
-                newMap.delete(newLocation.userId);
-              } else {
-                // ENTER 또는 TALK(위치전송)
+              // 'TALK' 메시지를 받아야만 동행 목록에 추가/업데이트
+              if (newLocation.type === "TALK") {
                 newMap.set(newLocation.userId, {
                   userId: newLocation.userId,
                   username: newLocation.username,
                   position: newPos,
                 });
               }
+              // 'LEAVE' 메시지를 받으면 동행 목록에서 제거
+              else if (newLocation.type === "LEAVE") {
+                newMap.delete(newLocation.userId);
+              }
+
               return newMap;
             });
           },
           { Authorization: `Bearer ${token}` } // 구독 시 헤더 추가
         );
 
-        // 첫 위치 가져오기 및 'ENTER' 메시지 전송
-        navigator.geolocation.getCurrentPosition((pos) => {
-          const newPos = {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-          };
-          setMyPosition(newPos);
-          sendMessage("ENTER", newPos); // "입장" 메시지 전송
-        });
+        // 첫 위치 가져오기
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const newPos = {
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+            };
+            setMyPosition(newPos);
+          },
+          (err) => {
+            console.error("초기 위치 가져오기 실패:", err);
+            setError("위치 권한을 확인해주세요.");
+          }
+        );
       },
       onStompError: (frame) => {
         console.error("STOMP 에러:", frame);
@@ -209,15 +221,17 @@ const LocationSharePage: React.FC = () => {
 
     client.activate();
 
-    // Cleanup: 컴포넌트 언마운트 시 'LEAVE' 메시지 전송 및 연결 종료
+    // Cleanup: 컴포넌트 언마운트 시
     return () => {
-      if (client?.connected && myPosition) {
+      // 페이지 이탈 시, '공유 중' 상태였을 때만 'LEAVE' 메시지 전송
+      if (client?.connected && myPosition && isSharing) {
         sendMessage("LEAVE", myPosition);
       }
       client?.deactivate();
       console.log("STOMP 연결 종료");
     };
-  }, [chatRoomId, user, isLoaded, sendMessage, myPosition]); // myPosition 추가 (LEAVE 시 필요)
+    // isSharing, myPosition을 의존성 배열에 추가
+  }, [chatRoomId, user, isLoaded, sendMessage, isSharing, myPosition]);
 
   // 실시간 위치 추적 및 전송
   useEffect(() => {
@@ -231,8 +245,17 @@ const LocationSharePage: React.FC = () => {
             lat: pos.coords.latitude,
             lng: pos.coords.longitude,
           };
-          setMyPosition(newPos); // 내 마커 업데이트
-          sendMessage("TALK", newPos); // 실시간 위치 'TALK'로 전송
+          // 내 화면의 마커는 즉시 부드럽게 업데이트
+          setMyPosition(newPos);
+
+          // 서버 전송은 5초(LOCATION_UPDATE_INTERVAL)마다 실행
+          const now = Date.now();
+          if (now - lastSendTimeRef.current > LOCATION_UPDATE_INTERVAL) {
+            console.log("5초 경과, 서버로 위치 전송"); // (디버깅용 로그)
+
+            sendMessage("TALK", newPos); // 'TALK'로 실시간 위치 전송
+            lastSendTimeRef.current = now; // 마지막 전송 시간 갱신
+          }
         },
         (err) => {
           console.error("watchPosition 에러:", err);
@@ -258,10 +281,24 @@ const LocationSharePage: React.FC = () => {
 
   // 핸들러 함수
   const handleToggleSharing = () => {
-    setIsSharing((prev) => !prev);
-    if (!isSharing && myPosition) {
-      centerOn(myPosition); // 공유 시작 시 내 위치로 이동
+    const newStatus = !isSharing;
+
+    if (newStatus) {
+      // 공유 시작
+      // 'TALK' 메시지는 watchPosition useEffect가 보낼 것임
+      console.log("위치 공유 시작");
+      if (myPosition) {
+        centerOn(myPosition);
+      }
+    } else {
+      // 공유 중지
+      console.log("위치 공유 중지");
+      // 공유를 끄는 시점에 'LEAVE' 메시지를 명시적으로 전송
+      if (myPosition) {
+        sendMessage("LEAVE", myPosition);
+      }
     }
+    setIsSharing(newStatus); // watchPosition useEffect 트리거
   };
 
   const handleCenterOnMe = () => {
@@ -276,12 +313,13 @@ const LocationSharePage: React.FC = () => {
       return <ErrorText>지도를 불러오는 데 실패했습니다.</ErrorText>;
     if (!isLoaded) return <StatusText>지도 로딩 중...</StatusText>;
     if (error) return <ErrorText>{error}</ErrorText>;
-    if (!myPosition && companionsArray.length === 0) {
-      return <StatusText>위치 정보를 가져오는 중...</StatusText>;
-    }
 
-    const defaultCenter = myPosition || companionsArray[0]?.position;
-    if (!defaultCenter) return <StatusText>표시할 위치가 없습니다.</StatusText>;
+    // '내 위치'가 없어도 지도를 렌더링할 수 있도록 수정
+    // (첫 위치 가져오기가 실패해도 지도는 보여야 함)
+    const defaultCenter = myPosition || {
+      lat: 36.144417,
+      lng: 128.393278,
+    }; // (기본값: 금오공대)
 
     return (
       <GoogleMap
@@ -307,8 +345,9 @@ const LocationSharePage: React.FC = () => {
           onClick={handleToggleSharing}
           variant={isSharing ? "primary" : "secondary"}
           style={{ flex: 1 }}
+          disabled={!myPosition} // 내 위치를 알아야 공유 가능
         >
-          {isSharing ? "공유 중 (ON)" : "공유 중지 (OFF)"}
+          {isSharing ? "공유 중 (ON)" : "내 위치 공유"}
         </Button>
         <Button
           onClick={handleCenterOnMe}
