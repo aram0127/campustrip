@@ -94,7 +94,10 @@ function App() {
               path="/posts/:postId/applicants"
               element={<ApplicantListPage />}
             />
-            <Route path="/location" element={<LocationSharePage />} />
+            <Route
+              path="/location/:chatRoomId"
+              element={<LocationSharePage />}
+            />
 
             <Route path="/test/chat" element={<ChatTestPage />} />
 
