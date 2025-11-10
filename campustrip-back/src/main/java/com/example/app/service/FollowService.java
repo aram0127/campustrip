@@ -1,12 +1,14 @@
 package com.example.app.service;
 
 import com.example.app.repository.FollowRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class FollowService {
     private final FollowRepository followRepository;
 
+    @Autowired
     public FollowService(FollowRepository followRepository) {
         this.followRepository = followRepository;
     }
