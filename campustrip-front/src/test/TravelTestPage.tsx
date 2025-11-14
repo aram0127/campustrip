@@ -26,20 +26,24 @@ interface QuestionnairePageProps {
 }
 
 interface TestResultPageProps {
-    choices: (1 | 0)[];
-    onSave: (choices: (1 | 0)[]) => void;
+    choices: (1 | 0 | null)[];
+    onSave: (choices: (1 | 0 | null)[]) => void;
     onBack: (isCompleted?: boolean) => void;
 }
 
 interface TravelTestFlowProps {
-    onComplete: (choices: (1 | 0)[]) => void;
+    onComplete: (choices: (1 | 0 | null)[]) => void;
 }
 
 const TAG_PAIRS = [
     { high: "#계획적", low: "#즉흥적" },
     { high: "#맛집탐방", low: "#음식아무거나" },
     { high: "#사진필수", low: "#눈으로기억" },
-    { high: "#뚜벅이", low: "#교통중심" }
+    { high: "#뚜벅이", low: "#교통중심" },
+    { high: "#가성비", low: "#투자" },
+    { high: "#느긋힐링", low: "#액티비티" },
+    { high: "#규칙적 식사", low: "#비규칙적 식사" },
+    { high: "#아침형", low: "#저녁형" },
 ];
 
 const QUIZ_QUESTIONS: Question[] = [
@@ -79,21 +83,61 @@ const QUIZ_QUESTIONS: Question[] = [
             { text: "대중교통이나 택시를 이용해 편하게 이동한다.", choiceValue: 0, tag: TAG_PAIRS[3].low }
         ]
     },
+    // 5. 가성비 vs 투자
+    {
+        id: 5,
+        question: "숙소나 항공편을 선택할 때 당신의 선택은?",
+        options: [
+            { text: "돈을 최대한 아끼기 위해 여러 곳을 비교한다.", choiceValue: 1, tag: TAG_PAIRS[4].high }, 
+            { text: "돈을 좀 더 쓰더라도 편리함과 쾌적함을 우선한다.", choiceValue: 0, tag: TAG_PAIRS[4].low }
+        ]
+    },
+    // 6. 느긋힐링 vs 액티비티
+    {
+        id: 6,
+        question: "여행의 주 목적은?",
+        options: [
+            { text: "여유롭게 즐기며 휴식이 필수다.", choiceValue: 1, tag: TAG_PAIRS[5].high }, 
+            { text: "활동은 최대한 많이, 꽉찬 일정이 좋다.", choiceValue: 0, tag: TAG_PAIRS[5].low }
+        ]
+    },
+    // 7. 규칙적 식사 vs 비규칙적 식사
+    {
+        id: 7,
+        question: "식사 규칙은?",
+        options: [
+            { text: "삼시세끼 정해진 시간에 챙겨먹는다.", choiceValue: 1, tag: TAG_PAIRS[6].high }, 
+            { text: "놀다가 배고파질 때 먹는다.", choiceValue: 0, tag: TAG_PAIRS[6].low }
+        ]
+    },
+    // 8. 아침형 vs 저녁형
+    {
+        id: 8,
+        question: "수면 패턴은?",
+        options: [
+            { text: "일찍 자고 일찍 일어난다.", choiceValue: 1, tag: TAG_PAIRS[7].high }, 
+            { text: "늦게 자고 늦게 일어난다.", choiceValue: 0, tag: TAG_PAIRS[7].low }
+        ]
+    },
 ];
 
 // 결과 계산 
-const getTagsByChoices = (choices: (1 | 0)[]) => {
-    // 검사 전 기본 태그 
-    const defaultTags = TAG_PAIRS.map(pair => pair.high); 
+const getTagsByChoices = (choices: (1 | 0 | null)[]) => {
+    const finalTags: string[] = [];
     
-    if (!choices || choices.length !== TAG_PAIRS.length) {
-        return defaultTags; 
-    }
-    
-    return choices.map((choice, index) => {
-        const pair = TAG_PAIRS[index];
-        return choice === 1 ? pair.high : pair.low;
+    choices.forEach((choice, index) => {
+        // 건너뛰기인 경우 태그를 추가하지 않음
+        if (choice === null) {
+            return; 
+        }
+
+        // 답변이 1 또는 0인 경우에만 태그를 결정
+        const pair = TAG_PAIRS[index];  
+        const tag = choice === 1 ? pair.high : pair.low;
+        finalTags.push(tag);
     });
+
+    return finalTags;
 };
 
 // 스타일 컴포넌트 (여행 성향 검사 페이지용)
@@ -350,7 +394,7 @@ const TestResultPage: React.FC<TestResultPageProps> = ({ choices, onSave, onBack
 const TravelTestFlow: React.FC<TravelTestFlowProps> = ({ onComplete }) => {
     const navigate = useNavigate();
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0); 
-    const [userAnswers, setUserAnswers] = useState<(1 | 0)[]>([]);
+    const [userAnswers, setUserAnswers] = useState<(1 | 0 | null)[]>([]);
     
     const totalQuestions = QUIZ_QUESTIONS.length;
     const currentQuestion = currentQuestionIndex > 0 ? QUIZ_QUESTIONS[currentQuestionIndex - 1] : null;
@@ -376,7 +420,7 @@ const TravelTestFlow: React.FC<TravelTestFlowProps> = ({ onComplete }) => {
     
     // 건너뛰기
     const handleSkip = () => {
-        const newAnswers = [...userAnswers, 1] as (1 | 0)[]; // 임시로 1 
+        const newAnswers = [...userAnswers, null];
         setUserAnswers(newAnswers);
 
         if (newAnswers.length === totalQuestions) {
