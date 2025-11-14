@@ -29,6 +29,7 @@ import PostDetailPage from "./pages/post/PostDetailPage";
 import PostCreateFlow from "./pages/post/create/PostCreateFlow";
 import ApplicantListPage from "./pages/post/ApplicantListPage";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import TravelTestPage from "@/pages/test/TravelTestPage";
 
 const RootRedirect: React.FC = () => {
   const { isLoggedIn } = useAuth();
