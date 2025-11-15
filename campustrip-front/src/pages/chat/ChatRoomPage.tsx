@@ -184,7 +184,7 @@ function ChatRoomPage() {
       console.log("WebSocket 연결 성공");
 
       // 채팅방 구독 (KafkaConsumerService가 여기로 메시지 전송)
-      client.subscribe(`/sub/chat/room/${chatId}`, (message: IMessage) => {
+      client.subscribe(`/topic/chat/room/${chatId}`, (message: IMessage) => {
         const receivedMessage = JSON.parse(message.body) as ChatMessage;
         setMessages((prevMessages) => [...prevMessages, receivedMessage]);
       });
