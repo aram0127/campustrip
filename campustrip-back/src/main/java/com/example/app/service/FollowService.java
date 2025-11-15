@@ -25,9 +25,9 @@ public class FollowService {
     public FollowDTO followUser(Integer followerId, Integer followeeId) {
         Follow follow = new Follow();
         User follower = userRepository.findById(followerId).orElseThrow(null);
-        follow.setTarget(follower);
+        follow.setMembership(follower);
         User followee = userRepository.findById(followeeId).orElseThrow(null);
-        follow.setMembership(followee);
+        follow.setTarget(followee);
         followRepository.save(follow);
         return new FollowDTO(follow.getMembership().getId(), follow.getTarget().getId(), follow.getMembership().getName(),
                 follow.getTarget().getName(), follow.getCreatedAt());
@@ -45,20 +45,12 @@ public class FollowService {
     public boolean isFollowing(Integer followerId, Integer followeeId) {
         Follow follow = followRepository.findByMembershipIdAndTargetId(followerId, followeeId).orElse(null);
         if (follow != null) {
-            return true;
+            return false;
         }
-        return false;
+        return true;
     }
 
     public int getFollowerCount(Integer userId) {
-        User user = userRepository.findById(userId).orElseThrow(null);
-        if (user != null) {
-            return followRepository.countByMembership(user);
-        }
-        return 0;
-    }
-
-    public int getFollowingCount(Integer userId) {
         User user = userRepository.findById(userId).orElseThrow(null);
         if (user != null) {
             return followRepository.countByTarget(user);
@@ -66,12 +58,20 @@ public class FollowService {
         return 0;
     }
 
+    public int getFollowingCount(Integer userId) {
+        User user = userRepository.findById(userId).orElseThrow(null);
+        if (user != null) {
+            return followRepository.countByMembership(user);
+        }
+        return 0;
+    }
+
     public List<UserResponse> getFollowers(Integer userId) {
         User user = userRepository.findById(userId).orElseThrow(null);
         if (user != null) {
-            return followRepository.findByMembership(user).stream()
-                    .map(Follow::getTarget)
-                    .map(users -> new UserResponse(user))
+            return followRepository.findByTarget(user).stream()
+                    .map(Follow::getMembership)
+                    .map(users -> new UserResponse(users))
                     .toList();
         }
         return List.of();
@@ -80,9 +80,9 @@ public class FollowService {
     public List<UserResponse> getFollowings(Integer userId) {
         User user = userRepository.findById(userId).orElseThrow(null);
         if (user != null) {
-            return followRepository.findByTarget(user).stream()
-                    .map(Follow::getMembership)
-                    .map(users -> new UserResponse(user))
+            return followRepository.findByMembership(user).stream()
+                    .map(Follow::getTarget)
+                    .map(users -> new UserResponse(users))
                     .toList();
         }
         return List.of();
