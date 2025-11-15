@@ -1,6 +1,7 @@
 package com.example.app.config;
 
 import com.example.app.dto.ChatMessageDTO;
+import com.example.app.dto.LocationMessage;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -38,16 +39,16 @@ public class KafkaConfig {
 
     // 위치 정보용 추가 (String)
     @Bean
-    public ProducerFactory<String, String> locationProducerFactory() {
+    public ProducerFactory<String, LocationMessage> locationProducerFactory() {
         Map<String, Object> config = new HashMap<>();
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "3.35.239.90:9092");
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         return new DefaultKafkaProducerFactory<>(config);
     }
 
     @Bean
-    public KafkaTemplate<String, String> locationKafkaTemplate() {
+    public KafkaTemplate<String, LocationMessage> locationKafkaTemplate() {
         return new KafkaTemplate<>(locationProducerFactory());
     }
 

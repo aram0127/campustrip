@@ -13,14 +13,13 @@ import org.springframework.stereotype.Service;
 public class KafkaProducerService {
 
     @Qualifier("locationKafkaTemplate")
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final KafkaTemplate<String, LocationMessage> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
     public void sendLocation(String topic, LocationMessage location) {
         try {
-            String message = objectMapper.writeValueAsString(location);
-            kafkaTemplate.send(topic, message);
-        } catch (JsonProcessingException e) {
+            kafkaTemplate.send(topic, location);
+        } catch (Exception e) {
             // 에러 처리
         }
     }

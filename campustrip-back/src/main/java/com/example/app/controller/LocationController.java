@@ -18,7 +18,7 @@ public class LocationController {
             @DestinationVariable String groupId, LocationMessage location) {
         location.setGroupId(groupId);
         location.setTimestamp(System.currentTimeMillis());
-
+        System.out.println("위치 메시지 수신: " + location.getGroupId() + ", " + location.getLatitude() + ", " + location.getLongitude());
         // 그룹별 토픽으로 발행
         kafkaProducerService.sendLocation("location-" + groupId, location);
     }

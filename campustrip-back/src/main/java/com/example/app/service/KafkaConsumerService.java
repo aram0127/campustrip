@@ -37,17 +37,16 @@ public class KafkaConsumerService {
     }
 
     @KafkaListener(topicPattern = "location-*", groupId = "campustrip-group")
-    public void consumeLocation(String message, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+    public void consumeLocation(LocationMessage locationMessage) {
         try {
-            LocationMessage location = objectMapper.readValue(message, LocationMessage.class);
-            String groupId = location.getGroupId();
-
+            String groupId = locationMessage.getGroupId();
+            System.out.println("Kafka 위치 메시지 수신: " + locationMessage);
             // 해당 그룹을 구독한 클라이언트들에게 전송
             messagingTemplate.convertAndSend(
-                    "/topic/locations/" + groupId,
-                    location
+                    "/topic/location/" + groupId,
+                    locationMessage
             );
-        } catch (JsonProcessingException e) {
+        } catch (Exception e) {
             // 에러 처리
         }
     }
