@@ -76,6 +76,8 @@ public class PostService {
         existingPost.setBody(updateData.getBody());
         existingPost.setUpdatedAt(java.time.LocalDateTime.now());
         existingPost.setTeamSize(updateData.getTeamSize());
+        existingPost.setStartAt(updateData.getStartAt());
+        existingPost.setEndAt(updateData.getEndAt());
 
         List<Integer> regions = updateData.getRegions();
         existingPost.setRegions(new HashSet<>(regionRepository.findByRegionIdIn(regions)));
