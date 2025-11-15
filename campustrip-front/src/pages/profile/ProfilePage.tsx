@@ -181,7 +181,7 @@ const parsePreferences = (preference: number | null) => {
 };
 
 function ProfilePage() {
-  const { userId } = useParams<{ userId: string }>();
+  const { userId: userIdString } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
@@ -194,9 +194,9 @@ function ProfilePage() {
     isLoading,
     error,
   } = useQuery<User, Error>({
-    queryKey: ["userProfile", userId],
-    queryFn: () => getUserProfile(userId!),
-    enabled: !!userId,
+    queryKey: ["userProfile", userIdString],
+    queryFn: () => getUserProfile(Number(userIdString!)),
+    enabled: !!userIdString,
   });
 
   // 팔로워/팔로잉 수 가져오기
@@ -265,7 +265,7 @@ function ProfilePage() {
   // 팔로우 목록 페이지로 이동
   const handleGoToFollowPage = () => {
     if (profileUser) {
-      navigate(`/follow/${profileUser.userId}`);
+      navigate(`/profile/${profileUser.id}/follows`);
     }
   };
 
