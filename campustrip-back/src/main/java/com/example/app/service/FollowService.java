@@ -2,6 +2,8 @@ package com.example.app.service;
 
 import com.example.app.domain.Follow;
 import com.example.app.domain.User;
+import com.example.app.dto.FollowDTO;
+import com.example.app.dto.UserResponse;
 import com.example.app.repository.FollowRepository;
 import com.example.app.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,22 +22,24 @@ public class FollowService {
         this.userRepository = userRepository;
     }
 
-    public Follow followUser(Integer followerId, Integer followeeId) {
+    public FollowDTO followUser(Integer followerId, Integer followeeId) {
         Follow follow = new Follow();
         User follower = userRepository.findById(followerId).orElseThrow(null);
         follow.setTarget(follower);
         User followee = userRepository.findById(followeeId).orElseThrow(null);
         follow.setMembership(followee);
         followRepository.save(follow);
-        return follow;
+        return new FollowDTO(follow.getMembership().getId(), follow.getTarget().getId(), follow.getMembership().getName(),
+                follow.getTarget().getName(), follow.getCreatedAt());
     }
 
-    public Follow unfollowUser(Integer followerId, Integer followeeId) {
+    public FollowDTO unfollowUser(Integer followerId, Integer followeeId) {
         Follow follow = followRepository.findByMembershipIdAndTargetId(followerId, followeeId).orElseThrow(null);
         if (follow != null) {
             followRepository.delete(follow);
         }
-        return follow;
+        return new FollowDTO(follow.getMembership().getId(), follow.getTarget().getId(), follow.getMembership().getName(),
+                follow.getTarget().getName(), follow.getCreatedAt());
     }
 
     public boolean isFollowing(Integer followerId, Integer followeeId) {
@@ -62,21 +66,23 @@ public class FollowService {
         return 0;
     }
 
-    public List<User> getFollowers(Integer userId) {
+    public List<UserResponse> getFollowers(Integer userId) {
         User user = userRepository.findById(userId).orElseThrow(null);
         if (user != null) {
             return followRepository.findByMembership(user).stream()
                     .map(Follow::getTarget)
+                    .map(users -> new UserResponse(user))
                     .toList();
         }
         return List.of();
     }
 
-    public List<User> getFollowings(Integer userId) {
+    public List<UserResponse> getFollowings(Integer userId) {
         User user = userRepository.findById(userId).orElseThrow(null);
         if (user != null) {
             return followRepository.findByTarget(user).stream()
                     .map(Follow::getMembership)
+                    .map(users -> new UserResponse(user))
                     .toList();
         }
         return List.of();
