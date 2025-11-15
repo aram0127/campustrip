@@ -27,5 +27,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         // 메시지 발행 prefix만 설정
         registry.setApplicationDestinationPrefixes("/pub", "/app");
+        registry.enableSimpleBroker("/topic", "/queue");
     }
 }
