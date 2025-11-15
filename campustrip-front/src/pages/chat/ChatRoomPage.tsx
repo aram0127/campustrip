@@ -188,18 +188,6 @@ function ChatRoomPage() {
         const receivedMessage = JSON.parse(message.body) as ChatMessage;
         setMessages((prevMessages) => [...prevMessages, receivedMessage]);
       });
-
-      // JOIN 메시지 전송 (ChatController @MessageMapping)
-      const joinMessage: ChatMessage = {
-        messageType: MessageTypeValue.JOIN,
-        roomId: chatId,
-        userName: user.name, // useAuth()에서 가져온 사용자 이름
-        message: `${user.name}님이 입장했습니다.`,
-      };
-      client.publish({
-        destination: "/pub/chat/message", // WebSocketConfig의 /pub
-        body: JSON.stringify(joinMessage),
-      });
     };
 
     // 연결 오류 시
@@ -211,26 +199,6 @@ function ChatRoomPage() {
     // 클라이언트 활성화
     client.activate();
     stompClientRef.current = client;
-
-    // 컴포넌트 언마운트 시 연결 해제
-    return () => {
-      if (stompClientRef.current?.active && user) {
-        // LEAVE 메시지 전송
-        const leaveMessage: ChatMessage = {
-          messageType: MessageTypeValue.LEAVE,
-          roomId: chatId,
-          userName: user.name,
-          message: `${user.name}님이 퇴장했습니다.`,
-        };
-        stompClientRef.current.publish({
-          destination: "/pub/chat/message",
-          body: JSON.stringify(leaveMessage),
-        });
-
-        stompClientRef.current.deactivate();
-        console.log("WebSocket 연결 해제됨");
-      }
-    };
   }, [chatId, user, isHistoryLoaded]); // user와 chatId가 변경될 때마다 재연결
 
   // 메시지 전송 핸들러
