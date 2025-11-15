@@ -71,7 +71,7 @@ type Tab = "followers" | "followings" | "recommendations";
 
 function FollowListPage() {
   const [activeTab, setActiveTab] = useState<Tab>("followers");
-  const { userId: profileStringId } = useParams<{ userId: string }>();
+  const { userId: profileIdString } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [followers, setFollowers] = useState<User[]>([]);
@@ -83,16 +83,23 @@ function FollowListPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!profileStringId || !currentUser) return;
+    if (!profileIdString || !currentUser) return;
 
     const loadData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const profile = await getUserProfile(profileStringId);
+        const numericId = Number(profileIdString);
+
+        if (isNaN(numericId)) {
+          setError("잘못된 사용자 ID입니다.");
+          setLoading(false);
+          return;
+        }
+
+        const profile = await getUserProfile(numericId);
         setProfileUser(profile);
-        const numericId = profile.id;
 
         const currentUserFollows = await getFollowings(currentUser.id);
         setCurrentUserFollowingIds(
@@ -119,7 +126,7 @@ function FollowListPage() {
     };
 
     loadData();
-  }, [profileStringId, activeTab, currentUser]);
+  }, [profileIdString, activeTab, currentUser]);
 
   // 팔로우/언팔로우 핸들러
   const handleFollowToggle = async (targetUser: User) => {
