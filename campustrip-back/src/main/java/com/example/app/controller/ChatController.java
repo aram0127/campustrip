@@ -10,6 +10,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.ZoneId;
 import java.util.List;
 
 @RestController
@@ -28,7 +29,8 @@ public class ChatController {
 
     @MessageMapping("/chat/message")  // 클라이언트가 /pub/chat/message로 전송
     public void sendMessage(ChatMessageDTO message) {
-        message.setTimestamp(java.time.LocalDateTime.now());
+        // 타임스탬프 kst로 변환해서 설정
+        message.setTimestamp(java.time.LocalDateTime.now().atZone(ZoneId.of("asia/Seoul")).toLocalDateTime());
         // ❌ 기존: SimpMessagingTemplate으로 직접 전송
         // messagingTemplate.convertAndSend("/sub/chat/room/" + roomId, message);
 
