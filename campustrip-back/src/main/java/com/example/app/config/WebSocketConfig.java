@@ -12,11 +12,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-//        registry.addEndpoint("/ws/chat")
-//                .setAllowedOriginPatterns("*")
-//                .withSockJS();
+        registry.addEndpoint("/ws/chat")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("http://localhost:5174", "http://localhost:8080")
+                .setAllowedOriginPatterns("http://localhost:5174", "http://localhost:8080", "*")
                 .withSockJS()
                 .setStreamBytesLimit(512 * 1024)
                 .setHttpMessageCacheSize(1000)
@@ -26,7 +26,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         // 메시지 발행 prefix만 설정
-        registry.setApplicationDestinationPrefixes("/pub");
-        registry.setApplicationDestinationPrefixes("/app");
+        registry.setApplicationDestinationPrefixes("/pub", "/app");
     }
 }
