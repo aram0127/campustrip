@@ -1,10 +1,11 @@
 export interface LocationMessage {
-  type: "ENTER" | "LEAVE" | "TALK"; // 'TALK'가 실시간 위치 전송용
-  chatRoomId: string;
-  userId: number;
-  username: string;
-  lat: number;
-  lng: number;
+  type: "ENTER" | "LEAVE" | "TALK";
+  groupId: string;
+  userId: string;
+  userName: string;
+  latitude: number;
+  longitude: number;
+  timestamp?: number;
 }
 
 // 지도에 표시할 동행의 상태 타입

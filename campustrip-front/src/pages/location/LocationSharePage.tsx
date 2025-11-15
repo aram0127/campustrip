@@ -148,14 +148,16 @@ const LocationSharePage: React.FC = () => {
         return;
       }
 
-      const message: LocationMessage = {
+      const message = {
         type: type,
-        chatRoomId: chatRoomId,
-        userId: currentUser.id,
-        username: currentUser.name,
-        lat: position.lat,
-        lng: position.lng,
+        userId: String(currentUser.id),
+        userName: currentUser.name,
+        groupId: chatRoomId,
+        latitude: position.lat,
+        longitude: position.lng,
+        timestamp: 0,
       };
+
       stompClientRef.current.publish({
         destination: `/app/location/${chatRoomId}`,
         body: JSON.stringify(message),
@@ -192,27 +194,29 @@ const LocationSharePage: React.FC = () => {
           (message) => {
             const newLocation: LocationMessage = JSON.parse(message.body);
 
+            const receivedUserId = parseInt(newLocation.userId, 10);
+
             const currentUserId = userRef.current?.id;
-            if (newLocation.userId === currentUserId) return;
+            if (receivedUserId === currentUserId) return;
 
             setCompanions((prev) => {
               const newMap = new Map(prev);
               const newPos = {
-                lat: newLocation.lat,
-                lng: newLocation.lng,
+                lat: newLocation.latitude,
+                lng: newLocation.longitude,
               };
 
               // 'TALK' 메시지를 받아야만 동행 목록에 추가/업데이트
               if (newLocation.type === "TALK") {
-                newMap.set(newLocation.userId, {
-                  userId: newLocation.userId,
-                  username: newLocation.username,
+                newMap.set(receivedUserId, {
+                  userId: receivedUserId,
+                  username: newLocation.userName,
                   position: newPos,
                 });
               }
               // 'LEAVE' 메시지를 받으면 동행 목록에서 제거
               else if (newLocation.type === "LEAVE") {
-                newMap.delete(newLocation.userId);
+                newMap.delete(receivedUserId);
               }
 
               return newMap;
