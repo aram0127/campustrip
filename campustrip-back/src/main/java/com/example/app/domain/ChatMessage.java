@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.ZoneId;
+
 @Document(collection = "messages")
 @AllArgsConstructor
 @Getter @Setter
@@ -22,7 +24,8 @@ public class ChatMessage {
 
 
     public ChatMessage() {
-        timestamp = java.time.LocalDateTime.now();
+        // 기본 생성자에서 timestamp를 KST로 설정
+        timestamp = java.time.LocalDateTime.now().atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
     }
 
 }
