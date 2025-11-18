@@ -4,6 +4,7 @@ import com.example.app.auth.EmailVerification;
 import com.example.app.repository.EmailVerificationRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,9 @@ public class EmailVerificationService {
     private final SpringTemplateEngine templateEngine;
     private final EmailVerificationRepository repository;
     private final SecureRandom random = new SecureRandom();
+
+    @Value("${spring.mail.username}")
+    private String senderEmail;
 
     public EmailVerificationService(JavaMailSender mailSender,
                                     SpringTemplateEngine templateEngine,
@@ -81,6 +85,7 @@ public class EmailVerificationService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(
                     message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
+            helper.setFrom(senderEmail);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(html, true);

@@ -31,6 +31,7 @@ interface SignupData {
   name: string;
   schoolEmail: string;
   phoneNumber: string;
+  universityName: string;
 }
 
 /* 회원가입을 요청 */
@@ -45,4 +46,32 @@ export const signupUser = async (userData: SignupData): Promise<User> => {
     }
   );
   return response.data;
+};
+
+/* 이메일 인증 코드 발송 */
+export const sendEmailVerification = async (email: string): Promise<void> => {
+  await axios.post(`${API_BASE_URL}/api/auth/email/send`, { email });
+};
+
+/* 이메일 인증 코드 검증 응답 타입 */
+interface VerifyResponse {
+  ok: boolean;
+  universityName: string | null;
+}
+
+/* 이메일 인증 코드 검증 */
+export const verifyEmailVerification = async (
+  email: string,
+  code: string
+): Promise<string> => {
+  const response = await axios.post<VerifyResponse>(
+    `${API_BASE_URL}/api/auth/email/verify`,
+    { email, code }
+  );
+
+  if (!response.data.ok || !response.data.universityName) {
+    throw new Error("인증에 실패했거나 대학교 정보를 찾을 수 없습니다.");
+  }
+
+  return response.data.universityName;
 };
