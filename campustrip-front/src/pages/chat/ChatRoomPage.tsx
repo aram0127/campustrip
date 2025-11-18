@@ -248,7 +248,7 @@ function ChatRoomPage() {
           <IoMenu />
         </HeaderButton>
       }
-      onBackClick={() => navigate("/chats")}
+      onBackClick={() => navigate("/chat")}
     >
       <MessageListContainer ref={messageListRef}>
         {isHistoryLoading && <Message>대화 내역을 불러오는 중...</Message>}
