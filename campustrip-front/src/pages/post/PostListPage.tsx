@@ -99,7 +99,7 @@ function PostListPage() {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         <Button
-          variant="outline"
+          $variant="outline"
           onClick={() => setIsModalOpen(true)}
           style={{
             flexShrink: 0,

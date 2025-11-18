@@ -1,8 +1,8 @@
 import styled, { css } from "styled-components";
 
 interface ButtonProps {
-  variant?: "primary" | "secondary" | "outline" | "danger";
-  size?: "large" | "medium" | "small";
+  $variant?: "primary" | "secondary" | "outline" | "danger";
+  $size?: "large" | "medium" | "small";
   disabled?: boolean;
 }
 
@@ -15,8 +15,8 @@ const Button = styled.button<ButtonProps>`
   transition: background-color 0.2s ease-in-out;
 
   /* 사이즈 variants */
-  ${({ size = "medium" }) =>
-    size === "large" &&
+  ${({ $size = "medium" }) =>
+    $size === "large" &&
     css`
       padding: ${({ theme }) => theme.spacings.medium}
         ${({ theme }) => theme.spacings.large};
@@ -24,8 +24,8 @@ const Button = styled.button<ButtonProps>`
     `}
 
   /* 디자인 variants */
-  ${({ variant = "primary", theme }) =>
-    variant === "primary" &&
+  ${({ $variant = "primary", theme }) =>
+    $variant === "primary" &&
     css`
       background-color: ${theme.colors.primary};
       color: white;
@@ -34,8 +34,8 @@ const Button = styled.button<ButtonProps>`
       }
     `}
 
-  ${({ variant, theme }) =>
-    variant === "outline" &&
+  ${({ $variant, theme }) =>
+    $variant === "outline" &&
     css`
       background-color: transparent;
       border: 1px solid ${theme.colors.primary};
@@ -45,8 +45,8 @@ const Button = styled.button<ButtonProps>`
       }
     `}
 
-  ${({ variant, theme }) =>
-    variant === "danger" &&
+  ${({ $variant, theme }) =>
+    $variant === "danger" &&
     css`
       background-color: ${theme.colors.error};
       color: white;

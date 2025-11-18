@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { usePostCreate } from "../../../context/PostCreateContext";
 import Button from "../../../components/common/Button";
 import PageLayout, {
@@ -137,6 +137,10 @@ const PostCreateDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const { formData, updateFormData } = usePostCreate();
 
+  // 수정 모드인지 확인
+  const { postId } = useParams<{ postId?: string }>();
+  const isEditMode = !!postId;
+
   // Context의 데이터로 컴포넌트 내부 상태 초기화
   const [title, setTitle] = useState(formData.title);
   const [body, setBody] = useState(formData.body);
@@ -144,9 +148,19 @@ const PostCreateDetailsPage: React.FC = () => {
   const [endDate, setEndDate] = useState(formData.endDate || "");
   const [teamSize, setTeamSize] = useState(formData.teamSize);
 
-  // 1단계(지역 선택)를 건너뛰고 이 페이지로 바로 온 경우, 1단계로 보냄
+  useEffect(() => {
+    // 1단계(지역 선택)를 건너뛰고 이 페이지로 바로 온 경우
+    if (formData.regions.length === 0) {
+      // 수정 모드와 생성 모드에 따라 올바른 경로로 리디렉션
+      const path = isEditMode
+        ? `/posts/edit/${postId}/region`
+        : "/posts/new/region";
+      navigate(path, { replace: true });
+    }
+  }, [formData.regions, navigate, isEditMode, postId]);
+
+  // useEffect가 실행되기 전에 렌더링되는 것을 방지하는 가드
   if (formData.regions.length === 0) {
-    navigate("/posts/new/region", { replace: true });
     return null;
   }
 
@@ -160,9 +174,11 @@ const PostCreateDetailsPage: React.FC = () => {
 
   // '이전' 버튼 클릭
   const handlePrev = () => {
-    // 2단계 데이터를 Context에 임시 저장 (페이지를 떠나기 전)
     updateFormData({ title, body, startDate, endDate, teamSize });
-    navigate("/posts/new/region"); // 1단계로 이동
+    const path = isEditMode
+      ? `/posts/edit/${postId}/region`
+      : "/posts/new/region";
+    navigate(path); // 1단계로 이동
   };
 
   // '다음' 버튼 클릭
@@ -171,14 +187,15 @@ const PostCreateDetailsPage: React.FC = () => {
       alert("제목과 본문 내용을 입력해주세요.");
       return;
     }
-    // 2단계 데이터를 Context에 저장
     updateFormData({ title, body, startDate, endDate, teamSize });
-    // 3단계(플래너 선택)로 이동
-    navigate("/posts/new/planner");
+    const path = isEditMode
+      ? `/posts/edit/${postId}/planner`
+      : "/posts/new/planner";
+    navigate(path); // 3단계(플래너 선택)로 이동
   };
 
   return (
-    <PageLayout title="새 게시글 작성 (2/3)">
+    <PageLayout title="새 게시글 작성 (2/3)" showBackButton={false}>
       <ScrollingFormContainer>
         <SelectedRegionsContainer>
           선택한 지역:

@@ -41,7 +41,7 @@ function SetNewPasswordPage() {
         <PasswordRequirement>
           8자 이상, 영문/숫자/특수문자 조합
         </PasswordRequirement>
-        <Button size="large" type="submit" style={{ width: "100%" }}>
+        <Button $size="large" type="submit" style={{ width: "100%" }}>
           비밀번호 변경
         </Button>
       </Form>

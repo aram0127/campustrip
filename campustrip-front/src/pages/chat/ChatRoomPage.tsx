@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { IoMenu, IoAdd, IoSend } from "react-icons/io5";
 import { Client, type IMessage } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
@@ -128,6 +128,7 @@ const Message = styled.p`
 function ChatRoomPage() {
   const { chatId } = useParams<{ chatId: string }>();
   const { user } = useAuth(); // 현재 로그인한 사용자 정보
+  const navigate = useNavigate();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]); // 실시간 + 과거 메시지
   const [inputValue, setInputValue] = useState("");
@@ -247,6 +248,7 @@ function ChatRoomPage() {
           <IoMenu />
         </HeaderButton>
       }
+      onBackClick={() => navigate("/chats")}
     >
       <MessageListContainer ref={messageListRef}>
         {isHistoryLoading && <Message>대화 내역을 불러오는 중...</Message>}

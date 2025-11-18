@@ -20,18 +20,18 @@ const TabMenu = styled.div`
   z-index: 9;
 `;
 
-const TabButton = styled.button<{ active?: boolean }>`
+const TabButton = styled.button<{ $active?: boolean }>`
   flex: 1;
   padding: 14px;
   border: none;
   background-color: transparent;
-  color: ${({ theme, active }) =>
-    active ? theme.colors.primary : theme.colors.secondaryTextColor};
+  color: ${({ theme, $active }) =>
+    $active ? theme.colors.primary : theme.colors.secondaryTextColor};
   font-size: 16px;
   cursor: pointer;
   border-bottom: 2px solid
-    ${({ theme, active }) => (active ? theme.colors.primary : "transparent")};
-  font-weight: ${({ active }) => (active ? "bold" : "normal")};
+    ${({ theme, $active }) => ($active ? theme.colors.primary : "transparent")};
+  font-weight: ${({ $active }) => ($active ? "bold" : "normal")};
 `;
 
 const ScrollingBody = styled.div`
@@ -41,6 +41,15 @@ const ScrollingBody = styled.div`
 
 const ContentContainer = styled.main`
   padding: 20px;
+`;
+
+const MenuContainer = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 44px;
+  height: 44px;
 `;
 
 const AuthorInfo = styled.div`
@@ -115,7 +124,6 @@ const HeaderMenuButton = styled.button`
   display: flex;
   align-items: center;
   margin-left: auto;
-  position: relative;
   width: 44px;
   height: 44px;
   justify-content: flex-end;
@@ -134,7 +142,7 @@ const DropdownMenu = styled.div`
   width: 120px;
 `;
 
-const DropdownItem = styled.button<{ isDelete?: boolean }>`
+const DropdownItem = styled.button<{ $isDelete?: boolean }>`
   display: block;
   width: 100%;
   padding: 12px 16px;
@@ -143,8 +151,8 @@ const DropdownItem = styled.button<{ isDelete?: boolean }>`
   text-align: left;
   cursor: pointer;
   font-size: 14px;
-  color: ${({ theme, isDelete }) =>
-    isDelete ? theme.colors.error : theme.colors.text};
+  color: ${({ theme, $isDelete }) =>
+    $isDelete ? theme.colors.error : theme.colors.text};
 
   &:hover {
     background-color: ${({ theme }) => theme.colors.inputBackground};
@@ -178,6 +186,7 @@ const PostDetailPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"post" | "planner">("post");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const {
     data: post,
@@ -292,18 +301,27 @@ const PostDetailPage: React.FC = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // 메뉴가 열려있고, 클릭된 영역이 메뉴 버튼(ref)의 바깥쪽일 때
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      // 클릭된 지점이 버튼(menuRef)의 바깥인지 확인
+      const isOutsideButton =
+        menuRef.current && !menuRef.current.contains(event.target as Node);
+
+      // 클릭된 지점이 드롭다운(dropdownRef)의 바깥인지 확인
+      const isOutsideDropdown =
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node);
+
+      // 버튼과 드롭다운 모두의 바깥을 클릭했을 때만 메뉴를 닫음
+      if (isOutsideButton && isOutsideDropdown) {
         setIsMenuOpen(false);
       }
     };
-    // 이벤트 리스너 등록
+
+    // mousedown 이벤트로 감지해야 onClick보다 먼저 실행됨
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      // 컴포넌트 언마운트 시 리스너 제거
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [menuRef]); // ref가 변경될 때만 effect 재실행
+  }, [menuRef, dropdownRef]);
 
   // 버튼 클릭 핸들러: 현재 상태에 따라 다른 뮤테이션 호출
   const handleButtonClick = () => {
@@ -334,10 +352,8 @@ const PostDetailPage: React.FC = () => {
   };
 
   const handleEditClick = () => {
-    // TODO: 게시글 수정 페이지로 이동 (PostCreateFlow 재사용 또는 수정용 페이지 신규 생성)
-    alert("게시글 수정 기능은 준비 중입니다.");
     setIsMenuOpen(false);
-    // 예: navigate(`/posts/edit/${postId}`);
+    navigate(`/posts/edit/${postId}`);
   };
 
   const handleDeleteClick = () => {
@@ -347,6 +363,28 @@ const PostDetailPage: React.FC = () => {
     if (window.confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
       performDelete(postId!);
     }
+  };
+
+  // 날짜 포맷팅
+  const formatDateRange = (
+    start: string | null,
+    end: string | null
+  ): string => {
+    if (start && end) {
+      const startDate = start.split("T")[0];
+      const endDate = end.split("T")[0];
+      if (startDate === endDate) {
+        return startDate;
+      }
+      return `${startDate} ~ ${endDate}`;
+    }
+    if (start) {
+      return `${start.split("T")[0]} ~ 미정`;
+    }
+    if (end) {
+      return `미정 ~ ${end.split("T")[0]}`;
+    }
+    return "기간 정보 없음";
   };
 
   if (isLoading) {
@@ -429,32 +467,36 @@ const PostDetailPage: React.FC = () => {
       title="게시글"
       headerRight={
         isMyPost ? (
-          <HeaderMenuButton
-            ref={menuRef}
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            <IoEllipsisHorizontal />
+          <MenuContainer>
+            <HeaderMenuButton
+              ref={menuRef}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              <IoEllipsisHorizontal />
+            </HeaderMenuButton>
+
             {isMenuOpen && (
-              <DropdownMenu>
+              <DropdownMenu ref={dropdownRef}>
                 <DropdownItem onClick={handleEditClick}>수정</DropdownItem>
-                <DropdownItem onClick={handleDeleteClick} isDelete>
+                <DropdownItem onClick={handleDeleteClick} $isDelete>
                   {isDeleting ? "삭제 중..." : "삭제"}
                 </DropdownItem>
               </DropdownMenu>
             )}
-          </HeaderMenuButton>
+          </MenuContainer>
         ) : null
       }
+      onBackClick={() => navigate("/posts")}
     >
       <TabMenu>
         <TabButton
-          active={activeTab === "post"}
+          $active={activeTab === "post"}
           onClick={() => setActiveTab("post")}
         >
           게시글
         </TabButton>
         <TabButton
-          active={activeTab === "planner"}
+          $active={activeTab === "planner"}
           onClick={() => setActiveTab("planner")}
         >
           플래너
@@ -481,7 +523,8 @@ const PostDetailPage: React.FC = () => {
                 </span>
               </MetaItem>
               <MetaItem>
-                📅 일정: <span>기간 정보 없음</span>
+                📅 일정:{" "}
+                <span>{formatDateRange(post.startAt, post.endAt)}</span>
               </MetaItem>
               <MetaItem>
                 👥 모집 인원:{" "}
@@ -499,9 +542,9 @@ const PostDetailPage: React.FC = () => {
 
             <Button
               onClick={handleButtonClick}
-              variant={buttonProps.variant}
+              $variant={buttonProps.variant}
               disabled={buttonProps.disabled || isDeleting}
-              size="large"
+              $size="large"
               style={{ width: "100%" }}
             >
               {isDeleting ? "삭제 중..." : buttonProps.text}

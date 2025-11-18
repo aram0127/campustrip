@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import styled from "styled-components";
 import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import PageLayout from "../../components/layout/PageLayout";
@@ -73,6 +73,7 @@ const LocationSharePage: React.FC = () => {
   // React-Router 및 Auth Context 훅
   const { chatRoomId } = useParams<{ chatRoomId: string }>();
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   // State 정의
   const [myPosition, setMyPosition] =
@@ -371,11 +372,14 @@ const LocationSharePage: React.FC = () => {
   };
 
   return (
-    <PageLayout title="위치 공유">
+    <PageLayout
+      title="위치 공유"
+      onBackClick={() => navigate(`/chat/${chatRoomId}`)}
+    >
       <ControlsWrapper>
         <Button
           onClick={handleToggleSharing}
-          variant={isSharing ? "primary" : "secondary"}
+          $variant={isSharing ? "primary" : "secondary"}
           style={{ flex: 1 }}
           disabled={!myPosition} // 내 위치를 알아야 공유 가능
         >
@@ -398,7 +402,7 @@ const LocationSharePage: React.FC = () => {
               <span>{c.username}</span>
               <Button
                 onClick={() => centerOnCompanion(c.position)}
-                size="small"
+                $size="small"
               >
                 위치
               </Button>

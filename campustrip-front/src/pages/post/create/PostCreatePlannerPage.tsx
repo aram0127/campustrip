@@ -1,11 +1,16 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { usePostCreate } from "../../../context/PostCreateContext";
 import { useAuth } from "../../../context/AuthContext";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getMyPlanners } from "../../../api/planners";
-import { createPost, type CreatePostData } from "../../../api/posts";
+import {
+  createPost,
+  updatePost,
+  type CreatePostData,
+  type UpdatePostData,
+} from "../../../api/posts";
 import { type Planner } from "../../../types/planner";
 import { type Post } from "../../../types/post";
 import Button from "../../../components/common/Button";
@@ -76,53 +81,79 @@ const Message = styled.p`
 const PostCreatePlannerPage: React.FC = () => {
   const navigate = useNavigate();
   const { formData, updateFormData, resetFormData } = usePostCreate();
-  const { user } = useAuth(); // 현재 로그인한 사용자 정보
+  const { user } = useAuth();
+
+  // 모드 식별
+  const { postId } = useParams<{ postId?: string }>();
+  const isEditMode = !!postId;
 
   const [selectedPlannerId, setSelectedPlannerId] = useState<number | null>(
     formData.plannerId
   );
 
-  // useQuery로 내 플래너 목록 가져오기
+  // 내 플래너 목록 가져오기
   const {
     data: planners = [],
     isLoading,
     error: queryError,
   } = useQuery<Planner[], Error>({
-    queryKey: ["myPlanners", user?.id], // 내 플래너
+    queryKey: ["myPlanners", user?.id],
     queryFn: () => getMyPlanners(user!.id),
-    enabled: !!user, // 로그인한 사용자만 실행
+    enabled: !!user,
   });
 
-  // useMutation으로 게시글 생성 API 설정
+  // 게시글 생성 Mutation
   const {
-    mutate: submitPost,
-    isPending,
-    error: mutationError,
-  } = useMutation<
-    Post, // 성공 시 Post 객체 반환
-    Error, // 실패 시 Error 객체
-    CreatePostData // 'variables' 타입을 CreatePostData로 명시
-  >({
+    mutate: createPostMutation,
+    isPending: isCreating,
+    error: creationError,
+  } = useMutation<Post, Error, CreatePostData>({
     mutationFn: createPost,
     onSuccess: (createdPost) => {
       alert("게시글 작성이 완료되었습니다!");
-      resetFormData(); // Context 초기화
-      // 생성된 게시글 상세 페이지로 이동
+      resetFormData();
       navigate(`/posts/${createdPost.postId}`, { replace: true });
     },
     onError: (err) => {
       console.error("게시글 생성 실패:", err);
-      // 에러 메시지는 아래 <Message> 컴포넌트에서 표시
     },
   });
+
+  // 게시글 수정 Mutation
+  const {
+    mutate: updatePostMutation,
+    isPending: isUpdating,
+    error: updateError,
+  } = useMutation<Post, Error, UpdatePostData>({
+    mutationFn: (data: UpdatePostData) => updatePost(postId!, data),
+    onSuccess: (updatedPost) => {
+      alert("게시글 수정이 완료되었습니다!");
+      resetFormData();
+      navigate(`/posts/${updatedPost.postId}`, { replace: true });
+      // 상세 페이지 캐시 무효화 (PostDetailPage가 최신 데이터를 받도록)
+      // queryClient.invalidateQueries({ queryKey: ["post", updatedPost.postId] });
+      // (QueryClient가 필요하면 상단에서 useQueryClient()로 가져와야 함)
+    },
+    onError: (err) => {
+      console.error("게시글 수정 실패:", err);
+    },
+  });
+
+  // 로딩/에러 상태 통합
+  const isLoadingSubmit = isCreating || isUpdating;
+  const submitError = creationError || updateError;
 
   // '이전' 버튼
   const handlePrev = () => {
     updateFormData({ plannerId: selectedPlannerId });
-    navigate("/posts/new/details"); // 2단계로 이동
+    if (isEditMode) {
+      navigate(`/posts/edit/${postId}/details`);
+    } else {
+      navigate("/posts/new/details");
+    }
   };
 
-  // '작성 완료' 버튼
+  // 작성 완료, 수정 완료 버튼
   const handleSubmit = () => {
     if (!selectedPlannerId) {
       alert("플래너를 선택해주세요.");
@@ -136,14 +167,24 @@ const PostCreatePlannerPage: React.FC = () => {
 
     updateFormData({ plannerId: selectedPlannerId });
 
-    submitPost({
+    // API에 전송할 최종 데이터
+    const postDataPayload = {
       formData: { ...formData, plannerId: selectedPlannerId },
       user: user,
-    });
+    };
+
+    if (isEditMode) {
+      updatePostMutation(postDataPayload);
+    } else {
+      createPostMutation(postDataPayload);
+    }
   };
 
   return (
-    <PageLayout title="플래너 선택 (3/3)">
+    <PageLayout
+      title={isEditMode ? "게시글 수정 (3/3)" : "플래너 선택 (3/3)"}
+      showBackButton={false}
+    >
       <ScrollingListContainer>
         {isLoading && <Message>플래너 목록을 불러오는 중...</Message>}
         {queryError && <Message>오류: {queryError.message}</Message>}
@@ -170,24 +211,30 @@ const PostCreatePlannerPage: React.FC = () => {
           </PlannerItem>
         ))}
 
-        {mutationError && (
+        {submitError && (
           <Message style={{ color: "red" }}>
-            {axios.isAxiosError(mutationError)
-              ? `작성 실패 (${mutationError.response?.status}): ${mutationError.message}`
-              : `작성 실패: ${mutationError.message}`}
+            {axios.isAxiosError(submitError)
+              ? `작업 실패 (${submitError.response?.status}): ${submitError.message}`
+              : `작업 실패: ${submitError.message}`}
           </Message>
         )}
       </ScrollingListContainer>
 
       <Footer>
-        <PrevButton onClick={handlePrev} disabled={isPending}>
+        <PrevButton onClick={handlePrev} disabled={isLoadingSubmit}>
           이전
         </PrevButton>
         <FooterButton
           onClick={handleSubmit}
-          disabled={!selectedPlannerId || isPending}
+          disabled={!selectedPlannerId || isLoadingSubmit}
         >
-          {isPending ? "생성 중..." : "작성 완료"}
+          {isEditMode
+            ? isLoadingSubmit
+              ? "수정 중..."
+              : "수정 완료"
+            : isLoadingSubmit
+            ? "생성 중..."
+            : "작성 완료"}
         </FooterButton>
       </Footer>
     </PageLayout>
