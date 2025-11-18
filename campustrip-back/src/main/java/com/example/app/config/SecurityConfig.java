@@ -61,7 +61,7 @@ public class SecurityConfig {
             .httpBasic(basic -> basic.disable())
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/ws/**", "/ws/chat/**", "/ws/websocket/**").permitAll()
-                    .requestMatchers("/", "/index.html", "/login", "/api/login", "/api/users",
+                    .requestMatchers("/", "/index.html", "/login", "/api/login", "/api/users", "/api/auth/email/**",
                             "assets/**", "/vite.svg", "manifest.webmanifest", "/registerSW.js", "/*.ico", "/*.png", "/*jpg").permitAll()
                     .requestMatchers("/error").permitAll()
                     .requestMatchers("/api/admin/**").hasRole("ADMIN")
