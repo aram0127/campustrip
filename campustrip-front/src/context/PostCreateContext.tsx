@@ -3,6 +3,7 @@ import React, {
   useContext,
   useState,
   type ReactNode,
+  useCallback,
 } from "react";
 import { type RegionDTO } from "../api/regions";
 
@@ -48,13 +49,13 @@ export const PostCreateProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [formData, setFormData] = useState<PostCreateData>(initialData);
 
-  const updateFormData = (data: Partial<PostCreateData>) => {
+  const updateFormData = useCallback((data: Partial<PostCreateData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
-  };
+  }, []);
 
-  const resetFormData = () => {
+  const resetFormData = useCallback(() => {
     setFormData(initialData);
-  };
+  }, []);
 
   return (
     <PostCreateContext.Provider

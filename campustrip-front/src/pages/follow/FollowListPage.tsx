@@ -219,7 +219,7 @@ function FollowListPage() {
             <UserName>{user.name}</UserName>
           </UserInfo>
           <Button
-            variant={isFollowing ? "outline" : "primary"}
+            $variant={isFollowing ? "outline" : "primary"}
             style={{ padding: "6px 16px", fontSize: "12px" }}
             onClick={() => handleFollowToggle(user)}
           >

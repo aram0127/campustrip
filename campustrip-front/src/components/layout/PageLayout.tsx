@@ -61,6 +61,7 @@ interface PageLayoutProps {
   showBackButton?: boolean;
   headerRight?: React.ReactNode;
   children: React.ReactNode;
+  onBackClick?: () => void;
 }
 
 const PageLayout: React.FC<PageLayoutProps> = ({
@@ -68,21 +69,30 @@ const PageLayout: React.FC<PageLayoutProps> = ({
   showBackButton = true,
   headerRight,
   children,
+  onBackClick,
 }) => {
   const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (onBackClick) {
+      onBackClick();
+    } else {
+      navigate(-1);
+    }
+  };
 
   return (
     <PageContainer>
       <Header>
         {showBackButton && (
-          <BackButton onClick={() => navigate(-1)}>
+          <BackButton onClick={handleBack}>
             <IoArrowBack />
           </BackButton>
         )}
         <HeaderTitle>{title}</HeaderTitle>
-        {headerRight} {/* 헤더 오른쪽에 렌더링될 요소 */}
+        {headerRight}
       </Header>
-      {children} {/* 페이지의 나머지 컨텐츠 */}
+      {children}
     </PageContainer>
   );
 };

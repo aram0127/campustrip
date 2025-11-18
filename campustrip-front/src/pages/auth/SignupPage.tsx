@@ -361,7 +361,7 @@ function SignupPage() {
         )}
 
         <Button
-          size="large"
+          $size="large"
           type="submit"
           // isFormValid와 isPending 상태로 disabled 관리
           disabled={!isFormValid || isPending}

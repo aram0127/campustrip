@@ -184,7 +184,11 @@ const ApplicantListPage: React.FC = () => {
   }
 
   return (
-    <PageLayout title="동행 신청자 목록" showBackButton>
+    <PageLayout
+      title="동행 신청자 목록"
+      showBackButton
+      onBackClick={() => navigate(`/posts/${postId}`)}
+    >
       <ApplicantList>
         {applicants.length === 0 && <Message>아직 신청자가 없습니다.</Message>}
         {applicants.map((applicant) => (

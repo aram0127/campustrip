@@ -329,7 +329,7 @@ function ProfilePage() {
 
           {!isMyProfile && (
             <Button
-              variant={isFollowing ? "outline" : "primary"}
+              $variant={isFollowing ? "outline" : "primary"}
               onClick={handleFollowToggle}
               disabled={followMutation.isPending || unfollowMutation.isPending}
               style={{ width: "100%", marginTop: "16px" }}
