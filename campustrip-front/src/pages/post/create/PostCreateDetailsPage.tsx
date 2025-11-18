@@ -102,14 +102,7 @@ const FooterButton = styled(Button)`
   font-size: 16px;
 `;
 
-const PrevButton = styled(FooterButton)`
-  background-color: ${({ theme }) => theme.colors.secondaryTextColor};
-  color: white;
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.grey};
-  }
-`;
+const PrevButton = styled(FooterButton)``;
 
 const SelectedRegionsContainer = styled.div`
   background-color: ${({ theme }) => theme.colors.inputBackground};

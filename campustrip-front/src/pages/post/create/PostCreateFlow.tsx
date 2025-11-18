@@ -1,11 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import PostCreateRegionPage from "./PostCreateRegionPage";
 import PostCreateDetailsPage from "./PostCreateDetailsPage";
 import PostCreatePlannerPage from "./PostCreatePlannerPage";
 import PostEditLoader from "../edit/PostEditLoader";
+import { usePostCreate } from "../../../context/PostCreateContext";
 
 const PostCreateFlow: React.FC = () => {
+  const { resetFormData } = usePostCreate();
+
+  useEffect(() => {
+    resetFormData();
+  }, [resetFormData]);
+
   return (
     <Routes>
       <Route path="region" element={<PostCreateRegionPage />} />
