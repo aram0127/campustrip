@@ -30,6 +30,9 @@ public class User {
     private String email;
     @Column(name="school_email", nullable=false, length=50)
     private String schoolEmail;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="university_id", nullable=false)
+    private Universities university;
     @Column(name="mbti", length=50)
     private String mbti;
     @Column(name="preference")
