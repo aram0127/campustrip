@@ -2,12 +2,21 @@ import { useState } from "react";
 import styled from "styled-components";
 import { IoEllipsisHorizontal } from "react-icons/io5";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getUserProfile } from "../../api/users";
 import { type User } from "../../types/user";
 import PageLayout, {
   ScrollingContent,
 } from "../../components/layout/PageLayout";
+import {
+  getFollowerCount,
+  getFollowingCount,
+  getFollowings,
+  followUser,
+  unfollowUser,
+} from "../../api/follow";
+import { useAuth } from "../../context/AuthContext";
+import Button from "../../components/common/Button";
 
 const IconButton = styled.button`
   background: none;
@@ -47,6 +56,13 @@ const FollowInfo = styled.div`
   gap: 16px;
   font-size: 14px;
   color: ${({ theme }) => theme.colors.text};
+`;
+
+const FollowStat = styled.span`
+  cursor: pointer;
+  &:hover {
+    opacity: 0.7;
+  }
 `;
 
 const TabMenu = styled.div`
@@ -165,21 +181,93 @@ const parsePreferences = (preference: number | null) => {
 };
 
 function ProfilePage() {
-  const { userId } = useParams<{ userId: string }>(); // URL에서 userId 가져오기
+  const { userId: userIdString } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
 
-  const [activeTab, setActiveTab] = useState("여행 기록"); // 탭 상태
+  const [activeTab, setActiveTab] = useState("여행 기록");
 
-  // useQuery로 사용자 프로필 데이터 가져오기
+  // 사용자 프로필 데이터 가져오기
   const {
     data: profileUser,
     isLoading,
     error,
   } = useQuery<User, Error>({
-    queryKey: ["userProfile", userId], // key에 userId를 포함시켜 사용자별로 캐싱
-    queryFn: () => getUserProfile(userId!),
-    enabled: !!userId, // userId가 있을 때만 쿼리 실행
+    queryKey: ["userProfile", userIdString],
+    queryFn: () => getUserProfile(Number(userIdString!)),
+    enabled: !!userIdString,
   });
+
+  // 팔로워/팔로잉 수 가져오기
+  const { data: followerCount } = useQuery({
+    queryKey: ["followerCount", profileUser?.id],
+    queryFn: () => getFollowerCount(profileUser!.id),
+    enabled: !!profileUser?.id,
+  });
+
+  const { data: followingCount } = useQuery({
+    queryKey: ["followingCount", profileUser?.id],
+    queryFn: () => getFollowingCount(profileUser!.id),
+    enabled: !!profileUser?.id,
+  });
+
+  // 현재 로그인한 유저의 팔로잉 목록
+  const { data: currentUserFollowings } = useQuery({
+    queryKey: ["currentUserFollowings", currentUser?.id],
+    queryFn: () => getFollowings(currentUser!.id),
+    enabled: !!currentUser?.id,
+  });
+
+  // 이 프로필이 내 프로필인지
+  const isMyProfile = currentUser?.id === profileUser?.id;
+  // 내가 이 프로필을 팔로우하고 있는지
+  const isFollowing = currentUserFollowings?.some(
+    (user) => user.id === profileUser?.id
+  );
+
+  // 팔로우
+  const followMutation = useMutation({
+    mutationFn: () => followUser(currentUser!.id, profileUser!.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["currentUserFollowings", currentUser?.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["followerCount", profileUser?.id],
+      });
+    },
+  });
+
+  // 언팔로우
+  const unfollowMutation = useMutation({
+    mutationFn: () => unfollowUser(currentUser!.id, profileUser!.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["currentUserFollowings", currentUser?.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["followerCount", profileUser?.id],
+      });
+    },
+  });
+
+  const handleFollowToggle = () => {
+    if (!currentUser || !profileUser || isMyProfile) return;
+
+    if (isFollowing) {
+      unfollowMutation.mutate();
+    } else {
+      followMutation.mutate();
+    }
+  };
+
+  // 팔로우 목록 페이지로 이동
+  const handleGoToFollowPage = () => {
+    if (profileUser) {
+      navigate(`/profile/${profileUser.id}/follows`);
+    }
+  };
 
   // 로딩 및 에러 상태 처리
   if (isLoading) {
@@ -231,13 +319,28 @@ function ProfilePage() {
           <Avatar />
           <UserName>{profileUser.name}</UserName>
           <FollowInfo>
-            <span>
-              <b>6</b> 팔로잉
-            </span>
-            <span>
-              <b>6</b> 팔로워
-            </span>
+            <FollowStat onClick={handleGoToFollowPage}>
+              <b>{followingCount ?? 0}</b> 팔로잉
+            </FollowStat>
+            <FollowStat onClick={handleGoToFollowPage}>
+              <b>{followerCount ?? 0}</b> 팔로워
+            </FollowStat>
           </FollowInfo>
+
+          {!isMyProfile && (
+            <Button
+              $variant={isFollowing ? "outline" : "primary"}
+              onClick={handleFollowToggle}
+              disabled={followMutation.isPending || unfollowMutation.isPending}
+              style={{ width: "100%", marginTop: "16px" }}
+            >
+              {isFollowing
+                ? "언팔로우"
+                : followMutation.isPending
+                ? "팔로우 중..."
+                : "팔로우"}
+            </Button>
+          )}
         </ProfileInfoContainer>
 
         <Section>
@@ -255,9 +358,11 @@ function ProfilePage() {
               <Tag key={tag}>{tag}</Tag>
             ))}
           </TagContainer>
-          <ActionButton onClick={handleStartTest}>
-            여행 성향 검사 시작
-          </ActionButton>
+          {isMyProfile && (
+            <ActionButton onClick={handleStartTest}>
+              여행 성향 검사 시작
+            </ActionButton>
+          )}
         </Section>
 
         <TabMenu>

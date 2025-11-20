@@ -1,8 +1,10 @@
 package com.example.app.controller;
 
+import com.example.app.domain.Universities;
 import com.example.app.dto.SchoolEmailDTO;
 import com.example.app.dto.UserPreference;
 import com.example.app.dto.UserResponse;
+import com.example.app.repository.UniversitiesRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -20,10 +22,12 @@ public class UserController {
     private BCryptPasswordEncoder passwordEncoder;
 
     private final UserService userService;
+    private final UniversitiesRepository universitiesRepository;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, UniversitiesRepository universitiesRepository) {
         this.userService = userService;
+        this.universitiesRepository = universitiesRepository;
     }
 
     // GET: 전체 사용자 조회
@@ -46,6 +50,7 @@ public class UserController {
     public UserResponse createUser(@RequestBody CreateUserRequest request) {
         request.setPasswordEncoder(passwordEncoder);
         User user = request.toEntity();
+        user.setUniversity(universitiesRepository.findByName(request.getUniversityName()));
         userService.saveUser(user);
         return new UserResponse(user);
     }

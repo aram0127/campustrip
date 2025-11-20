@@ -18,6 +18,8 @@ public class PostDTO {
     private String body;
     private java.time.LocalDateTime createdAt;
     private java.time.LocalDateTime updatedAt;
+    private java.time.LocalDate startAt;
+    private java.time.LocalDate endAt;
     private Integer teamSize;
     private Integer memberSize;
     private List<RegionDTO> regions;

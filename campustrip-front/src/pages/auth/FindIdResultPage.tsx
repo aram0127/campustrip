@@ -45,7 +45,7 @@ function FindIdResultPage() {
         <Button
           as={Link}
           to="/login"
-          size="large"
+          $size="large"
           style={{
             width: "100%",
             textDecoration: "none",

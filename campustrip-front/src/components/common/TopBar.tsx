@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { IoNotificationsOutline } from "react-icons/io5";
 
 const TopBarContainer = styled.header`
@@ -11,7 +11,7 @@ const TopBarContainer = styled.header`
     ${({ theme }) => theme.spacings.medium};
   border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
   flex-shrink: 0;
-  height: 56px;
+  height: 64px;
   box-sizing: border-box;
 `;
 
@@ -68,6 +68,8 @@ interface TopBarProps {
 }
 
 const TopBar: React.FC<TopBarProps> = ({ onProfileClick }) => {
+  const navigate = useNavigate();
+
   return (
     <TopBarContainer>
       <LeftSection>
@@ -77,7 +79,7 @@ const TopBar: React.FC<TopBarProps> = ({ onProfileClick }) => {
         <Logo to="/">Campus Trip</Logo>
       </CenterSection>
       <RightSection>
-        <NotificationBtn>
+        <NotificationBtn onClick={() => navigate("/notifications")}>
           <IoNotificationsOutline />
         </NotificationBtn>
       </RightSection>

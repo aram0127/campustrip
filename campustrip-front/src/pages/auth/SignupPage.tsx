@@ -5,7 +5,11 @@ import Input from "../../components/common/Input";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useMutation } from "@tanstack/react-query";
-import { signupUser } from "../../api/auth";
+import {
+  signupUser,
+  sendEmailVerification,
+  verifyEmailVerification,
+} from "../../api/auth";
 import AuthLayout from "../../components/layout/AuthLayout";
 
 const Form = styled.form`
@@ -43,6 +47,7 @@ function SignupPage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [emailCode, setEmailCode] = useState("");
   const [phoneCode, setPhoneCode] = useState("");
+  const [universityName, setUniversityName] = useState("");
 
   // 유효성 검사 상태
   const [isUserIdValid, setIsUserIdValid] = useState(false);
@@ -105,10 +110,11 @@ function SignupPage() {
   const handleSendEmailCode = async () => {
     setIsEmailLoading(true);
     try {
-      // TODO: 백엔드에 이메일 인증 코드 발송 API 호출
+      await sendEmailVerification(schoolEmail);
       alert("이메일로 인증코드가 발송되었습니다.");
       setEmailCodeSent(true);
     } catch (err) {
+      console.error(err);
       alert("인증코드 발송에 실패했습니다.");
     } finally {
       setIsEmailLoading(false);
@@ -119,11 +125,16 @@ function SignupPage() {
   const handleVerifyEmailCode = async () => {
     setIsEmailLoading(true);
     try {
-      // TODO: 백엔드에 이메일 인증 코드 검증 API 호출
-      alert("이메일 인증에 성공했습니다.");
+      const verifiedUnivName = await verifyEmailVerification(
+        schoolEmail,
+        emailCode
+      );
+      setUniversityName(verifiedUnivName);
+      alert(`이메일 인증에 성공했습니다. (${verifiedUnivName})`);
       setIsEmailVerified(true);
     } catch (err) {
-      alert("인증코드가 올바르지 않습니다.");
+      console.error(err);
+      alert("인증코드가 올바르지 않거나 대학교 정보를 찾을 수 없습니다.");
     } finally {
       setIsEmailLoading(false);
     }
@@ -165,7 +176,8 @@ function SignupPage() {
     isSchoolEmailValid &&
     isPhoneNumberValid &&
     isEmailVerified &&
-    isPhoneVerified;
+    isPhoneVerified &&
+    universityName;
 
   const {
     mutate: performSignup,
@@ -200,6 +212,7 @@ function SignupPage() {
       schoolEmail: schoolEmail,
       phoneNumber: phoneNumber,
       email: schoolEmail,
+      universityName: universityName,
     };
 
     // useMutation의 mutate 함수(performSignup) 호출
@@ -361,7 +374,7 @@ function SignupPage() {
         )}
 
         <Button
-          size="large"
+          $size="large"
           type="submit"
           // isFormValid와 isPending 상태로 disabled 관리
           disabled={!isFormValid || isPending}

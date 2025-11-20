@@ -8,6 +8,8 @@ export interface Post {
   updatedAt?: string | null;
   teamSize: number;
   memberSize: number;
+  startAt: string | null;
+  endAt: string | null;
   // User 정보
   user: {
     id: number;

@@ -92,6 +92,8 @@ public class PostController {
         postDTO.setBody(post.getBody());
         postDTO.setCreatedAt(post.getCreatedAt());
         postDTO.setUpdatedAt(post.getUpdatedAt());
+        postDTO.setStartAt(post.getStartAt());
+        postDTO.setEndAt(post.getEndAt());
         postDTO.setTeamSize(post.getTeamSize());
         postDTO.setMemberSize(chatService.getNumberOfChatMembers(post.getChat()));
         postDTO.setChatId(post.getChat().getId());

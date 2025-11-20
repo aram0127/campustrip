@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { IoMenu, IoAdd, IoSend } from "react-icons/io5";
 import { Client, type IMessage } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
@@ -128,6 +128,7 @@ const Message = styled.p`
 function ChatRoomPage() {
   const { chatId } = useParams<{ chatId: string }>();
   const { user } = useAuth(); // 현재 로그인한 사용자 정보
+  const navigate = useNavigate();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]); // 실시간 + 과거 메시지
   const [inputValue, setInputValue] = useState("");
@@ -184,21 +185,9 @@ function ChatRoomPage() {
       console.log("WebSocket 연결 성공");
 
       // 채팅방 구독 (KafkaConsumerService가 여기로 메시지 전송)
-      client.subscribe(`/sub/chat/room/${chatId}`, (message: IMessage) => {
+      client.subscribe(`/topic/chat/room/${chatId}`, (message: IMessage) => {
         const receivedMessage = JSON.parse(message.body) as ChatMessage;
         setMessages((prevMessages) => [...prevMessages, receivedMessage]);
-      });
-
-      // JOIN 메시지 전송 (ChatController @MessageMapping)
-      const joinMessage: ChatMessage = {
-        messageType: MessageTypeValue.JOIN,
-        roomId: chatId,
-        userName: user.name, // useAuth()에서 가져온 사용자 이름
-        message: `${user.name}님이 입장했습니다.`,
-      };
-      client.publish({
-        destination: "/pub/chat/message", // WebSocketConfig의 /pub
-        body: JSON.stringify(joinMessage),
       });
     };
 
@@ -211,26 +200,6 @@ function ChatRoomPage() {
     // 클라이언트 활성화
     client.activate();
     stompClientRef.current = client;
-
-    // 컴포넌트 언마운트 시 연결 해제
-    return () => {
-      if (stompClientRef.current?.active && user) {
-        // LEAVE 메시지 전송
-        const leaveMessage: ChatMessage = {
-          messageType: MessageTypeValue.LEAVE,
-          roomId: chatId,
-          userName: user.name,
-          message: `${user.name}님이 퇴장했습니다.`,
-        };
-        stompClientRef.current.publish({
-          destination: "/pub/chat/message",
-          body: JSON.stringify(leaveMessage),
-        });
-
-        stompClientRef.current.deactivate();
-        console.log("WebSocket 연결 해제됨");
-      }
-    };
   }, [chatId, user, isHistoryLoaded]); // user와 chatId가 변경될 때마다 재연결
 
   // 메시지 전송 핸들러
@@ -279,6 +248,7 @@ function ChatRoomPage() {
           <IoMenu />
         </HeaderButton>
       }
+      onBackClick={() => navigate("/chat")}
     >
       <MessageListContainer ref={messageListRef}>
         {isHistoryLoading && <Message>대화 내역을 불러오는 중...</Message>}

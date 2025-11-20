@@ -29,9 +29,12 @@ import PostDetailPage from "./pages/post/PostDetailPage";
 import PostCreateFlow from "./pages/post/create/PostCreateFlow";
 import ApplicantListPage from "./pages/post/ApplicantListPage";
 import LocationSharePage from "./pages/location/LocationSharePage";
+import PostEditLoader from "./pages/post/edit/PostEditLoader";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import TravelTestPage from "@/pages/test/TravelTestPage";
+import { PostCreateProvider } from "./context/PostCreateContext";
 
+import TravelTestPage from "@/pages/test/TravelTestPage";
 import ChatTestPage from "./test/ChatTestPage"; // 채팅테스트
 
 const RootRedirect: React.FC = () => {
@@ -67,56 +70,65 @@ function App() {
       <GlobalStyle />
       <AuthProvider>
         <Router>
-          <Routes>
-            {/* 루트 경로 접근 시 로그인 상태에 따라 리디렉션 */}
-            <Route path="/" element={<RootRedirect />} />
+          <PostCreateProvider>
+            <Routes>
+              {/* 루트 경로 접근 시 로그인 상태에 따라 리디렉션 */}
+              <Route path="/" element={<RootRedirect />} />
 
-            {/* 로그인/인증 관련 페이지들 */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/find-id" element={<FindIdPage />} />
-            <Route path="/find-id/result" element={<FindIdResultPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/set-new-password" element={<SetNewPasswordPage />} />
+              {/* 로그인/인증 관련 페이지들 */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/find-id" element={<FindIdPage />} />
+              <Route path="/find-id/result" element={<FindIdResultPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route
+                path="/set-new-password"
+                element={<SetNewPasswordPage />}
+              />
 
-            {/* 로그인이 필요한 페이지들 */}
-            <Route path="/profile/:userId" element={<ProfilePage />} />
-            <Route path="/chat/new" element={<NewChatPage />} />
-            <Route path="/chat/:chatId" element={<ChatRoomPage />} />
-            <Route
-              path="/profile/:userId/follows"
-              element={<FollowListPage />}
-            />
-            <Route path="/settings/blocked" element={<BlockedListPage />} />
-            <Route path="/notifications" element={<NotificationListPage />} />
-            <Route path="/posts/:postId" element={<PostDetailPage />} />
-            <Route path="/posts/new/*" element={<PostCreateFlow />} />
-            <Route
-              path="/posts/:postId/applicants"
-              element={<ApplicantListPage />}
-            />
-            <Route
-              path="/location/:chatRoomId"
-              element={<LocationSharePage />}
-            />
+              {/* 로그인이 필요한 페이지들 */}
+              <Route path="/profile/:userId" element={<ProfilePage />} />
+              <Route path="/chat/new" element={<NewChatPage />} />
+              <Route path="/chat/:chatId" element={<ChatRoomPage />} />
+              <Route
+                path="/profile/:userId/follows"
+                element={<FollowListPage />}
+              />
+              <Route path="/settings/blocked" element={<BlockedListPage />} />
+              <Route path="/notifications" element={<NotificationListPage />} />
+              <Route path="/posts/:postId" element={<PostDetailPage />} />
+              <Route path="/posts/new/*" element={<PostCreateFlow />} />
+              <Route
+                path="/posts/edit/:postId/*"
+                element={<PostEditLoader />}
+              />
+              <Route
+                path="/posts/:postId/applicants"
+                element={<ApplicantListPage />}
+              />
+              <Route
+                path="/location/:chatRoomId"
+                element={<LocationSharePage />}
+              />
 
-            <Route path="/test/chat" element={<ChatTestPage />} />
+              <Route path="/test/chat" element={<ChatTestPage />} />
 
-            {/* MainLayout을 사용하는 페이지들 */}
-            <Route
-              path="/*"
-              element={
-                <MainLayout currentTheme={theme} toggleTheme={toggleTheme}>
-                  <Routes>
-                    <Route path="/posts" element={<PostListPage />} />
-                    <Route path="/reviews" element={<ReviewListPage />} />
-                    <Route path="/chat" element={<ChatListPage />} />
-                    <Route path="/planner" element={<PlannerListPage />} />
-                  </Routes>
-                </MainLayout>
-              }
-            />
-          </Routes>
+              {/* MainLayout을 사용하는 페이지들 */}
+              <Route
+                path="/*"
+                element={
+                  <MainLayout currentTheme={theme} toggleTheme={toggleTheme}>
+                    <Routes>
+                      <Route path="/posts" element={<PostListPage />} />
+                      <Route path="/reviews" element={<ReviewListPage />} />
+                      <Route path="/chat" element={<ChatListPage />} />
+                      <Route path="/planner" element={<PlannerListPage />} />
+                    </Routes>
+                  </MainLayout>
+                }
+              />
+            </Routes>
+          </PostCreateProvider>
         </Router>
       </AuthProvider>
     </ThemeProvider>
