@@ -1,14 +1,14 @@
-import React from 'react';
-import styled from 'styled-components';
-import { IoAdd } from 'react-icons/io5';
+import React from "react";
+import styled from "styled-components";
+import { IoAdd } from "react-icons/io5";
 
 const FABContainer = styled.button`
   position: fixed;
-  right: 20px;
-  bottom: 80px;
+  right: ${({ theme }) => theme.spacings.medium}; /* 16px (20px에서 조정) */
+  bottom: calc(60px + ${({ theme }) => theme.spacings.medium});
   width: 56px;
   height: 56px;
-  border-radius: 50%;
+  border-radius: ${({ theme }) => theme.borderRadius.circle};
   border: none;
   background-color: ${({ theme }) => theme.colors.primary};
   color: white;
@@ -20,14 +20,14 @@ const FABContainer = styled.button`
   z-index: 10;
   transition: transform 0.2s ease-in-out;
   padding: 0;
-  
+
   &:hover {
     transform: scale(1.05);
   }
 
   & > svg {
-    width: 32px;
-    height: 32px;
+    width: ${({ theme }) => theme.spacings.xlarge}; /* 32px */
+    height: ${({ theme }) => theme.spacings.xlarge}; /* 32px */
   }
 `;
 
@@ -35,7 +35,9 @@ interface FloatingActionButtonProps {
   onClick: () => void;
 }
 
-const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onClick }) => {
+const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
+  onClick,
+}) => {
   return (
     <FABContainer onClick={onClick}>
       <IoAdd />

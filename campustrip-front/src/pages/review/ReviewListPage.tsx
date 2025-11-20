@@ -1,12 +1,9 @@
-import React, { useState } from "react";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
 import FloatingActionButton from "../../components/common/FloatingActionButton";
 
 const PageContainer = styled.div`
   width: 100%;
-  max-width: 390px;
-  margin: 0 auto;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;

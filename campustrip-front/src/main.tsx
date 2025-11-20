@@ -1,3 +1,8 @@
+// SockJS가 'global'을 참조하므로, Vite 환경에서 수동으로 정의
+if (typeof (window as any).global === "undefined") {
+  (window as any).global = globalThis;
+}
+
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";

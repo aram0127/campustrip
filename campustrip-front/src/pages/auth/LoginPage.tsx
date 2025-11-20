@@ -7,27 +7,7 @@ import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 import Checkbox from "../../components/common/Checkbox";
 import { useAuth } from "../../context/AuthContext";
-
-const LoginPageContainer = styled.div`
-  width: 100%;
-  max-width: 390px;
-  margin: 0 auto;
-  box-sizing: border-box;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex-grow: 1;
-  padding: 20px;
-`;
-
-const Title = styled.h1`
-  font-size: ${({ theme }) => theme.fontSizes.title};
-  color: ${({ theme }) => theme.colors.primary};
-  font-weight: bold;
-  margin-bottom: 24px;
-`;
+import AuthLayout from "../../components/layout/AuthLayout";
 
 const Form = styled.form`
   width: 100%;
@@ -77,7 +57,6 @@ function LoginPage() {
 
   const {
     mutate: performLogin, // mutate 함수를 performLogin으로 이름 변경
-    isPending, // 로딩 상태 (isLoading 대신 isPending 사용)
     error, // 에러 상태
   } = useMutation({
     mutationFn: loginUser, // API 함수 연결
@@ -107,8 +86,7 @@ function LoginPage() {
   };
 
   return (
-    <LoginPageContainer>
-      <Title>Campus Trip</Title>
+    <AuthLayout title="Campus Trip">
       <Form onSubmit={handleLogin}>
         <Input
           type="text"
@@ -143,7 +121,7 @@ function LoginPage() {
         <StyledLink to="/reset-password">비밀번호 재설정</StyledLink>
         <StyledLink to="/signup">회원가입</StyledLink>
       </LinkContainer>
-    </LoginPageContainer>
+    </AuthLayout>
   );
 }
 

@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 const ListItemContainer = styled(Link)`
   display: block;
-  padding: 16px;
+  padding: ${({ theme }) => theme.spacings.medium};
   border-bottom: 1px solid ${({ theme }) => theme.colors.grey};
   cursor: pointer;
   text-decoration: none;
@@ -17,14 +17,15 @@ const ListItemContainer = styled(Link)`
 `;
 
 const PostTitle = styled.h2`
-  font-size: 18px;
-  margin: 0 0 8px 0;
+  font-size: ${({ theme }) => theme.fontSizes.body}; /* 16px */
+  font-weight: ${({ theme }) => theme.fontWeights.bold};
+  margin: 0 0 ${({ theme }) => theme.spacings.xsmall} 0;
   color: ${({ theme }) => theme.colors.text};
 `;
 
 const PostInfo = styled.p`
-  font-size: 14px;
-  margin: 4px 0 0 0;
+  font-size: ${({ theme }) => theme.fontSizes.caption}; /* 12px  */
+  margin: ${({ theme }) => theme.spacings.xxsmall} 0 0 0;
   color: ${({ theme }) => theme.colors.grey};
 `;
 
@@ -36,7 +37,8 @@ const getRegionNames = (regions: Post["regions"]): string => {
   if (!regions || regions.length === 0) {
     return "지역 정보 없음";
   }
-  return regions.map((r) => r.regionName).join(", ");
+
+  return regions.map((r) => r.name).join(", ");
 };
 
 const getDummyPeriod = (postId: number): string => {
@@ -45,19 +47,15 @@ const getDummyPeriod = (postId: number): string => {
   return "10/25 ~ 10/30 (5박 6일)";
 };
 
-const getDummyCurrentMembers = (postId: number, teamSize: number): string => {
-  const current = Math.min(Math.floor(postId / 2) + 1, teamSize);
-  return `모집 인원 [${current}/${teamSize}]`;
-};
-
 const PostListItem: React.FC<PostListItemProps> = ({ post }) => {
+  console.log(post);
   return (
     <ListItemContainer to={`/posts/${post.postId}`}>
       <PostTitle>{post.title}</PostTitle>
       <PostInfo>📍 {getRegionNames(post.regions)}</PostInfo>
       <PostInfo>📅 {getDummyPeriod(post.postId)}</PostInfo>
       <PostInfo>
-        👥 {getDummyCurrentMembers(post.postId, post.teamSize)}
+        👥 모집 인원 [{post.memberSize ?? 0}/{post.teamSize}]
       </PostInfo>
     </ListItemContainer>
   );

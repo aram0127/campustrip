@@ -26,61 +26,65 @@ const MenuContainer = styled(animated.div)`
   display: flex;
   flex-direction: column;
   box-shadow: 4px 0px 15px rgba(0, 0, 0, 0.1);
+  padding-top: env(safe-area-inset-top); /* 상단 노치 영역 패딩 */
+  padding-bottom: env(safe-area-inset-bottom); /* 하단 홈바 영역 패딩 */
+  box-sizing: border-box; /* 패딩을 높이에 포함 */
 `;
 
 const MenuProfile = styled.div`
-  padding: 20px;
+  padding: ${({ theme }) => theme.spacings.medium}; /* 16px */
   border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
 `;
 
 const ProfileAvatar = styled.div`
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
+  width: ${({ theme }) => theme.spacings.xxlarge}; /* 48px */
+  height: ${({ theme }) => theme.spacings.xxlarge}; /* 48px */
+  border-radius: ${({ theme }) => theme.borderRadius.circle};
   background-color: ${({ theme }) => theme.colors.secondaryTextColor};
-  margin-bottom: 12px;
+  margin-bottom: ${({ theme }) => theme.spacings.small};
 `;
 
 const ProfileName = styled.div`
-  font-weight: bold;
-  font-size: 18px;
+  font-weight: ${({ theme }) => theme.fontWeights.bold};
+  font-size: ${({ theme }) => theme.fontSizes.body}; /* 16px */
   color: ${({ theme }) => theme.colors.text};
 `;
 
 const ProfileId = styled.div`
   color: ${({ theme }) => theme.colors.secondaryTextColor};
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.fontSizes.caption}; /* 12px */
 `;
 
 const FollowInfo = styled.div`
   display: flex;
-  gap: 12px;
-  font-size: 14px;
-  margin-top: 12px;
+  gap: ${({ theme }) => theme.spacings.small};
+  font-size: ${({ theme }) => theme.fontSizes.caption}; /* 12px */
+  margin-top: ${({ theme }) => theme.spacings.small};
   color: ${({ theme }) => theme.colors.text};
 `;
 
 const MenuList = styled.div`
   flex-grow: 1;
-  padding: 10px 20px;
+  padding: ${({ theme }) => theme.spacings.small}
+    ${({ theme }) => theme.spacings.medium}; /* 12px 16px */
 `;
 
 const MenuItem = styled.div`
-  padding: 15px 0;
-  font-size: 16px;
-  font-weight: 500;
+  padding: ${({ theme }) => theme.spacings.medium} 0; /* 16px */
+  font-size: ${({ theme }) => theme.fontSizes.body};
+  font-weight: ${({ theme }) => theme.fontWeights.medium};
   cursor: pointer;
   color: ${({ theme }) => theme.colors.text};
 `;
 
 const MenuFooter = styled.div`
-  padding: 20px;
+  padding: ${({ theme }) => theme.spacings.medium}; /* 16px */
   border-top: 1px solid ${({ theme }) => theme.colors.borderColor};
 `;
 
 const DarkModeToggle = styled.div`
   cursor: pointer;
-  font-size: 24px;
+  font-size: ${({ theme }) => theme.fontSizes.title};
 `;
 
 const StyledLink = styled(Link)`

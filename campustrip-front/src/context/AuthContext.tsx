@@ -19,7 +19,7 @@ interface DecodedToken {
 }
 
 // 전역으로 관리할 사용자 정보 타입
-interface UserInfo {
+export interface UserInfo {
   id: number; // User의 membership_id
   userId: string;
   name: string;
@@ -34,7 +34,7 @@ interface AuthContextType {
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   token: null,
   user: null,
   isLoggedIn: false,

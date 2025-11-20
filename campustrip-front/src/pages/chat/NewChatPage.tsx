@@ -1,41 +1,10 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
-import { IoArrowBack, IoSearch } from 'react-icons/io5';
-
-const PageContainer = styled.div`
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: ${({ theme }) => theme.colors.background};
-`;
-
-const Header = styled.header`
-  display: flex;
-  align-items: center;
-  padding: 10px 16px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
-  flex-shrink: 0;
-`;
-
-const BackButton = styled.button`
-  background: none;
-  border: none;
-  color: ${({ theme }) => theme.colors.text};
-  font-size: 24px;
-  cursor: pointer;
-  margin-right: 16px;
-`;
-
-const Title = styled.h1`
-  font-size: 18px;
-  font-weight: bold;
-  margin: 0;
-  color: ${({ theme }) => theme.colors.text};
-`;
+import { useState } from "react";
+import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
+import { IoSearch } from "react-icons/io5";
+import PageLayout, {
+  ScrollingContent,
+} from "../../components/layout/PageLayout";
 
 const CreateButton = styled.button`
   background: none;
@@ -45,6 +14,7 @@ const CreateButton = styled.button`
   font-weight: bold;
   cursor: pointer;
   margin-left: auto;
+  flex-shrink: 0;
 
   &:disabled {
     color: ${({ theme }) => theme.colors.grey};
@@ -55,6 +25,7 @@ const CreateButton = styled.button`
 const SearchContainer = styled.div`
   padding: 16px;
   position: relative;
+  flex-shrink: 0;
 `;
 
 const SearchInput = styled.input`
@@ -75,10 +46,7 @@ const SearchIcon = styled(IoSearch)`
   color: ${({ theme }) => theme.colors.grey};
 `;
 
-const UserList = styled.div`
-  overflow-y: auto;
-  flex-grow: 1;
-`;
+const UserList = styled.div``;
 
 const UserItem = styled.label`
   display: flex;
@@ -102,7 +70,7 @@ const UserName = styled.span`
   color: ${({ theme }) => theme.colors.text};
 `;
 
-const Checkbox = styled.input.attrs({ type: 'checkbox' })`
+const Checkbox = styled.input.attrs({ type: "checkbox" })`
   margin-left: auto;
   width: 20px;
   height: 20px;
@@ -110,11 +78,11 @@ const Checkbox = styled.input.attrs({ type: 'checkbox' })`
 
 // --- 임시 데이터 ---
 const dummyUsers = [
-  { id: 1, name: '홍길동' },
-  { id: 2, name: '안기준' },
-  { id: 3, name: '김철수' },
-  { id: 4, name: '아람' },
-  { id: 5, name: '사용자' },
+  { id: 1, name: "홍길동" },
+  { id: 2, name: "안기준" },
+  { id: 3, name: "김철수" },
+  { id: 4, name: "아람" },
+  { id: 5, name: "사용자" },
 ];
 
 function NewChatPage() {
@@ -122,9 +90,9 @@ function NewChatPage() {
   const navigate = useNavigate();
 
   const handleUserSelect = (userId: number) => {
-    setSelectedUsers(prev => 
-      prev.includes(userId) 
-        ? prev.filter(id => id !== userId) 
+    setSelectedUsers((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
         : [...prev, userId]
     );
   };
@@ -133,32 +101,38 @@ function NewChatPage() {
     if (selectedUsers.length === 0) return;
     // 실제로는 여기서 선택된 사용자들과 새 채팅방을 만드는 API를 호출
     alert(`${selectedUsers.length}명의 사용자와 채팅방을 생성합니다.`);
-    navigate('/chat'); // 채팅 목록으로 이동
+    navigate("/chat"); // 채팅 목록으로 이동
   };
 
   return (
-    <PageContainer>
-      <Header>
-        <BackButton onClick={() => navigate(-1)}><IoArrowBack /></BackButton>
-        <Title>새로운 채팅</Title>
-        <CreateButton onClick={handleCreateChat} disabled={selectedUsers.length === 0}>
+    <PageLayout
+      title="새로운 채팅"
+      headerRight={
+        <CreateButton
+          onClick={handleCreateChat}
+          disabled={selectedUsers.length === 0}
+        >
           생성
         </CreateButton>
-      </Header>
+      }
+    >
       <SearchContainer>
         <SearchIcon />
         <SearchInput placeholder="사용자 검색" />
       </SearchContainer>
-      <UserList>
-        {dummyUsers.map(user => (
-          <UserItem key={user.id}>
-            <Avatar />
-            <UserName>{user.name}</UserName>
-            <Checkbox onChange={() => handleUserSelect(user.id)} />
-          </UserItem>
-        ))}
-      </UserList>
-    </PageContainer>
+
+      <ScrollingContent>
+        <UserList>
+          {dummyUsers.map((user) => (
+            <UserItem key={user.id}>
+              <Avatar />
+              <UserName>{user.name}</UserName>
+              <Checkbox onChange={() => handleUserSelect(user.id)} />
+            </UserItem>
+          ))}
+        </UserList>
+      </ScrollingContent>
+    </PageLayout>
   );
 }
 

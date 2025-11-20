@@ -17,8 +17,8 @@ export interface Post {
   };
   // Region 정보
   regions: {
-    regionId: number;
-    regionName: string;
+    id: number;
+    name: string;
   }[];
 
   // 게시글에 포함된 신청 목록

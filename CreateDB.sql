@@ -64,6 +64,19 @@ CREATE TABLE Post (
     FOREIGN KEY (planner_id) REFERENCES Planner(planner_id)
 ) ENGINE=InnoDB;
 
+-- 후기 게시글 테이블
+CREATE TABLE Review (
+	review_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	membership_id INT NOT NULL,
+	created_at DATETIME NOT NULL,
+	updated_at DATETIME NOT NULL,
+	title VARCHAR(255) NOT NULL,
+	body VARCHAR(255) NOT NULL,
+	post_id INT NOT NULL,
+	FOREIGN KEY (membership_id) REFERENCES User(membership_id),
+	FOREIGN KEY (post_id) REFERENCES Post(post_id)
+) ENGINE=InnoDB;
+
 -- 지역 테이블
 CREATE TABLE Region (
     region_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -151,6 +164,16 @@ CREATE TABLE PostAsset (
     file_size INT NOT NULL DEFAULT 0 COMMENT 'KB 단위',
     PRIMARY KEY (asset_id, post_id),
     FOREIGN KEY (post_id) REFERENCES Post(post_id)
+) ENGINE=InnoDB;
+
+-- 후기 게시글 첨부파일 테이블
+CREATE TABLE ReviewAsset (
+	asset_id INT NOT NULL AUTO_INCREMENT,
+	review_id INT NOT NULL,
+	storge_url VARCHAR(255) NOT NULL,
+	file_size INT NOT NULL DEFAULT 0,
+	PRIMARY KEY (asset_id, review_id),
+	FOREIGN KEY (review_id) REFERENCES Review(review_id)
 ) ENGINE=InnoDB;
 
 -- 팔로우 테이블

@@ -1,34 +1,13 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import styled from "styled-components";
-import { IoArrowBack, IoEllipsisHorizontal } from "react-icons/io5";
+import { IoEllipsisHorizontal } from "react-icons/io5";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getUserProfile } from "../../api/users";
 import { type User } from "../../types/user";
-import { useAuth } from "../../context/AuthContext";
-
-const PageContainer = styled.div`
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  background-color: ${({ theme }) => theme.colors.background};
-`;
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 16px;
-  position: sticky;
-  top: 0;
-  background-color: ${({ theme }) => theme.colors.background};
-  z-index: 10;
-`;
-
-const HeaderText = styled.div`
-  font-weight: bold;
-  color: ${({ theme }) => theme.colors.text};
-`;
+import PageLayout, {
+  ScrollingContent,
+} from "../../components/layout/PageLayout";
 
 const IconButton = styled.button`
   background: none;
@@ -36,6 +15,13 @@ const IconButton = styled.button`
   color: ${({ theme }) => theme.colors.text};
   font-size: 24px;
   cursor: pointer;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0;
+  margin-right: -12px;
 `;
 
 const ProfileInfoContainer = styled.div`
@@ -67,7 +53,7 @@ const TabMenu = styled.div`
   display: flex;
   border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
   position: sticky;
-  top: 50px;
+  top: 0;
   background-color: ${({ theme }) => theme.colors.background};
   z-index: 5;
 `;
@@ -148,7 +134,7 @@ const Message = styled.p`
 const ActionButton = styled.button`
   width: 100%;
   padding: 12px;
-  margin-top: 16px; 
+  margin-top: 16px;
   background-color: ${({ theme }) => theme.colors.primary};
   color: white;
   border: none;
@@ -159,7 +145,7 @@ const ActionButton = styled.button`
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.primary || '#0056b3'};
+    background-color: ${({ theme }) => theme.colors.primary || "#0056b3"};
     opacity: 0.85;
   }
 `;
@@ -181,7 +167,6 @@ const parsePreferences = (preference: number | null) => {
 function ProfilePage() {
   const { userId } = useParams<{ userId: string }>(); // URL에서 userId 가져오기
   const navigate = useNavigate();
-  const { user: currentUser } = useAuth(); // 현재 로그인한 사용자
 
   const [activeTab, setActiveTab] = useState("여행 기록"); // 탭 상태
 
@@ -198,15 +183,27 @@ function ProfilePage() {
 
   // 로딩 및 에러 상태 처리
   if (isLoading) {
-    return <Message>프로필을 불러오는 중...</Message>;
+    return (
+      <PageLayout title="로딩 중...">
+        <Message>프로필을 불러오는 중...</Message>
+      </PageLayout>
+    );
   }
 
   if (error) {
-    return <Message>오류가 발생했습니다: {error.message}</Message>;
+    return (
+      <PageLayout title="오류">
+        <Message>오류가 발생했습니다: {error.message}</Message>
+      </PageLayout>
+    );
   }
 
   if (!profileUser) {
-    return <Message>사용자 정보를 찾을 수 없습니다.</Message>;
+    return (
+      <PageLayout title="오류">
+        <Message>사용자 정보를 찾을 수 없습니다.</Message>
+      </PageLayout>
+    );
   }
 
   // API 데이터로 여행 성향 태그 파싱
@@ -214,91 +211,89 @@ function ProfilePage() {
 
   // 사용자 온도를 0-100% 사이 값으로 변환 (100도 기준)
   const tempPercentage = Math.max(0, Math.min(100, profileUser.userScore || 0));
- 
+
   // 여행 성향 검사 페이지로 이동
   const handleStartTest = () => {
-    navigate(`/test/travel-test-page`); 
+    navigate(`/test/travel-test-page`);
   };
 
   return (
-    <PageContainer>
-      <Header>
-        <IconButton onClick={() => navigate(-1)}>
-          <IoArrowBack />
-        </IconButton>
-        <HeaderText>{profileUser.name}</HeaderText>
+    <PageLayout
+      title={profileUser.name}
+      headerRight={
         <IconButton>
           <IoEllipsisHorizontal />
         </IconButton>
-      </Header>
+      }
+    >
+      <ScrollingContent>
+        <ProfileInfoContainer>
+          <Avatar />
+          <UserName>{profileUser.name}</UserName>
+          <FollowInfo>
+            <span>
+              <b>6</b> 팔로잉
+            </span>
+            <span>
+              <b>6</b> 팔로워
+            </span>
+          </FollowInfo>
+        </ProfileInfoContainer>
 
-      <ProfileInfoContainer>
-        <Avatar />
-        <UserName>{profileUser.name}</UserName>
-        <FollowInfo>
-          {/* TODO: 팔로우/팔로워 API 연동 필요 (현재는 더미) */}
-          <span>
-            <b>6</b> 팔로잉
-          </span>
-          <span>
-            <b>6</b> 팔로워
-          </span>
-        </FollowInfo>
-        {/* TODO: 본인 프로필인지 타인 프로필인지에 따라 버튼 다르게 표시 */}
-        {/* {currentUser?.id === profileUser.id ? <Button>프로필 수정</Button> : <Button>팔로우</Button>} */}
-      </ProfileInfoContainer>
+        <Section>
+          <SectionTitle>여행 온도</SectionTitle>
+          <TempBarContainer>
+            <TempBar percentage={tempPercentage} />
+          </TempBarContainer>
+          <TempValue>{profileUser.userScore.toFixed(1)}°C</TempValue>
+        </Section>
 
-      <Section>
-        <SectionTitle>여행 온도</SectionTitle>
-        <TempBarContainer>
-          <TempBar percentage={tempPercentage} />
-        </TempBarContainer>
-        <TempValue>{profileUser.userScore.toFixed(1)}°C</TempValue>
-      </Section>
-
-      <Section>
-        <SectionTitle>여행 성향</SectionTitle>
-        <TagContainer>
-          {travelTags.map((tag) => (
-            <Tag key={tag}>{tag}</Tag>
-          ))}
-        </TagContainer>
-      
-        <ActionButton onClick={handleStartTest}>
+        <Section>
+          <SectionTitle>여행 성향</SectionTitle>
+          <TagContainer>
+            {travelTags.map((tag) => (
+              <Tag key={tag}>{tag}</Tag>
+            ))}
+          </TagContainer>
+          <ActionButton onClick={handleStartTest}>
             여행 성향 검사 시작
-        </ActionButton>
-      </Section>
+          </ActionButton>
+        </Section>
 
-      <TabMenu>
-        <TabButton
-          active={activeTab === "여행 기록"}
-          onClick={() => setActiveTab("여행 기록")}
-        >
-          여행 기록
-        </TabButton>
-        <TabButton
-          active={activeTab === "작성한 게시글"}
-          onClick={() => setActiveTab("작성한 게시글")}
-        >
-          작성한 게시글
-        </TabButton>
-        <TabButton
-          active={activeTab === "받은 후기"}
-          onClick={() => setActiveTab("받은 후기")}
-        >
-          받은 후기
-        </TabButton>
-      </TabMenu>
+        <TabMenu>
+          <TabButton
+            active={activeTab === "여행 기록"}
+            onClick={() => setActiveTab("여행 기록")}
+          >
+            여행 기록
+          </TabButton>
+          <TabButton
+            active={activeTab === "작성한 게시글"}
+            onClick={() => setActiveTab("작성한 게시글")}
+          >
+            작성한 게시글
+          </TabButton>
+          <TabButton
+            active={activeTab === "받은 후기"}
+            onClick={() => setActiveTab("받은 후기")}
+          >
+            받은 후기
+          </TabButton>
+        </TabMenu>
 
-      <ContentFeed>
-        {/* TODO: 각 탭에 맞는 API를 호출하여 데이터 표시 (현재는 비어있음) */}
-        {activeTab === "여행 기록" && <Message>여행 기록이 없습니다.</Message>}
-        {activeTab === "작성한 게시글" && (
-          <Message>작성한 게시글이 없습니다.</Message>
-        )}
-        {activeTab === "받은 후기" && <Message>받은 후기가 없습니다.</Message>}
-      </ContentFeed>
-    </PageContainer>
+        <ContentFeed>
+          {activeTab === "여행 기록" && (
+            <Message>여행 기록이 없습니다.</Message>
+          )}
+          {activeTab === "작성한 게시글" && (
+            <Message>작성한 게시글이 없습니다.</Message>
+          )}
+          {activeTab === "받은 후기" && (
+            <Message>받은 후기가 없습니다.</Message>
+          )}
+        </ContentFeed>
+      </ScrollingContent>
+    </PageLayout>
   );
 }
 

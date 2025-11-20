@@ -1,13 +1,14 @@
-import React from 'react';
-import styled from 'styled-components';
-import { Link } from 'react-router-dom';
-import { IoNotificationsOutline } from 'react-icons/io5';
+import React from "react";
+import styled from "styled-components";
+import { Link } from "react-router-dom";
+import { IoNotificationsOutline } from "react-icons/io5";
 
 const TopBarContainer = styled.header`
   display: grid;
   grid-template-columns: 50px 1fr 50px;
   align-items: center;
-  padding: 10px 16px;
+  padding: ${({ theme }) => theme.spacings.small}
+    ${({ theme }) => theme.spacings.medium};
   border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
   flex-shrink: 0;
   height: 56px;
@@ -29,19 +30,21 @@ const RightSection = styled.div`
   justify-content: flex-end;
 `;
 
-
 const ProfileBtn = styled.button`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  border-radius: ${({ theme }) => theme.borderRadius.circle};
   background-color: ${({ theme }) => theme.colors.secondaryTextColor};
   border: none;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const Logo = styled(Link)`
-  font-size: 20px;
-  font-weight: bold;
+  font-size: ${({ theme }) => theme.fontSizes.subtitle};
+  font-weight: ${({ theme }) => theme.fontWeights.bold};
   color: ${({ theme }) => theme.colors.primary};
   text-decoration: none;
 `;
@@ -49,9 +52,9 @@ const Logo = styled(Link)`
 const NotificationBtn = styled.button`
   background: none;
   border: none;
-  font-size: 24px;
-  width: 32px;
-  height: 32px;
+  font-size: ${({ theme }) => theme.fontSizes.title};
+  width: 44px;
+  height: 44px;
   padding: 0;
   color: ${({ theme }) => theme.colors.text};
   cursor: pointer;
@@ -74,7 +77,9 @@ const TopBar: React.FC<TopBarProps> = ({ onProfileClick }) => {
         <Logo to="/">Campus Trip</Logo>
       </CenterSection>
       <RightSection>
-        <NotificationBtn><IoNotificationsOutline /></NotificationBtn>
+        <NotificationBtn>
+          <IoNotificationsOutline />
+        </NotificationBtn>
       </RightSection>
     </TopBarContainer>
   );

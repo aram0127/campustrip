@@ -1,32 +1,7 @@
-import React from "react";
 import styled from "styled-components";
 import { Link, useLocation } from "react-router-dom";
 import Button from "../../components/common/Button";
-
-const PageContainer = styled.div`
-  width: 100%;
-  max-width: 390px;
-  margin: 0 auto;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  min-height: 100vh;
-`;
-
-const Title = styled.h1`
-  font-size: 24px;
-  color: ${({ theme }) => theme.colors.primary};
-  margin-bottom: 8px;
-`;
-
-const Subtitle = styled.p`
-  font-size: 14px;
-  color: ${({ theme }) => theme.colors.secondaryTextColor};
-  margin-bottom: 24px;
-`;
+import AuthLayout from "../../components/layout/AuthLayout";
 
 const ResultContainer = styled.div`
   width: 100%;
@@ -61,9 +36,10 @@ function FindIdResultPage() {
   const foundId = location.state?.foundId || "아이디 정보 없음";
 
   return (
-    <PageContainer>
-      <Title>아이디 찾기 결과</Title>
-      <Subtitle>입력하신 정보와 일치하는 아이디입니다.</Subtitle>
+    <AuthLayout
+      title="아이디 찾기 결과"
+      subtitle="입력하신 정보와 일치하는 아이디입니다."
+    >
       <ResultContainer>
         <ResultBox>{foundId}</ResultBox>
         <Button
@@ -84,7 +60,7 @@ function FindIdResultPage() {
         </Button>
         <StyledLink to="/reset-password">비밀번호 재설정</StyledLink>
       </ResultContainer>
-    </PageContainer>
+    </AuthLayout>
   );
 }
 

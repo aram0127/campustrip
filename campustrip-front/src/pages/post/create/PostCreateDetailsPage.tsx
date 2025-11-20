@@ -3,60 +3,12 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { usePostCreate } from "../../../context/PostCreateContext";
 import Button from "../../../components/common/Button";
-import { IoArrowBack } from "react-icons/io5";
+import PageLayout, {
+  ScrollingContent,
+} from "../../../components/layout/PageLayout";
 
-const PageContainer = styled.div`
-  max-width: 480px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: ${({ theme }) => theme.colors.background};
-`;
-
-const Header = styled.header`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 12px 20px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
-  position: relative;
-  flex-shrink: 0;
-`;
-
-const BackButton = styled.button`
-  position: absolute;
-  left: 16px;
-  background: none;
-  border: none;
-  color: ${({ theme }) => theme.colors.text};
-  font-size: 24px;
-  cursor: pointer;
-`;
-
-const HeaderTitle = styled.h1`
-  font-size: 18px;
-  font-weight: bold;
-  margin: 0;
-`;
-
-const FormContainer = styled.main`
+const ScrollingFormContainer = styled(ScrollingContent)`
   padding: 20px;
-  flex-grow: 1;
-  overflow-y: auto;
-`;
-
-const SelectedLocation = styled.div`
-  background-color: ${({ theme }) => theme.colors.inputBackground};
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 24px;
-  color: ${({ theme }) => theme.colors.secondaryTextColor};
-
-  span {
-    color: ${({ theme }) => theme.colors.text};
-    font-weight: 500;
-  }
 `;
 
 const FormGroup = styled.div`
@@ -159,6 +111,28 @@ const PrevButton = styled(FooterButton)`
   }
 `;
 
+const SelectedRegionsContainer = styled.div`
+  background-color: ${({ theme }) => theme.colors.inputBackground};
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  color: ${({ theme }) => theme.colors.secondaryTextColor};
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+const RegionTag = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 14px;
+`;
+
 const PostCreateDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const { formData, updateFormData } = usePostCreate();
@@ -171,7 +145,7 @@ const PostCreateDetailsPage: React.FC = () => {
   const [teamSize, setTeamSize] = useState(formData.teamSize);
 
   // 1단계(지역 선택)를 건너뛰고 이 페이지로 바로 온 경우, 1단계로 보냄
-  if (!formData.region) {
+  if (formData.regions.length === 0) {
     navigate("/posts/new/region", { replace: true });
     return null;
   }
@@ -204,18 +178,14 @@ const PostCreateDetailsPage: React.FC = () => {
   };
 
   return (
-    <PageContainer>
-      <Header>
-        <BackButton onClick={handlePrev}>
-          <IoArrowBack />
-        </BackButton>
-        <HeaderTitle>새 게시글 작성 (2/3)</HeaderTitle>
-      </Header>
-
-      <FormContainer>
-        <SelectedLocation>
-          선택한 지역: <span>{formData.region}</span>
-        </SelectedLocation>
+    <PageLayout title="새 게시글 작성 (2/3)">
+      <ScrollingFormContainer>
+        <SelectedRegionsContainer>
+          선택한 지역:
+          {formData.regions.map((region) => (
+            <RegionTag key={region.id}>{region.name}</RegionTag>
+          ))}
+        </SelectedRegionsContainer>
 
         <FormGroup>
           <FormLabel htmlFor="title">제목</FormLabel>
@@ -266,7 +236,7 @@ const PostCreateDetailsPage: React.FC = () => {
             </NumberButton>
           </NumberInputContainer>
         </FormGroup>
-      </FormContainer>
+      </ScrollingFormContainer>
 
       <Footer>
         <PrevButton onClick={handlePrev}>이전</PrevButton>
@@ -274,7 +244,7 @@ const PostCreateDetailsPage: React.FC = () => {
           다음
         </FooterButton>
       </Footer>
-    </PageContainer>
+    </PageLayout>
   );
 };
 

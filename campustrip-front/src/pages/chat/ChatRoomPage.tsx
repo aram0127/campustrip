@@ -1,44 +1,18 @@
-import React from "react";
+import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
-import { IoArrowBack, IoMenu, IoAdd, IoSend } from "react-icons/io5";
+import { useParams } from "react-router-dom";
+import { IoMenu, IoAdd, IoSend } from "react-icons/io5";
+import { Client, type IMessage } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import { useAuth } from "../../context/AuthContext";
+import { type ChatMessage, MessageTypeValue } from "../../types/chat";
+import PageLayout, {
+  ScrollingContent,
+} from "../../components/layout/PageLayout";
+import { useQuery } from "@tanstack/react-query";
+import { getChatHistory } from "../../api/chats";
 
-const PageContainer = styled.div`
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: ${({ theme }) => theme.colors.background};
-`;
-
-const Header = styled.header`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 16px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
-  flex-shrink: 0;
-`;
-
-const HeaderButton = styled.button`
-  background: none;
-  border: none;
-  color: ${({ theme }) => theme.colors.text};
-  font-size: 24px;
-  cursor: pointer;
-`;
-
-const Title = styled.h1`
-  font-size: 18px;
-  font-weight: bold;
-  margin: 0;
-  color: ${({ theme }) => theme.colors.text};
-`;
-
-const MessageList = styled.div`
-  flex-grow: 1;
-  overflow-y: auto;
+const MessageListContainer = styled(ScrollingContent)`
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -53,6 +27,7 @@ const MessageBubble = styled.div<{ isMe?: boolean }>`
   background-color: ${({ isMe, theme }) =>
     isMe ? theme.colors.primary : theme.colors.inputBackground};
   color: ${({ isMe, theme }) => (isMe ? "white" : theme.colors.text)};
+  white-space: pre-wrap;
 `;
 
 const Timestamp = styled.span<{ isMe?: boolean }>`
@@ -60,27 +35,7 @@ const Timestamp = styled.span<{ isMe?: boolean }>`
   color: ${({ theme }) => theme.colors.secondaryTextColor};
   margin-bottom: 12px;
   align-self: ${({ isMe }) => (isMe ? "flex-end" : "flex-start")};
-`;
-
-const InputContainer = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  border-top: 1px solid ${({ theme }) => theme.colors.borderColor};
   flex-shrink: 0;
-`;
-
-const MessageInput = styled.input`
-  flex-grow: 1;
-  border: none;
-  background-color: ${({ theme }) => theme.colors.inputBackground};
-  color: ${({ theme }) => theme.colors.text};
-  padding: 10px 14px;
-  border-radius: 20px;
-  margin: 0 8px;
-  &:focus {
-    outline: none;
-  }
 `;
 
 const MessageContainer = styled.div<{ isMe?: boolean }>`
@@ -117,6 +72,42 @@ const BubbleContainer = styled.div<{ isMe?: boolean }>`
   align-self: ${({ isMe }) => (isMe ? "flex-end" : "flex-start")};
 `;
 
+const InputContainer = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-top: 1px solid ${({ theme }) => theme.colors.borderColor};
+  flex-shrink: 0; /* 줄어들지 않도록 설정 */
+  padding-bottom: env(safe-area-inset-bottom); /* 하단 홈바 대응 */
+`;
+
+const MessageInput = styled.input`
+  flex-grow: 1;
+  border: none;
+  background-color: ${({ theme }) => theme.colors.inputBackground};
+  color: ${({ theme }) => theme.colors.text};
+  padding: 10px 14px;
+  border-radius: 20px;
+  margin: 0 8px;
+  &:focus {
+    outline: none;
+  }
+`;
+
+const HeaderButton = styled.button`
+  background: none;
+  border: none;
+  color: ${({ theme }) => theme.colors.text};
+  font-size: 24px;
+  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+`;
+
 const SendButton = styled(HeaderButton)`
   color: ${({ theme }) => theme.colors.primary};
 `;
@@ -128,94 +119,233 @@ const DateSeparator = styled.div`
   font-size: 12px;
 `;
 
-// --- 임시 데이터 ---
-const dummyMessages = [
-  {
-    id: 1,
-    user: "사용자 3",
-    text: "안녕하세요, 동행 신청합니다!",
-    date: "2025년 9월 29일",
-    time: "오후 2:30",
-    isMe: false,
-  },
-  {
-    id: 2,
-    user: "나",
-    text: "네, 안녕하세요!",
-    date: "2025년 9월 29일",
-    time: "오후 2:32",
-    isMe: true,
-  },
-  {
-    id: 3,
-    user: "사용자 5",
-    text: "저도 같이 가도 될까요?",
-    date: "2025년 9월 30일",
-    time: "오전 11:15",
-    isMe: false,
-  },
-  {
-    id: 4,
-    user: "나",
-    text: "네 그럼요! 환영합니다.",
-    date: "2025년 9월 30일",
-    time: "오전 11:16",
-    isMe: true,
-  },
-];
+const Message = styled.p`
+  text-align: center;
+  padding: 40px 20px;
+  color: ${({ theme }) => theme.colors.secondaryTextColor};
+`;
 
 function ChatRoomPage() {
-  let lastDate: string | null = null;
+  const { chatId } = useParams<{ chatId: string }>();
+  const { user } = useAuth(); // 현재 로그인한 사용자 정보
+
+  const [messages, setMessages] = useState<ChatMessage[]>([]); // 실시간 + 과거 메시지
+  const [inputValue, setInputValue] = useState("");
+  const [roomTitle, setRoomTitle] = useState("채팅방");
+  const stompClientRef = useRef<Client | null>(null);
+  const messageListRef = useRef<HTMLDivElement>(null);
+  const [isHistoryLoaded, setIsHistoryLoaded] = useState(false); // 중복 로드 방지
+
+  // 채팅 내역 불러오기
+  const {
+    data: historyData,
+    isLoading: isHistoryLoading,
+    error: historyError,
+  } = useQuery({
+    queryKey: ["chatHistory", chatId],
+    queryFn: () => getChatHistory(chatId!),
+    enabled: !!chatId,
+    refetchOnWindowFocus: false,
+  });
+
+  // historyData 로딩 시 state 업데이트
+  useEffect(() => {
+    if (historyData) {
+      setMessages(historyData);
+      setIsHistoryLoaded(true);
+    }
+  }, [historyData]); // historyData가 변경될 때마다 실행
+
+  useEffect(() => {
+    if (!chatId || !user || !isHistoryLoaded) return;
+
+    // STOMP 클라이언트 생성
+    const client = new Client({
+      // 백엔드 WebSocketConfig.java의 /ws/chat 엔드포인트
+      brokerURL: `${import.meta.env.VITE_API_BASE_URL.replace(
+        "http",
+        "ws"
+      )}/ws/chat`,
+      webSocketFactory: () =>
+        new SockJS(`${import.meta.env.VITE_API_BASE_URL}/ws/chat`),
+      connectHeaders: {
+        Authorization: localStorage.getItem("authToken") || "",
+      },
+      debug: (str) => {
+        console.log(new Date(), str);
+      },
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+    });
+
+    // 연결 성공 시
+    client.onConnect = () => {
+      console.log("WebSocket 연결 성공");
+
+      // 채팅방 구독 (KafkaConsumerService가 여기로 메시지 전송)
+      client.subscribe(`/sub/chat/room/${chatId}`, (message: IMessage) => {
+        const receivedMessage = JSON.parse(message.body) as ChatMessage;
+        setMessages((prevMessages) => [...prevMessages, receivedMessage]);
+      });
+
+      // JOIN 메시지 전송 (ChatController @MessageMapping)
+      const joinMessage: ChatMessage = {
+        messageType: MessageTypeValue.JOIN,
+        roomId: chatId,
+        userName: user.name, // useAuth()에서 가져온 사용자 이름
+        message: `${user.name}님이 입장했습니다.`,
+      };
+      client.publish({
+        destination: "/pub/chat/message", // WebSocketConfig의 /pub
+        body: JSON.stringify(joinMessage),
+      });
+    };
+
+    // 연결 오류 시
+    client.onStompError = (frame) => {
+      console.error("Broker reported error: " + frame.headers["message"]);
+      console.error("Additional details: " + frame.body);
+    };
+
+    // 클라이언트 활성화
+    client.activate();
+    stompClientRef.current = client;
+
+    // 컴포넌트 언마운트 시 연결 해제
+    return () => {
+      if (stompClientRef.current?.active && user) {
+        // LEAVE 메시지 전송
+        const leaveMessage: ChatMessage = {
+          messageType: MessageTypeValue.LEAVE,
+          roomId: chatId,
+          userName: user.name,
+          message: `${user.name}님이 퇴장했습니다.`,
+        };
+        stompClientRef.current.publish({
+          destination: "/pub/chat/message",
+          body: JSON.stringify(leaveMessage),
+        });
+
+        stompClientRef.current.deactivate();
+        console.log("WebSocket 연결 해제됨");
+      }
+    };
+  }, [chatId, user, isHistoryLoaded]); // user와 chatId가 변경될 때마다 재연결
+
+  // 메시지 전송 핸들러
+  const handleSend = () => {
+    if (inputValue.trim() && stompClientRef.current?.active && user) {
+      const chatMessage: ChatMessage = {
+        messageType: MessageTypeValue.CHAT,
+        roomId: chatId!,
+        userName: user.name,
+        message: inputValue,
+      };
+
+      stompClientRef.current.publish({
+        destination: "/pub/chat/message", // @MessageMapping("/chat/message")
+        body: JSON.stringify(chatMessage),
+      });
+
+      setInputValue("");
+    }
+  };
+
+  const formatTimestamp = (timestamp: string | undefined) => {
+    if (!timestamp) return "";
+    try {
+      return new Date(timestamp).toLocaleTimeString("ko-KR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (e) {
+      return "";
+    }
+  };
+
+  // 최초 로딩, 새 메시지 수신 시 스크롤 하단으로 이동
+  useEffect(() => {
+    if (messageListRef.current) {
+      messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+    }
+  }, [messages, isHistoryLoaded]);
 
   return (
-    <PageContainer>
-      <Header>
-        <HeaderButton>
-          <IoArrowBack />
-        </HeaderButton>
-        <Title>부산 여행 채팅방</Title>
-        <HeaderButton>
+    <PageLayout
+      title={roomTitle}
+      headerRight={
+        <HeaderButton style={{ marginRight: "-12px" }}>
           <IoMenu />
         </HeaderButton>
-      </Header>
-      <MessageList>
-        {dummyMessages.map((msg) => {
-          let dateSeparator = null;
-          if (msg.date !== lastDate) {
-            dateSeparator = <DateSeparator>{msg.date}</DateSeparator>;
-            lastDate = msg.date;
-          }
+      }
+    >
+      <MessageListContainer ref={messageListRef}>
+        {isHistoryLoading && <Message>대화 내역을 불러오는 중...</Message>}
+        {historyError && (
+          <Message>대화 내역 로딩 실패: {historyError.message}</Message>
+        )}
 
-          return (
-            <React.Fragment key={msg.id}>
-              {dateSeparator}
-              <MessageContainer isMe={msg.isMe}>
-                {!msg.isMe && (
+        {/* 메시지 렌더링 (isHistoryLoaded가 true인 경우) */}
+        {isHistoryLoaded &&
+          messages.map((msg, index) => {
+            const isMe = msg.userName === user?.name;
+
+            if (msg.messageType === "JOIN" || msg.messageType === "LEAVE") {
+              return (
+                <DateSeparator
+                  key={msg.timestamp ? msg.timestamp + index : index}
+                >
+                  {msg.message}
+                </DateSeparator>
+              );
+            }
+
+            return (
+              <MessageContainer
+                key={msg.timestamp ? msg.timestamp + index : index}
+                isMe={isMe}
+              >
+                {!isMe && (
                   <SenderInfo>
                     <Avatar />
-                    <UserName>{msg.user}</UserName>
+                    <UserName>{msg.userName}</UserName>
                   </SenderInfo>
                 )}
-                <BubbleContainer isMe={msg.isMe}>
-                  {msg.isMe && <Timestamp>{msg.time}</Timestamp>}
-                  <MessageBubble isMe={msg.isMe}>{msg.text}</MessageBubble>
-                  {!msg.isMe && <Timestamp>{msg.time}</Timestamp>}
+                <BubbleContainer isMe={isMe}>
+                  {isMe && (
+                    <Timestamp>{formatTimestamp(msg.timestamp)}</Timestamp>
+                  )}
+                  <MessageBubble isMe={isMe}>{msg.message}</MessageBubble>
+                  {!isMe && (
+                    <Timestamp>{formatTimestamp(msg.timestamp)}</Timestamp>
+                  )}
                 </BubbleContainer>
               </MessageContainer>
-            </React.Fragment>
-          );
-        })}
-      </MessageList>
+            );
+          })}
+      </MessageListContainer>
+
       <InputContainer>
-        <HeaderButton>
+        <HeaderButton style={{ marginLeft: "-4px" }}>
           <IoAdd />
         </HeaderButton>
-        <MessageInput placeholder="메세지 입력" />
-        <SendButton>
+        <MessageInput
+          placeholder="메세지 입력"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyPress={(e) => e.key === "Enter" && handleSend()}
+          disabled={!isHistoryLoaded} // 내역 로딩 전까지 비활성화
+        />
+        <SendButton
+          onClick={handleSend}
+          style={{ marginRight: "-4px" }}
+          disabled={!isHistoryLoaded || !stompClientRef.current?.active} // 연결 전 비활성화
+        >
           <IoSend />
         </SendButton>
       </InputContainer>
-    </PageContainer>
+    </PageLayout>
   );
 }
 

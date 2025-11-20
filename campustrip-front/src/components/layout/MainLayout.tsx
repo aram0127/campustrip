@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import TopBar from '../common/TopBar';
-import BottomNav from '../common/BottomNav';
-import SideMenu from '../common/SideMenu';
+import React, { useState } from "react";
+import styled from "styled-components";
+import TopBar from "../common/TopBar";
+import BottomNav from "../common/BottomNav";
+import SideMenu from "../common/SideMenu";
 
 const AppContainer = styled.div`
   max-width: 480px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100dvh;
 `;
 
 const MainContent = styled.main`
@@ -24,19 +24,21 @@ interface MainLayoutProps {
   toggleTheme: () => void;
 }
 
-const MainLayout: React.FC<MainLayoutProps> = ({ children, currentTheme, toggleTheme }) => {
+const MainLayout: React.FC<MainLayoutProps> = ({
+  children,
+  currentTheme,
+  toggleTheme,
+}) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <AppContainer>
       <TopBar onProfileClick={() => setIsMenuOpen(true)} />
-      <MainContent>
-        {children}
-      </MainContent>
+      <MainContent>{children}</MainContent>
       <BottomNav />
-      <SideMenu 
-        isOpen={isMenuOpen} 
-        onClose={() => setIsMenuOpen(false)} 
+      <SideMenu
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
         currentTheme={currentTheme}
         toggleTheme={toggleTheme}
       />

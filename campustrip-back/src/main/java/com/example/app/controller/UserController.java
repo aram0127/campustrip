@@ -1,6 +1,7 @@
 package com.example.app.controller;
 
 import com.example.app.dto.SchoolEmailDTO;
+import com.example.app.dto.UserPreference;
 import com.example.app.dto.UserResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -71,5 +72,14 @@ public class UserController {
             return email;
         }
         return null;
+    }
+
+    @PutMapping("/preference/{id}")
+    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
+    public User updateUserPreference(@PathVariable Integer id, @RequestBody UserPreference user) {
+        User existingUser = userService.getUserById(id);
+        existingUser.setPreference(user.getPreference());
+        userService.saveUser(existingUser);
+        return existingUser;
     }
 }
