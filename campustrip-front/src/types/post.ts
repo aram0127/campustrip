@@ -13,14 +13,11 @@ export interface Post {
   endAt: string | null;
   userScore: number;
   chatId: number;
-  // User 정보
   user: User;
-  // Region 정보
   regions: {
     id: number;
     name: string;
   }[];
-
-  // 게시글에 포함된 신청 목록
   applications: Application[];
+  postAssets: string[];
 }

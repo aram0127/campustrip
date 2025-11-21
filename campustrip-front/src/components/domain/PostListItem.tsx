@@ -3,7 +3,8 @@ import { type Post } from "../../types/post";
 import { Link } from "react-router-dom";
 
 const ListItemContainer = styled(Link)`
-  display: block;
+  display: flex;
+  gap: 16px;
   padding: ${({ theme }) => theme.spacings.medium};
   border-bottom: 1px solid ${({ theme }) => theme.colors.grey};
   cursor: pointer;
@@ -14,6 +15,20 @@ const ListItemContainer = styled(Link)`
     background-color: ${({ theme }) =>
       theme.colors.background === "#FFFFFF" ? "#f8f9fa" : "#2c2c2e"};
   }
+`;
+
+const TextContent = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const Thumbnail = styled.img`
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  object-fit: cover;
+  background-color: ${({ theme }) => theme.colors.inputBackground};
+  flex-shrink: 0;
 `;
 
 const PostTitle = styled.h2`
@@ -61,14 +76,20 @@ const getRegionNames = (regions: Post["regions"]): string => {
 };
 
 const PostListItem: React.FC<PostListItemProps> = ({ post }) => {
+  const thumbnailSrc =
+    post.postAssets && post.postAssets.length > 0 ? post.postAssets[0] : null;
+
   return (
     <ListItemContainer to={`/posts/${post.postId}`}>
-      <PostTitle>{post.title}</PostTitle>
-      <PostInfo>📍 {getRegionNames(post.regions)}</PostInfo>
-      <PostInfo>📅 {formatDateRange(post.startAt, post.endAt)}</PostInfo>
-      <PostInfo>
-        👥 모집 인원 [{post.memberSize ?? 0}/{post.teamSize}]
-      </PostInfo>
+      <TextContent>
+        <PostTitle>{post.title}</PostTitle>
+        <PostInfo>📍 {getRegionNames(post.regions)}</PostInfo>
+        <PostInfo>📅 {formatDateRange(post.startAt, post.endAt)}</PostInfo>
+        <PostInfo>
+          👥 모집 인원 [{post.memberSize ?? 0}/{post.teamSize}]
+        </PostInfo>
+      </TextContent>
+      {thumbnailSrc && <Thumbnail src={thumbnailSrc} alt="thumbnail" />}
     </ListItemContainer>
   );
 };
