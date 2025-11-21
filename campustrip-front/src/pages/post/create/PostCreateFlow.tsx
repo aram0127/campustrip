@@ -15,7 +15,7 @@ const PostCreateFlow: React.FC = () => {
     if (!location.pathname.includes("/edit")) {
       resetFormData();
     }
-  }, [resetFormData, location.pathname]);
+  }, []);
 
   return (
     <Routes>
