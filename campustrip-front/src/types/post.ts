@@ -1,4 +1,5 @@
 import { type Application } from "./application";
+import { type User } from "./user";
 
 export interface Post {
   postId: number;
@@ -10,13 +11,10 @@ export interface Post {
   memberSize: number;
   startAt: string | null;
   endAt: string | null;
+  userScore: number;
+  chatId: number;
   // User 정보
-  user: {
-    id: number;
-    name: string;
-    userId: string;
-    userScore: number;
-  };
+  user: User;
   // Region 정보
   regions: {
     id: number;
