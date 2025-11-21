@@ -6,6 +6,8 @@ import com.example.app.dto.*;
 import com.example.app.service.ChatService;
 import com.example.app.service.PostService;
 import com.example.app.service.RegionService;
+import com.example.app.service.S3Service;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -19,12 +21,14 @@ public class PostController {
     private final PostService postService;
     private final ChatService chatService;
     private final RegionService regionService;
+    private final S3Service s3Service;
 
     @Autowired
-    public PostController(PostService postService, ChatService chatService, RegionService regionService) {
+    public PostController(PostService postService, ChatService chatService, RegionService regionService, S3Service s3Service) {
         this.postService = postService;
         this.chatService = chatService;
         this.regionService = regionService;
+        this.s3Service = s3Service;
     }
 
     // GET: 전체 게시물 조회 (DTO 리스트를 반환하도록 수정)
@@ -62,9 +66,9 @@ public class PostController {
     }
 
     // POST: 새 게시물 생성
-    @PostMapping
-    public Post createPost(@RequestBody CreatePost createPost) {
-        Post post = postService.savePost(createPost, chatService);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Post createPost(@ModelAttribute CreatePost createPost) throws Exception {
+        Post post = postService.savePost(createPost, chatService, s3Service);
         return post;
     }
 

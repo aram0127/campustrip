@@ -1,6 +1,7 @@
 package com.example.app.service;
 
 import com.example.app.domain.Chat;
+import com.example.app.domain.PostAsset;
 import com.example.app.domain.User;
 import com.example.app.dto.CreateChat;
 import com.example.app.dto.CreatePost;
@@ -19,14 +20,16 @@ public class PostService {
     private final UserRepository userRepository;
     private final RegionRepository regionRepository;
     private final PlannerRepository plannerRepository;
+    private final PostAssetRepository postAssetRepository;
 
     @Autowired
     public PostService(PostRepository postRepository,
-                       UserRepository userRepository, RegionRepository regionRepository, PlannerRepository plannerRepository) {
+                       UserRepository userRepository, RegionRepository regionRepository, PlannerRepository plannerRepository, PostAssetRepository postAssetrepository) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.regionRepository = regionRepository;
         this.plannerRepository = plannerRepository;
+        this.postAssetRepository = postAssetrepository;
     }
 
     public List<Post> getAllPosts() {
@@ -56,7 +59,7 @@ public class PostService {
         //return postRepository.findAllByRegionIds(regionIds);
     }
 
-    public Post savePost(CreatePost createPost, ChatService chatService) {
+    public Post savePost(CreatePost createPost, ChatService chatService, S3Service s3Service) throws Exception {
         Post newPost = createPost.toEntity();
         Chat chat = chatService.saveChat(new CreateChat(newPost));
         newPost.setChat(chat);
@@ -65,7 +68,16 @@ public class PostService {
         newPost.setPlanner(plannerRepository.findById(1)
                 .orElseThrow(() -> new NoSuchElementException("Planner not found with id: 1"))
         );
-        return postRepository.save(newPost);
+        newPost = postRepository.save(newPost);
+        try{
+            for(var image : createPost.getImages()){
+                String imageUrl = s3Service.uploadFile(image);
+                postAssetRepository.save(new PostAsset(newPost, imageUrl));
+            }
+        } catch(Exception e){
+            throw new Exception("Image upload failed: " + e.getMessage());
+        }
+        return newPost;
     }
 
     public Post updatePost(CreatePost updateData) {
