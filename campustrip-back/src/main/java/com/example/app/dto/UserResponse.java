@@ -16,6 +16,7 @@ public class UserResponse {
         this.name = user.getName();
         this.gender = user.getGender();
         this.userId = user.getUserId();
+        this.phoneNumber = user.getPhoneNumber();
         this.email = user.getEmail();
         this.schoolEmail = user.getSchoolEmail();
         this.description = user.getDescription();
@@ -27,6 +28,7 @@ public class UserResponse {
     private String name;
     private String gender;
     private String userId;
+    private String phoneNumber;
     private String email;
     private String schoolEmail;
     private String description;
