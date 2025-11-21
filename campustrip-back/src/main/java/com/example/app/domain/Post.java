@@ -67,5 +67,8 @@ public class Post {
     @Column(name="end_at")
     private java.time.LocalDate endAt;
 
+    @JsonManagedReference("post-assets")
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<PostAsset> assets = new HashSet<>();
     // 기본 생성자, getter, setter 생략
 }

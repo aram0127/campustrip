@@ -20,7 +20,7 @@ public interface PostRepository extends JpaRepository<Post,Integer>
      * /api/posts 와 같이 전체 목록을 조회하는 API에서 기본 findAll() 대신 사용해야 합니다.
      * @return 모든 Post 리스트 (User, Region, Chat 정보 포함)
      */
-    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.chat LEFT JOIN FETCH p.regions ORDER BY p.createdAt DESC")
+    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.chat LEFT JOIN FETCH p.regions LEFT JOIN FETCH p.assets ORDER BY p.createdAt DESC")
     List<Post> findAllWithDetails();
 
     /**
@@ -30,7 +30,7 @@ public interface PostRepository extends JpaRepository<Post,Integer>
      * @param postId 조회할 게시글의 ID
      * @return Post 객체를 담은 Optional
      */
-    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.chat LEFT JOIN FETCH p.regions LEFT JOIN FETCH p.applications app LEFT JOIN FETCH app.user WHERE p.postId = :postId")
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.chat LEFT JOIN FETCH p.regions LEFT JOIN FETCH p.applications app LEFT JOIN FETCH app.user LEFT JOIN FETCH p.assets WHERE p.postId = :postId")
     Optional<Post> findByIdWithDetails(@Param("postId") Integer postId);
 
     // membershipId로 Post 찾기 - 삭제
@@ -42,7 +42,7 @@ public interface PostRepository extends JpaRepository<Post,Integer>
      * @param user 조회할 User 객체
      * @return 해당 사용자의 Post 리스트
      */
-    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.chat LEFT JOIN FETCH p.regions WHERE p.user = :user ORDER BY p.createdAt DESC")
+    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.chat LEFT JOIN FETCH p.regions LEFT JOIN FETCH p.assets WHERE p.user = :user ORDER BY p.createdAt DESC")
     List<Post> findAllByUserWithDetails(@Param("user") User user);
 
     // regionId로 Post 찾기 - 삭제
@@ -55,7 +55,7 @@ public interface PostRepository extends JpaRepository<Post,Integer>
      * @param regionIds 조회할 지역 ID의 리스트
      * @return 조건에 맞는 Post 리스트 (User, Region, Chat 정보 포함)
      */
-    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.chat JOIN FETCH p.regions r WHERE r.regionId IN :regionIds ORDER BY p.createdAt DESC")
+    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.chat JOIN FETCH p.regions r LEFT JOIN FETCH p.assets WHERE r.regionId IN :regionIds ORDER BY p.createdAt DESC")
     List<Post> findPostsByRegionIds(@Param("regionIds") List<Integer> regionIds);
 
     // 동적 쿼리 생성

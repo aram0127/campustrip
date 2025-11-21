@@ -3,6 +3,8 @@ package com.example.app.dto;
 import com.example.app.domain.Post;
 import com.example.app.domain.User;
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
 @Getter
@@ -21,6 +23,8 @@ public class CreatePost {
     private Integer teamSize = 0;
     private List<Integer> regions;
     private Integer plannerId;
+    private List<MultipartFile> images;
+
     public Post toEntity() {
         Post newPost = new Post();
         newPost.setUser(this.user);
