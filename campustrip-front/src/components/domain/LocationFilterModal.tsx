@@ -177,24 +177,29 @@ const LocationFilterModal: React.FC<LocationFilterModalProps> = ({
     }
 
     // 2차 지역 (e.g., "해운대구")
-    if (finalSelection.id % 100 !== 0) {
-      onApply([finalSelection.id]); // [209] 전달
+    if (finalSelection.id && finalSelection.id % 100 !== 0) {
+      onApply([finalSelection.id]);
       onClose();
       return;
     }
 
     // 1차 지역 (e.g., "부산광역시")
-    if (finalSelection.id % 100 === 0) {
+    if (finalSelection.id && finalSelection.id % 100 === 0) {
       const dataList =
         activeTab === "domestic" ? domesticRegions : overseasRegions;
       const province = dataList.find((p) => p.province === finalSelection.name);
 
       if (province) {
-        // 해당 1차 지역의 모든 하위 ID (100, 101, 102...) 전달
+        // 해당 1차 지역의 모든 하위 ID (101, 102...) 가져오기
         const allIdsInProvince = province.regions.map((r) => r.id);
+
+        if (!allIdsInProvince.includes(finalSelection.id)) {
+          allIdsInProvince.push(finalSelection.id);
+        }
+
         onApply(allIdsInProvince);
       } else {
-        onApply([finalSelection.id]); // Fallback
+        onApply([finalSelection.id]);
       }
       onClose();
       return;
