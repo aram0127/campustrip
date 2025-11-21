@@ -36,6 +36,36 @@ const ValidationMessage = styled.p<{ isValid: boolean }>`
   text-align: left;
 `;
 
+const GenderContainer = styled.div`
+  display: flex;
+  width: 100%;
+  gap: 16px;
+  margin-bottom: 8px;
+`;
+
+const GenderLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: ${({ theme }) => theme.colors.text};
+  flex: 1;
+  padding: 10px;
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
+  border-radius: 8px;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.background};
+  }
+`;
+
+const RadioInput = styled.input`
+  accent-color: ${({ theme }) => theme.colors.primary};
+  width: 18px;
+  height: 18px;
+`;
+
 function SignupPage() {
   const navigate = useNavigate();
 
@@ -43,6 +73,7 @@ function SignupPage() {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [gender, setGender] = useState("");
   const [schoolEmail, setSchoolEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [emailCode, setEmailCode] = useState("");
@@ -186,6 +217,7 @@ function SignupPage() {
     isUserIdValid &&
     isPasswordValid &&
     name &&
+    gender &&
     isSchoolEmailValid &&
     isPhoneNumberValid &&
     isEmailVerified &&
@@ -222,6 +254,7 @@ function SignupPage() {
       userId: userId,
       password: password,
       name: name,
+      gender: gender,
       schoolEmail: schoolEmail,
       phoneNumber: phoneNumber,
       email: schoolEmail,
@@ -270,6 +303,29 @@ function SignupPage() {
           onChange={(e) => setName(e.target.value)}
           required
         />
+
+        <GenderContainer>
+          <GenderLabel>
+            <RadioInput
+              type="radio"
+              name="gender"
+              value="남성"
+              checked={gender === "남성"}
+              onChange={(e) => setGender(e.target.value)}
+            />
+            남성
+          </GenderLabel>
+          <GenderLabel>
+            <RadioInput
+              type="radio"
+              name="gender"
+              value="여성"
+              checked={gender === "여성"}
+              onChange={(e) => setGender(e.target.value)}
+            />
+            여성
+          </GenderLabel>
+        </GenderContainer>
 
         {/* 이메일 인증 섹션 */}
         <InputWithButtonContainer>
