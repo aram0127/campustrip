@@ -64,6 +64,7 @@ function SignupPage() {
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [isPhoneLoading, setIsPhoneLoading] = useState(false);
+  const [timer, setTimer] = useState(0);
 
   // 아이디 유효성 검사
   useEffect(() => {
@@ -106,6 +107,17 @@ function SignupPage() {
     setIsPhoneNumberValid(phoneRegex.test(phoneNumber));
   }, [phoneNumber]);
 
+  // 타이머 카운트다운 효과
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
+
   // 인증코드 발송 함수 (이메일)
   const handleSendEmailCode = async () => {
     setIsEmailLoading(true);
@@ -113,9 +125,10 @@ function SignupPage() {
       await sendEmailVerification(schoolEmail);
       alert("이메일로 인증코드가 발송되었습니다.");
       setEmailCodeSent(true);
+      setTimer(60);
     } catch (err) {
       console.error(err);
-      alert("인증코드 발송에 실패했습니다.");
+      alert("인증코드 발송에 실패했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setIsEmailLoading(false);
     }
@@ -130,7 +143,7 @@ function SignupPage() {
         emailCode
       );
       setUniversityName(verifiedUnivName);
-      alert(`이메일 인증에 성공했습니다. (${verifiedUnivName})`);
+      alert("이메일 인증이 완료되었습니다.");
       setIsEmailVerified(true);
     } catch (err) {
       console.error(err);
@@ -229,7 +242,6 @@ function SignupPage() {
           value={userId}
           onChange={(e) => setUserId(e.target.value)}
           required
-          disabled={isEmailVerified && isPhoneVerified}
         />
         {userIdMessage && (
           <ValidationMessage isValid={isUserIdValid}>
@@ -244,7 +256,6 @@ function SignupPage() {
           onChange={(e) => setPassword(e.target.value)}
           maxLength={20}
           required
-          disabled={isEmailVerified && isPhoneVerified}
         />
         {passwordMessage && (
           <ValidationMessage isValid={isPasswordValid}>
@@ -258,7 +269,6 @@ function SignupPage() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          disabled={isEmailVerified && isPhoneVerified}
         />
 
         {/* 이메일 인증 섹션 */}
@@ -275,11 +285,20 @@ function SignupPage() {
           <Button
             type="button"
             onClick={handleSendEmailCode}
-            disabled={!isSchoolEmailValid || emailCodeSent || isEmailVerified}
+            disabled={
+              !isSchoolEmailValid ||
+              isEmailLoading ||
+              isEmailVerified ||
+              timer > 0
+            }
             style={{ width: "120px", padding: "12px 0" }}
           >
             {isEmailLoading
               ? "전송중..."
+              : isEmailVerified
+              ? "인증완료"
+              : timer > 0
+              ? `${timer}초`
               : emailCodeSent
               ? "재전송"
               : "인증코드 받기"}
@@ -305,6 +324,19 @@ function SignupPage() {
             </Button>
           </InputWithButtonContainer>
         )}
+
+        {isEmailVerified && universityName && (
+          <Input
+            type="text"
+            value={universityName}
+            disabled
+            style={{
+              cursor: "default",
+            }}
+          />
+        )}
+
+        {/* 인증 완료 메시지 */}
         {isEmailVerified && (
           <ValidationMessage isValid={true}>
             이메일 인증이 완료되었습니다.

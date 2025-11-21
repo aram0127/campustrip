@@ -55,7 +55,7 @@ export const sendEmailVerification = async (email: string): Promise<void> => {
 
 /* 이메일 인증 코드 검증 응답 타입 */
 interface VerifyResponse {
-  ok: boolean;
+  verified: boolean;
   universityName: string | null;
 }
 
@@ -69,7 +69,7 @@ export const verifyEmailVerification = async (
     { email, code }
   );
 
-  if (!response.data.ok || !response.data.universityName) {
+  if (!response.data.verified || !response.data.universityName) {
     throw new Error("인증에 실패했거나 대학교 정보를 찾을 수 없습니다.");
   }
 
