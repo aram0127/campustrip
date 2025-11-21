@@ -18,7 +18,6 @@ export const getPostById = async (postId: string): Promise<Post> => {
 export const getPostsByRegion = async (
   regionIds: number[]
 ): Promise<Post[]> => {
-  // regionIds 배열을 쉼표로 구분된 문자열로 만듬
   const params = new URLSearchParams();
   regionIds.forEach((id) => params.append("regionIds", id.toString()));
 
@@ -38,6 +37,7 @@ export interface CreatePostData {
     endDate: string | null;
     teamSize: number;
     plannerId: number | null;
+    images: File[];
   };
   user: UserInfo;
 }
@@ -47,23 +47,32 @@ export const createPost = async ({
   formData,
   user,
 }: CreatePostData): Promise<Post> => {
-  const postDataPayload = {
-    user: { id: user.id },
-    title: formData.title,
-    body: formData.body,
-    teamSize: formData.teamSize,
-    regions: formData.regions.map((region) => region.id),
-    plannerId: formData.plannerId,
-    startAt: formData.startDate,
-    endAt: formData.endDate,
-  };
+  const payload = new FormData();
 
-  // POST /api/posts 로 데이터 전송
+  // 일반 필드 추가
+  payload.append("user.id", user.id.toString());
+  payload.append("title", formData.title);
+  payload.append("body", formData.body);
+  payload.append("teamSize", formData.teamSize.toString());
+
+  if (formData.startDate) payload.append("startAt", formData.startDate);
+  if (formData.endDate) payload.append("endAt", formData.endDate);
+  if (formData.plannerId)
+    payload.append("plannerId", formData.plannerId.toString());
+
+  // 리스트 데이터 추가 (지역 ID)
+  formData.regions.forEach((region) => {
+    payload.append("regions", region.id.toString());
+  });
+
+  // 이미지 파일 추가
+  formData.images.forEach((file) => {
+    payload.append("images", file);
+  });
+
+  // POST /api/posts 로 FormData 전송
   try {
-    const postResponse = await apiClient.post<Post>(
-      "/api/posts",
-      postDataPayload
-    );
+    const postResponse = await apiClient.post<Post>("/api/posts", payload);
     return postResponse.data;
   } catch (err) {
     console.error("게시글 생성 실패:", err);
@@ -78,22 +87,31 @@ export const updatePost = async (
   postId: string,
   { formData, user }: UpdatePostData
 ): Promise<Post> => {
-  const postDataPayload = {
-    user: { id: user.id },
-    title: formData.title,
-    body: formData.body,
-    teamSize: formData.teamSize,
-    regions: formData.regions.map((region) => region.id),
-    plannerId: formData.plannerId,
-    startAt: formData.startDate,
-    endAt: formData.endDate,
-  };
+  const payload = new FormData();
+
+  payload.append("user.id", user.id.toString());
+  payload.append("title", formData.title);
+  payload.append("body", formData.body);
+  payload.append("teamSize", formData.teamSize.toString());
+
+  if (formData.startDate) payload.append("startAt", formData.startDate);
+  if (formData.endDate) payload.append("endAt", formData.endDate);
+  if (formData.plannerId)
+    payload.append("plannerId", formData.plannerId.toString());
+
+  formData.regions.forEach((region) => {
+    payload.append("regions", region.id.toString());
+  });
+
+  formData.images.forEach((file) => {
+    payload.append("images", file);
+  });
 
   // PUT /api/posts/{postId} 로 데이터 전송
   try {
     const postResponse = await apiClient.put<Post>(
       `/api/posts/${postId}`,
-      postDataPayload
+      payload
     );
     return postResponse.data;
   } catch (err) {
