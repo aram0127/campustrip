@@ -143,6 +143,13 @@ const SideMenu: React.FC<SideMenuProps> = ({
     navigate("/login");
   };
 
+  const handleFollowClick = (type: "following" | "follower") => {
+    if (user) {
+      navigate(`/profile/${user.id}/follows`, { state: { initialTab: type } });
+      onClose();
+    }
+  };
+
   return (
     <>
       <Backdrop
@@ -162,10 +169,10 @@ const SideMenu: React.FC<SideMenuProps> = ({
             <ProfileName>{user.name}</ProfileName>
             <ProfileId>@{user.userId}</ProfileId>
             <FollowInfo>
-              <span>
+              <span onClick={() => handleFollowClick("following")}>
                 <b>6</b> 팔로잉
               </span>
-              <span>
+              <span onClick={() => handleFollowClick("follower")}>
                 <b>6</b> 팔로워
               </span>
             </FollowInfo>
