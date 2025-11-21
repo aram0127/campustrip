@@ -30,7 +30,7 @@ public class ReviewAsset {
     @JoinColumn(name = "review_id", insertable = false, updatable = false)
     private Review review;
 
-    @Column(name = "storge_url", nullable = false, length = 255)
+    @Column(name = "storage_url", nullable = false, length = 255)
     private String storgeUrl;
 
     @Column(name = "file_size", nullable = false)
