@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { useNavigate, useParams } from "react-router-dom";
 import { usePostCreate } from "../../../context/PostCreateContext";
@@ -126,9 +126,80 @@ const RegionTag = styled.div`
   font-size: 14px;
 `;
 
+const ImageUploadContainer = styled.div`
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: ${({ theme }) => theme.colors.borderColor};
+    border-radius: 3px;
+  }
+`;
+
+const ImageUploadButton = styled.button`
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  border: 1px dashed ${({ theme }) => theme.colors.borderColor};
+  border-radius: 8px;
+  background-color: ${({ theme }) => theme.colors.inputBackground};
+  color: ${({ theme }) => theme.colors.secondaryTextColor};
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+const ImagePreviewItem = styled.div`
+  position: relative;
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
+`;
+
+const PreviewImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
+const RemoveImageButton = styled.button`
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+`;
+
 const PostCreateDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const { formData, updateFormData } = usePostCreate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 수정 모드인지 확인
   const { postId } = useParams<{ postId?: string }>();
@@ -140,6 +211,7 @@ const PostCreateDetailsPage: React.FC = () => {
   const [startDate, setStartDate] = useState(formData.startDate || "");
   const [endDate, setEndDate] = useState(formData.endDate || "");
   const [teamSize, setTeamSize] = useState(formData.teamSize);
+  const [images, setImages] = useState<File[]>(formData.images);
 
   useEffect(() => {
     // 1단계(지역 선택)를 건너뛰고 이 페이지로 바로 온 경우
@@ -157,6 +229,31 @@ const PostCreateDetailsPage: React.FC = () => {
     return null;
   }
 
+  // 이미지 선택 핸들러
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      const availableCount = 5 - images.length;
+
+      if (newFiles.length > availableCount) {
+        alert(`사진은 최대 5장까지 업로드할 수 있습니다.`);
+        return;
+      }
+
+      const updatedImages = [...images, ...newFiles];
+      setImages(updatedImages);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // 이미지 삭제 핸들러
+  const handleRemoveImage = (index: number) => {
+    const updatedImages = images.filter((_, i) => i !== index);
+    setImages(updatedImages);
+  };
+
   // 인원 수 조절 핸들러 (최소 2명)
   const handleTeamSizeChange = (amount: number) => {
     setTeamSize((prev) => Math.max(2, prev + amount));
@@ -167,7 +264,7 @@ const PostCreateDetailsPage: React.FC = () => {
 
   // '이전' 버튼 클릭
   const handlePrev = () => {
-    updateFormData({ title, body, startDate, endDate, teamSize });
+    updateFormData({ title, body, startDate, endDate, teamSize, images });
     const path = isEditMode
       ? `/posts/edit/${postId}/region`
       : "/posts/new/region";
@@ -196,7 +293,7 @@ const PostCreateDetailsPage: React.FC = () => {
       return;
     }
 
-    updateFormData({ title, body, startDate, endDate, teamSize });
+    updateFormData({ title, body, startDate, endDate, teamSize, images });
     const path = isEditMode
       ? `/posts/edit/${postId}/planner`
       : "/posts/new/planner";
@@ -212,6 +309,36 @@ const PostCreateDetailsPage: React.FC = () => {
             <RegionTag key={region.id}>{region.name}</RegionTag>
           ))}
         </SelectedRegionsContainer>
+
+        <FormGroup>
+          <FormLabel>사진 ({images.length}/5)</FormLabel>
+          <ImageUploadContainer>
+            {images.length < 5 && (
+              <ImageUploadButton onClick={() => fileInputRef.current?.click()}>
+                <span>+ 추가</span>
+              </ImageUploadButton>
+            )}
+            {images.map((file, index) => (
+              <ImagePreviewItem key={index}>
+                <PreviewImage
+                  src={URL.createObjectURL(file)}
+                  alt={`preview-${index}`}
+                />
+                <RemoveImageButton
+                  onClick={() => handleRemoveImage(index)}
+                ></RemoveImageButton>
+              </ImagePreviewItem>
+            ))}
+          </ImageUploadContainer>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            ref={fileInputRef}
+            style={{ display: "none" }}
+            onChange={handleImageChange}
+          />
+        </FormGroup>
 
         <FormGroup>
           <FormLabel htmlFor="title">제목</FormLabel>

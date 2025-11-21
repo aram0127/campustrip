@@ -15,6 +15,7 @@ interface PostCreateData {
   startDate: string | null; // 2단계: 시작일
   endDate: string | null; // 2단계: 종료일
   teamSize: number; // 2단계: 인원
+  images: File[]; // 2단계: 이미지 파일 목록
   plannerId: number | null; // 3단계: 플래너 ID
 }
 
@@ -36,6 +37,7 @@ const initialData: PostCreateData = {
   endDate: null,
   teamSize: 2, // 기본값 2명
   plannerId: null,
+  images: [],
 };
 
 // Context 생성
