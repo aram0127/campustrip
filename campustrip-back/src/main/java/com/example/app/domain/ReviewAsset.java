@@ -31,7 +31,7 @@ public class ReviewAsset {
     private Review review;
 
     @Column(name = "storage_url", nullable = false, length = 255)
-    private String storgeUrl;
+    private String storageUrl;
 
     @Column(name = "file_size", nullable = false)
     private Integer fileSize = 0;
