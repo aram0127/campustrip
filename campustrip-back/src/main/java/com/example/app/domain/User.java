@@ -37,8 +37,8 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="university_id", nullable=false)
     private Universities university;
-    @Column(name="mbti", length=50)
-    private String mbti;
+    @Column(name="description", length=50)
+    private String description;
     @Column(name="preference")
     private Integer preference;
     @Column(name="user_score", nullable=false)
