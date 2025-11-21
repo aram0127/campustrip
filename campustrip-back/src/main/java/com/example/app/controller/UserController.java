@@ -41,8 +41,8 @@ public class UserController {
 
     // GET: ID로 사용자 조회
     @GetMapping("/{id}")
-    public User getUserById(@PathVariable Integer id) {
-        return userService.getUserById(id);
+    public UserResponse getUserById(@PathVariable Integer id) {
+        return new UserResponse(userService.getUserById(id));
     }
 
     // POST: 새 사용자 생성
