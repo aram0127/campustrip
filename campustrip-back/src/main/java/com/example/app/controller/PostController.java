@@ -99,9 +99,12 @@ public class PostController {
         postDTO.setChatId(post.getChat().getId());
 
         // 지역 이름 조합 로직
-        List<RegionDTO> fullRegionNamesDTOs = post.getRegions().stream().map(region -> {
-            Integer id = region.getRegionId();
-            String name = region.getRegionName();
+        List<RegionDTO> fullRegionNamesDTOs = post.getRegions().stream()
+            // Region ID 기준으로 오름차순 정렬
+            .sorted((r1, r2) -> r1.getRegionId().compareTo(r2.getRegionId()))
+            .map(region -> {
+                Integer id = region.getRegionId();
+                String name = region.getRegionName();
 
             if (id % 100 != 0 && id > 100) {
                 Integer parentId = (id / 100) * 100;
