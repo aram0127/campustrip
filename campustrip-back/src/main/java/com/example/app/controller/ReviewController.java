@@ -1,7 +1,5 @@
 package com.example.app.controller;
 
-
-import com.example.app.domain.Review;
 import com.example.app.dto.ReviewDTO;
 import com.example.app.service.ReviewService;
 import org.springframework.web.bind.annotation.*;
