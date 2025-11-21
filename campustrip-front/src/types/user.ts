@@ -1,11 +1,12 @@
 export interface User {
   id: number;
   name: string;
+  gender: string | null;
   userId: string;
-  phoneNumber: string | null;
+  phoneNumber: string;
   email: string;
   schoolEmail: string;
-  mbti: string | null;
+  description: string | null;
   preference: number | null;
   userScore: number;
   role: number;
