@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import Button from "../../components/common/Button";
 import PageLayout, {
@@ -72,6 +72,7 @@ type Tab = "followers" | "followings" | "recommendations";
 function FollowListPage() {
   const [activeTab, setActiveTab] = useState<Tab>("followers");
   const { userId: profileIdString } = useParams<{ userId: string }>();
+  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [followers, setFollowers] = useState<User[]>([]);
@@ -171,6 +172,11 @@ function FollowListPage() {
     }
   };
 
+  // 프로필 이동 핸들러
+  const handleProfileClick = (userId: number) => {
+    navigate(`/profile/${userId}`);
+  };
+
   // 목록 렌더링
   const renderList = () => {
     if (loading) {
@@ -204,8 +210,8 @@ function FollowListPage() {
       if (user.id === currentUser?.id) {
         return (
           <UserItem key={user.id}>
-            <Avatar />
-            <UserInfo>
+            <Avatar onClick={() => handleProfileClick(user.id)} />
+            <UserInfo onClick={() => handleProfileClick(user.id)}>
               <UserName>{user.name} (나)</UserName>
             </UserInfo>
           </UserItem>
@@ -214,8 +220,8 @@ function FollowListPage() {
 
       return (
         <UserItem key={user.id}>
-          <Avatar />
-          <UserInfo>
+          <Avatar onClick={() => handleProfileClick(user.id)} />
+          <UserInfo onClick={() => handleProfileClick(user.id)}>
             <UserName>{user.name}</UserName>
           </UserInfo>
           <Button
