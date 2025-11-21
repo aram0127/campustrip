@@ -24,5 +24,6 @@ public class PostDTO {
     private Integer memberSize;
     private List<RegionDTO> regions;
     private List<ApplicationSimpleDTO> applications;
+    private List<String> postAssets;
     private Integer chatId;
 }

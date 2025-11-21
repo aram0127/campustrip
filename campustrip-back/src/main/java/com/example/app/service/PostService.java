@@ -81,7 +81,12 @@ public class PostService {
     public Post updatePost(CreatePost updateData, S3Service s3Service) throws Exception {
         Post existingPost = postRepository.findById(updateData.getPostId())
                 .orElseThrow(() -> new NoSuchElementException("Post not found with id: " + updateData.getPostId()));
-
+        // 기존 이미지 삭제 처리 추가
+        List<PostAsset> existingAssets = (List<PostAsset>) postAssetRepository.findAllByPostId(existingPost);
+        for (var asset : existingAssets) {
+            s3Service.deleteFile(asset.getStorageUrl()); // S3에서 파일 삭제
+            postAssetRepository.delete(asset); // DB에서 레코드 삭제
+        }
         existingPost.setTitle(updateData.getTitle());
         existingPost.setBody(updateData.getBody());
         existingPost.setUpdatedAt(java.time.LocalDateTime.now());
@@ -165,6 +170,12 @@ public class PostService {
         } else {
             postDTO.setApplications(new ArrayList<>()); // 빈 리스트 보장
         }
+
+        // PostAsset 리스트 변환
+        List<String> assetUrls = postAssetRepository.findAllByPostId(post).stream()
+                .map(PostAsset::getStorageUrl)
+                .collect(Collectors.toList());
+        postDTO.setPostAssets(assetUrls);
         return postDTO;
     }
 }
