@@ -22,6 +22,8 @@ public class User {
     private Integer id;
     @Column(name="name", nullable=false, length=50)
     private String name;
+    @Column(name="gender", length=50)
+    private String gender;
     @Column(name="password", nullable=false, length=100)
     private String password;
     @Column(name="user_id", nullable=false, length=50)
