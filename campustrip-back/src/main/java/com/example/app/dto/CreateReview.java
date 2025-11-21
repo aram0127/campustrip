@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class CreateReview {
     private java.time.LocalDateTime createdAt = java.time.LocalDateTime.now();
 
     // 첨부 이미지 파일 - aws에 업로드 후 url로 저장 예정
-    private List<String> images;
+    private List<MultipartFile> images;
 
     public Review toEntity() {
         Review newReview = new Review();
