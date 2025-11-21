@@ -159,6 +159,33 @@ const DropdownItem = styled.button<{ $isDelete?: boolean }>`
   }
 `;
 
+// [추가] 이미지 슬라이더 스타일
+const ImageSliderContainer = styled.div`
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  margin-bottom: 24px;
+  padding-bottom: 10px;
+  scroll-behavior: smooth;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: ${({ theme }) => theme.colors.borderColor};
+    border-radius: 3px;
+  }
+`;
+
+const PostImage = styled.img`
+  height: 250px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+`;
+
 interface ApplicationData {
   post: { postId: number };
   user: { userId: string };
@@ -521,6 +548,19 @@ const PostDetailPage: React.FC = () => {
             </AuthorInfo>
 
             <PostTitle>{post.title}</PostTitle>
+
+            {post.postAssets && post.postAssets.length > 0 && (
+              <ImageSliderContainer>
+                {post.postAssets.map((imageUrl, index) => (
+                  <PostImage
+                    key={index}
+                    src={imageUrl}
+                    alt={`게시글 이미지 ${index + 1}`}
+                    onClick={() => window.open(imageUrl, "_blank")}
+                  />
+                ))}
+              </ImageSliderContainer>
+            )}
 
             <PostMeta>
               <MetaItem>
