@@ -180,6 +180,22 @@ const PostCreateDetailsPage: React.FC = () => {
       alert("제목과 본문 내용을 입력해주세요.");
       return;
     }
+
+    const today = new Date();
+    const todayString = `${today.getFullYear()}-${String(
+      today.getMonth() + 1
+    ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+    if (startDate && startDate < todayString) {
+      alert("여행 시작일은 오늘 날짜 이후여야 합니다.");
+      return;
+    }
+
+    if (startDate && endDate && startDate > endDate) {
+      alert("종료일은 시작일보다 빠를 수 없습니다.");
+      return;
+    }
+
     updateFormData({ title, body, startDate, endDate, teamSize });
     const path = isEditMode
       ? `/posts/edit/${postId}/planner`
