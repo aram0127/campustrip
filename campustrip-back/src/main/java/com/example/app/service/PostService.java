@@ -165,7 +165,6 @@ public class PostService {
         } else {
             postDTO.setApplications(new ArrayList<>()); // 빈 리스트 보장
         }
-
         return postDTO;
     }
 }

@@ -20,7 +20,7 @@ public class PostAsset {
 
     // 연관관계는 읽기 전용으로 매핑
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", insertable = false, updatable = false)
+    @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
     @Column(name = "storage_url", nullable = false, length = 255)
