@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import PostCreateRegionPage from "./PostCreateRegionPage";
 import PostCreateDetailsPage from "./PostCreateDetailsPage";
 import PostCreatePlannerPage from "./PostCreatePlannerPage";
@@ -8,10 +8,14 @@ import { usePostCreate } from "../../../context/PostCreateContext";
 
 const PostCreateFlow: React.FC = () => {
   const { resetFormData } = usePostCreate();
+  const location = useLocation();
 
   useEffect(() => {
-    resetFormData();
-  }, [resetFormData]);
+    // 수정 모드가 아닐 때만 폼 데이터 초기화
+    if (!location.pathname.includes("/edit")) {
+      resetFormData();
+    }
+  }, []);
 
   return (
     <Routes>
