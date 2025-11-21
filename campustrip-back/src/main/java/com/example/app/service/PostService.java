@@ -1,18 +1,16 @@
 package com.example.app.service;
 
-import com.example.app.domain.Chat;
-import com.example.app.domain.PostAsset;
-import com.example.app.domain.User;
-import com.example.app.dto.CreateChat;
-import com.example.app.dto.CreatePost;
+import com.example.app.domain.*;
+import com.example.app.dto.*;
 import com.example.app.repository.*;
 import org.springframework.stereotype.Service;  // @Service 어노테이션
 import org.springframework.beans.factory.annotation.Autowired;  // 의존성 주입용 (선택적)
-import com.example.app.domain.Post;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @Service
 public class PostService {
@@ -80,7 +78,7 @@ public class PostService {
         return newPost;
     }
 
-    public Post updatePost(CreatePost updateData) {
+    public Post updatePost(CreatePost updateData, S3Service s3Service) throws Exception {
         Post existingPost = postRepository.findById(updateData.getPostId())
                 .orElseThrow(() -> new NoSuchElementException("Post not found with id: " + updateData.getPostId()));
 
@@ -94,14 +92,80 @@ public class PostService {
         List<Integer> regions = updateData.getRegions();
         existingPost.setRegions(new HashSet<>(regionRepository.findByRegionIdIn(regions)));
 
-        return postRepository.save(existingPost);
+        Post savedPost = postRepository.save(existingPost);
+
+        // 이미지 업로드 처리
+        // 다시 확인해보자
+        if (updateData.getImages() != null && !updateData.getImages().isEmpty()) {
+            try {
+                for (var image : updateData.getImages()) {
+                    String imageUrl = s3Service.uploadFile(image);
+                    PostAsset asset = new PostAsset();
+                    asset.setPost(savedPost);
+                    asset.setStorageUrl(imageUrl);
+                    asset.setFileSize(Math.toIntExact(image.getSize()));
+                    postAssetRepository.save(asset);
+                }
+            } catch (Exception e) {
+                throw new Exception("Image upload failed: " + e.getMessage());
+            }
+        }
+
+        return savedPost;
     }
 
     public void deletePost(Integer postId) {
         postRepository.deleteById(postId);
     }
 
-    public void assignRegionsToPost(Post post, List<Integer> regions) {
-        post.setRegions(new HashSet<>(regionRepository.findByRegionIdIn(regions)));
+    public PostDTO convertPostToDTO(Post post, ChatService chatService, RegionService regionService) {
+        PostDTO postDTO = new PostDTO();
+        postDTO.setPostId(post.getPostId());
+        postDTO.setUser(post.getUser());
+        postDTO.setUserScore(post.getUser().getUserScore());
+        postDTO.setTitle(post.getTitle());
+        postDTO.setBody(post.getBody());
+        postDTO.setCreatedAt(post.getCreatedAt());
+        postDTO.setUpdatedAt(post.getUpdatedAt());
+        postDTO.setStartAt(post.getStartAt());
+        postDTO.setEndAt(post.getEndAt());
+        postDTO.setTeamSize(post.getTeamSize());
+        postDTO.setMemberSize(chatService.getNumberOfChatMembers(post.getChat()));
+        postDTO.setChatId(post.getChat().getId());
+
+        // 지역 이름 조합 로직
+        List<RegionDTO> fullRegionNamesDTOs = post.getRegions().stream()
+                // Region ID 기준으로 오름차순 정렬
+                .sorted((r1, r2) -> r1.getRegionId().compareTo(r2.getRegionId()))
+                .map(region -> {
+                    Integer id = region.getRegionId();
+                    String name = region.getRegionName();
+
+                    if (id % 100 != 0 && id > 100) {
+                        Integer parentId = (id / 100) * 100;
+
+                        Region parentRegion = regionService.getRegionById(parentId);
+
+                        if (parentRegion != null) {
+                            String fullName = parentRegion.getRegionName() + " " + name;
+                            return new RegionDTO(fullName, id);
+                        }
+                    }
+                    return new RegionDTO(name, id);
+                }).collect(Collectors.toList());
+
+        postDTO.setRegions(fullRegionNamesDTOs);
+
+        // Application 리스트 변환
+        if (post.getApplications() != null) {
+            List<ApplicationSimpleDTO> appDTOs = post.getApplications().stream()
+                    .map(ApplicationSimpleDTO::new) // Application -> ApplicationSimpleDTO
+                    .collect(Collectors.toList());
+            postDTO.setApplications(appDTOs);
+        } else {
+            postDTO.setApplications(new ArrayList<>()); // 빈 리스트 보장
+        }
+
+        return postDTO;
     }
 }
