@@ -365,6 +365,13 @@ const PostDetailPage: React.FC = () => {
     }
   };
 
+  // 프로필 클릭 핸들러
+  const handleProfileClick = () => {
+    if (post?.user?.id) {
+      navigate(`/profile/${post.user.id}`);
+    }
+  };
+
   // 날짜 포맷팅
   const formatDateRange = (
     start: string | null,
@@ -507,7 +514,7 @@ const PostDetailPage: React.FC = () => {
       <ScrollingBody>
         {activeTab === "post" && (
           <ContentContainer>
-            <AuthorInfo>
+            <AuthorInfo onClick={handleProfileClick}>
               <AuthorAvatar />
               <AuthorName>{post.user?.name || "작성자"}</AuthorName>
               <span>여행 온도: 🌡{post.user.userScore}</span>
