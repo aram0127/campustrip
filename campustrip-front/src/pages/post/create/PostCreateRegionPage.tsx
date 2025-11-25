@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import styled from "styled-components";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { usePostCreate } from "../../../context/PostCreateContext";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -123,6 +123,11 @@ const RemoveTagButton = styled.button`
 const PostCreateRegionPage: React.FC = () => {
   const navigate = useNavigate();
   const { formData, updateFormData } = usePostCreate();
+
+  // 수정 모드인지 확인
+  const { postId } = useParams<{ postId?: string }>();
+  const isEditMode = !!postId;
+
   const [activeTab, setActiveTab] = useState<"domestic" | "overseas">(
     "domestic"
   );
@@ -236,7 +241,13 @@ const PostCreateRegionPage: React.FC = () => {
       return;
     }
     updateFormData({ regions: selectedRegions });
-    navigate("/posts/new/details");
+
+    // 수정 모드와 생성 모드에 따라 경로를 동적으로 설정
+    const path = isEditMode
+      ? `/posts/edit/${postId}/details`
+      : "/posts/new/details";
+
+    navigate(path);
   };
 
   // 1차 지역 (시/도 또는 대륙) 선택
@@ -312,7 +323,10 @@ const PostCreateRegionPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <PageLayout title="지역 선택 (1/3)" showBackButton={false}>
+      <PageLayout
+        title={isEditMode ? "게시글 수정 (1/3)" : "지역 선택 (1/3)"}
+        showBackButton={false}
+      >
         <Message>지역 목록을 불러오는 중...</Message>
       </PageLayout>
     );
@@ -320,14 +334,22 @@ const PostCreateRegionPage: React.FC = () => {
 
   if (error) {
     return (
-      <PageLayout title="지역 선택 (1/3)" showBackButton={false}>
+      <PageLayout
+        title={isEditMode ? "게시글 수정 (1/3)" : "지역 선택 (1/3)"}
+        showBackButton={false}
+      >
         <Message>오류가 발생했습니다: {error.message}</Message>
       </PageLayout>
     );
   }
 
   return (
-    <PageLayout title="지역 선택 (1/3)">
+    <PageLayout
+      title={isEditMode ? "게시글 수정 (1/3)" : "지역 선택 (1/3)"}
+      onBackClick={() => {
+        isEditMode ? navigate(`/posts/${postId}`) : navigate("/posts");
+      }}
+    >
       <ScrollableContent>
         <TabContainer>
           <TabButton
@@ -414,7 +436,6 @@ const PostCreateRegionPage: React.FC = () => {
           )}
         </FilterContainer>
       </ScrollableContent>
-
       <SelectedRegionsContainer>
         {selectedRegions.map((region) => (
           <RegionTag key={region.id}>
@@ -425,7 +446,6 @@ const PostCreateRegionPage: React.FC = () => {
           </RegionTag>
         ))}
       </SelectedRegionsContainer>
-
       <Footer>
         <Button
           onClick={handleNext}

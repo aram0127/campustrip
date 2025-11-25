@@ -2,6 +2,8 @@ package com.example.app.controller;
 
 import com.example.app.domain.Follow;
 import com.example.app.domain.User;
+import com.example.app.dto.FollowDTO;
+import com.example.app.dto.UserResponse;
 import com.example.app.service.FollowService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -21,12 +23,12 @@ public class FollowController {
     // 필요한 엔드포인트
     // 예: 팔로우, 언팔로우, 팔로우 상태 확인, 팔로워 수 조회, 팔로워 목록 조회 등
     @PutMapping("/follow")
-    public Follow followUser(Integer followerId, Integer followeeId) {
+    public FollowDTO followUser(Integer followerId, Integer followeeId) {
         return followService.followUser(followerId, followeeId);
     }
 
     @PutMapping("/unfollow")
-    public Follow unfollowUser(Integer followerId, Integer followeeId) {
+    public FollowDTO unfollowUser(Integer followerId, Integer followeeId) {
         return followService.unfollowUser(followerId, followeeId);
     }
 
@@ -46,12 +48,12 @@ public class FollowController {
     }
 
     @GetMapping("/followers")
-    public List<User> getFollowers(Integer userId) {
+    public List<UserResponse> getFollowers(Integer userId) {
         return followService.getFollowers(userId);
     }
 
     @GetMapping("/followings")
-    public List<User> getFollowings(Integer userId) {
+    public List<UserResponse> getFollowings(Integer userId) {
         return followService.getFollowings(userId);
     }
 }

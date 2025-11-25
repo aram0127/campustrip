@@ -14,15 +14,17 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class CreateUserRequest {
     private BCryptPasswordEncoder passwordEncoder;
     private String name;
+    private String gender;
     private String password;
     private String userId;
     private String phoneNumber;
     private String email;
     private String schoolEmail;
+    private String universityName;
 
     public User toEntity() {
         String encodedPassword = passwordEncoder.encode(password);
-        return new User(null, name, encodedPassword, userId, phoneNumber, email, schoolEmail, null, 0, 36.5F, 1, null, null);
+        return new User(null, name, gender, encodedPassword, userId, phoneNumber, email, schoolEmail, null, null, 0, 36.5F, 1, null, null);
     }
 
 }

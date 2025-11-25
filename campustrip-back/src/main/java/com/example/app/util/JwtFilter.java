@@ -3,6 +3,8 @@ package com.example.app.util;
 import com.example.app.dto.CustomUserDetails;
 import com.example.app.domain.User;
 import com.example.app.util.JwtUtil;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +13,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.security.SignatureException;
 
 import java.io.IOException;
 
@@ -38,33 +43,46 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String token = authorization.substring(7);
 
-        // 토큰 만료 여부 확인
-        if (jwtUtil.isExpired(token)) {
-            filterChain.doFilter(request, response);
+        try {
+            // 토큰 만료 여부 확인
+            if (jwtUtil.isExpired(token)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // 토큰에서 사용자 정보 추출
+            String username = jwtUtil.getUsername(token);
+            String role = jwtUtil.getRole(token);
+
+            // UserEntity 생성
+            User user = new User();
+            // user.setName(username);
+            user.setUserId(username);
+            user.setPassword("temppassword"); // 임시 비밀번호
+            user.setRole(role);
+
+            // CustomUserDetails에 담기
+            CustomUserDetails customUserDetails = new CustomUserDetails(user);
+
+            // 스프링 시큐리티 인증 토큰 생성
+            Authentication authToken =
+                    new UsernamePasswordAuthenticationToken(customUserDetails, null,
+                            customUserDetails.getAuthorities());
+
+            // SecurityContext에 인증 정보 저장
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+
+        } catch (SignatureException | MalformedJwtException | UnsupportedJwtException | IllegalArgumentException e) {
+            // 서명 오류 또는 잘못된 토큰 등 유효하지 않은 토큰
+            logger.warn("Invalid JWT Token: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401 응답
+            return;
+        } catch (ExpiredJwtException e) {
+            // 만료된 토큰
+            logger.warn("Expired JWT Token: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401 응답
             return;
         }
-
-        // 토큰에서 사용자 정보 추출
-        String username = jwtUtil.getUsername(token);
-        String role = jwtUtil.getRole(token);
-
-        // UserEntity 생성
-        User user = new User();
-//        user.setName(username);
-        user.setUserId(username);
-        user.setPassword("temppassword"); // 임시 비밀번호
-        user.setRole(role);
-
-        // CustomUserDetails에 담기
-        CustomUserDetails customUserDetails = new CustomUserDetails(user);
-
-        // 스프링 시큐리티 인증 토큰 생성
-        Authentication authToken =
-                new UsernamePasswordAuthenticationToken(customUserDetails, null,
-                        customUserDetails.getAuthorities());
-
-        // SecurityContext에 인증 정보 저장
-        SecurityContextHolder.getContext().setAuthentication(authToken);
 
         filterChain.doFilter(request, response);
     }

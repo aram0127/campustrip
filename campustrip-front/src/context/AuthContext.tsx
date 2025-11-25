@@ -69,11 +69,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               role: decoded.role,
             });
           } else {
+            // 토큰이 만료된 경우
+            console.error("Token expired on load. Logging out.");
             localStorage.removeItem("authToken");
+            delete axios.defaults.headers.common["Authorization"];
+            window.location.href = "/login";
+            alert("세션이 만료되었습니다. 다시 로그인해주세요.");
           }
         } catch (error) {
           console.error("Failed to decode stored token:", error);
           localStorage.removeItem("authToken");
+          delete axios.defaults.headers.common["Authorization"];
         }
       }
       setAuthLoading(false);

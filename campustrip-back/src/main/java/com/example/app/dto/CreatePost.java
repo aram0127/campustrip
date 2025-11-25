@@ -3,6 +3,8 @@ package com.example.app.dto;
 import com.example.app.domain.Post;
 import com.example.app.domain.User;
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
 @Getter
@@ -16,9 +18,13 @@ public class CreatePost {
     private String title;
     private String body;
     private java.time.LocalDateTime createdAt = java.time.LocalDateTime.now();
+    private java.time.LocalDate startAt;
+    private java.time.LocalDate endAt;
     private Integer teamSize = 0;
     private List<Integer> regions;
     private Integer plannerId;
+    private List<MultipartFile> images;
+
     public Post toEntity() {
         Post newPost = new Post();
         newPost.setUser(this.user);
@@ -26,6 +32,8 @@ public class CreatePost {
         newPost.setBody(this.body);
         newPost.setCreatedAt(this.createdAt);
         newPost.setUpdatedAt(this.createdAt);
+        newPost.setStartAt(this.startAt);
+        newPost.setEndAt(this.endAt);
         newPost.setTeamSize(this.teamSize);
         return newPost;
     }

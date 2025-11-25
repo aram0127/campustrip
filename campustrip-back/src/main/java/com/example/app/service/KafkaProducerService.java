@@ -1,27 +1,81 @@
 package com.example.app.service;
 
 import com.example.app.dto.LocationMessage;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.ListTopicsResult;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.Set;
+
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class KafkaProducerService {
 
-    @Qualifier("locationKafkaTemplate")
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final KafkaTemplate<String, LocationMessage> kafkaTemplate;
     private final ObjectMapper objectMapper;
+    private final KafkaAdmin kafkaAdmin;
+
+    public KafkaProducerService(
+            @Qualifier("locationKafkaTemplate") KafkaTemplate<String, LocationMessage> kafkaTemplate,
+            ObjectMapper objectMapper,
+            KafkaAdmin kafkaAdmin) {
+        this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
+        this.kafkaAdmin = kafkaAdmin;
+    }
 
     public void sendLocation(String topic, LocationMessage location) {
         try {
-            String message = objectMapper.writeValueAsString(location);
-            kafkaTemplate.send(topic, message);
-        } catch (JsonProcessingException e) {
-            // 에러 처리
+            // 토픽 존재 확인 (필요시 생성)
+            createTopicIfNotExists(topic);
+
+            log.info("Kafka 위치 메시지 전송: {}, topic: {}",
+                    objectMapper.writeValueAsString(location), topic);
+
+            kafkaTemplate.send(topic, location)
+                .whenComplete((result, ex) -> {
+                    if (ex != null) {
+                        log.error("메시지 전송 실패: topic={}", topic, ex);
+                    } else {
+                        log.info("메시지 전송 성공: topic={}, partition={}, offset={}",
+                                topic,
+                                result.getRecordMetadata().partition(),
+                                result.getRecordMetadata().offset());
+                    }
+                });
+        } catch (Exception e) {
+            log.error("위치 메시지 전송 중 오류", e);
+        }
+    }
+
+    private void createTopicIfNotExists(String topicName) {
+        try {
+            AdminClient adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties());
+
+            ListTopicsResult topics = adminClient.listTopics();
+            Set<String> topicNames = topics.names().get();
+
+            if (!topicNames.contains(topicName)) {
+                NewTopic newTopic = new NewTopic(topicName, 1, (short) 1);
+                adminClient.createTopics(Collections.singleton(newTopic));
+                log.info("토픽 생성됨: {}", topicName);
+                Thread.sleep(1000); // 토픽 생성 후 메타데이터 갱신 대기
+            } else {
+                log.debug("토픽 이미 존재: {}", topicName);
+            }
+
+            adminClient.close();
+        } catch (Exception e) {
+            log.warn("토픽 생성 실패 (이미 존재할 수 있음): {}", topicName);
         }
     }
 }
+
+

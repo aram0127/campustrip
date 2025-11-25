@@ -1,4 +1,5 @@
 import { type Application } from "./application";
+import { type User } from "./user";
 
 export interface Post {
   postId: number;
@@ -8,19 +9,15 @@ export interface Post {
   updatedAt?: string | null;
   teamSize: number;
   memberSize: number;
-  // User 정보
-  user: {
-    id: number;
-    name: string;
-    userId: string;
-    userScore: number;
-  };
-  // Region 정보
+  startAt: string | null;
+  endAt: string | null;
+  userScore: number;
+  chatId: number;
+  user: User;
   regions: {
     id: number;
     name: string;
   }[];
-
-  // 게시글에 포함된 신청 목록
   applications: Application[];
+  postAssets: string[];
 }

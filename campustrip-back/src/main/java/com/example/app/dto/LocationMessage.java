@@ -7,6 +7,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LocationMessage {
+    private String type;
     private String userId;
     private String userName;
     private String groupId;  // 그룹/방 ID

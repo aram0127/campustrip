@@ -5,7 +5,11 @@ import Input from "../../components/common/Input";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useMutation } from "@tanstack/react-query";
-import { signupUser } from "../../api/auth";
+import {
+  signupUser,
+  sendEmailVerification,
+  verifyEmailVerification,
+} from "../../api/auth";
 import AuthLayout from "../../components/layout/AuthLayout";
 
 const Form = styled.form`
@@ -32,6 +36,36 @@ const ValidationMessage = styled.p<{ isValid: boolean }>`
   text-align: left;
 `;
 
+const GenderContainer = styled.div`
+  display: flex;
+  width: 100%;
+  gap: 16px;
+  margin-bottom: 8px;
+`;
+
+const GenderLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: ${({ theme }) => theme.colors.text};
+  flex: 1;
+  padding: 10px;
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
+  border-radius: 8px;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.background};
+  }
+`;
+
+const RadioInput = styled.input`
+  accent-color: ${({ theme }) => theme.colors.primary};
+  width: 18px;
+  height: 18px;
+`;
+
 function SignupPage() {
   const navigate = useNavigate();
 
@@ -39,10 +73,12 @@ function SignupPage() {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [gender, setGender] = useState("");
   const [schoolEmail, setSchoolEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [emailCode, setEmailCode] = useState("");
   const [phoneCode, setPhoneCode] = useState("");
+  const [universityName, setUniversityName] = useState("");
 
   // 유효성 검사 상태
   const [isUserIdValid, setIsUserIdValid] = useState(false);
@@ -59,6 +95,7 @@ function SignupPage() {
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [isPhoneLoading, setIsPhoneLoading] = useState(false);
+  const [timer, setTimer] = useState(0);
 
   // 아이디 유효성 검사
   useEffect(() => {
@@ -101,15 +138,28 @@ function SignupPage() {
     setIsPhoneNumberValid(phoneRegex.test(phoneNumber));
   }, [phoneNumber]);
 
+  // 타이머 카운트다운 효과
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
+
   // 인증코드 발송 함수 (이메일)
   const handleSendEmailCode = async () => {
     setIsEmailLoading(true);
     try {
-      // TODO: 백엔드에 이메일 인증 코드 발송 API 호출
+      await sendEmailVerification(schoolEmail);
       alert("이메일로 인증코드가 발송되었습니다.");
       setEmailCodeSent(true);
+      setTimer(60);
     } catch (err) {
-      alert("인증코드 발송에 실패했습니다.");
+      console.error(err);
+      alert("인증코드 발송에 실패했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setIsEmailLoading(false);
     }
@@ -119,11 +169,16 @@ function SignupPage() {
   const handleVerifyEmailCode = async () => {
     setIsEmailLoading(true);
     try {
-      // TODO: 백엔드에 이메일 인증 코드 검증 API 호출
-      alert("이메일 인증에 성공했습니다.");
+      const verifiedUnivName = await verifyEmailVerification(
+        schoolEmail,
+        emailCode
+      );
+      setUniversityName(verifiedUnivName);
+      alert("이메일 인증이 완료되었습니다.");
       setIsEmailVerified(true);
     } catch (err) {
-      alert("인증코드가 올바르지 않습니다.");
+      console.error(err);
+      alert("인증코드가 올바르지 않거나 대학교 정보를 찾을 수 없습니다.");
     } finally {
       setIsEmailLoading(false);
     }
@@ -162,10 +217,12 @@ function SignupPage() {
     isUserIdValid &&
     isPasswordValid &&
     name &&
+    gender &&
     isSchoolEmailValid &&
     isPhoneNumberValid &&
     isEmailVerified &&
-    isPhoneVerified;
+    isPhoneVerified &&
+    universityName;
 
   const {
     mutate: performSignup,
@@ -197,9 +254,11 @@ function SignupPage() {
       userId: userId,
       password: password,
       name: name,
+      gender: gender,
       schoolEmail: schoolEmail,
       phoneNumber: phoneNumber,
       email: schoolEmail,
+      universityName: universityName,
     };
 
     // useMutation의 mutate 함수(performSignup) 호출
@@ -216,7 +275,6 @@ function SignupPage() {
           value={userId}
           onChange={(e) => setUserId(e.target.value)}
           required
-          disabled={isEmailVerified && isPhoneVerified}
         />
         {userIdMessage && (
           <ValidationMessage isValid={isUserIdValid}>
@@ -231,7 +289,6 @@ function SignupPage() {
           onChange={(e) => setPassword(e.target.value)}
           maxLength={20}
           required
-          disabled={isEmailVerified && isPhoneVerified}
         />
         {passwordMessage && (
           <ValidationMessage isValid={isPasswordValid}>
@@ -245,8 +302,30 @@ function SignupPage() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          disabled={isEmailVerified && isPhoneVerified}
         />
+
+        <GenderContainer>
+          <GenderLabel>
+            <RadioInput
+              type="radio"
+              name="gender"
+              value="남성"
+              checked={gender === "남성"}
+              onChange={(e) => setGender(e.target.value)}
+            />
+            남성
+          </GenderLabel>
+          <GenderLabel>
+            <RadioInput
+              type="radio"
+              name="gender"
+              value="여성"
+              checked={gender === "여성"}
+              onChange={(e) => setGender(e.target.value)}
+            />
+            여성
+          </GenderLabel>
+        </GenderContainer>
 
         {/* 이메일 인증 섹션 */}
         <InputWithButtonContainer>
@@ -262,11 +341,20 @@ function SignupPage() {
           <Button
             type="button"
             onClick={handleSendEmailCode}
-            disabled={!isSchoolEmailValid || emailCodeSent || isEmailVerified}
+            disabled={
+              !isSchoolEmailValid ||
+              isEmailLoading ||
+              isEmailVerified ||
+              timer > 0
+            }
             style={{ width: "120px", padding: "12px 0" }}
           >
             {isEmailLoading
               ? "전송중..."
+              : isEmailVerified
+              ? "인증완료"
+              : timer > 0
+              ? `${timer}초`
               : emailCodeSent
               ? "재전송"
               : "인증코드 받기"}
@@ -292,6 +380,19 @@ function SignupPage() {
             </Button>
           </InputWithButtonContainer>
         )}
+
+        {isEmailVerified && universityName && (
+          <Input
+            type="text"
+            value={universityName}
+            disabled
+            style={{
+              cursor: "default",
+            }}
+          />
+        )}
+
+        {/* 인증 완료 메시지 */}
         {isEmailVerified && (
           <ValidationMessage isValid={true}>
             이메일 인증이 완료되었습니다.
@@ -361,7 +462,7 @@ function SignupPage() {
         )}
 
         <Button
-          size="large"
+          $size="large"
           type="submit"
           // isFormValid와 isPending 상태로 disabled 관리
           disabled={!isFormValid || isPending}

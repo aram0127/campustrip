@@ -45,14 +45,14 @@ function ResetPasswordPage() {
         <Form onSubmit={handleGetCode}>
           <Input type="text" placeholder="아이디" required />
           <Input type="tel" placeholder="전화번호" required />
-          <Button size="large" type="submit" style={{ width: "100%" }}>
+          <Button $size="large" type="submit" style={{ width: "100%" }}>
             인증코드 받기
           </Button>
         </Form>
       ) : (
         <Form onSubmit={handleConfirmCode}>
           <Input type="text" placeholder="인증코드 입력" required />
-          <Button size="large" type="submit" style={{ width: "100%" }}>
+          <Button $size="large" type="submit" style={{ width: "100%" }}>
             인증코드 확인
           </Button>
         </Form>

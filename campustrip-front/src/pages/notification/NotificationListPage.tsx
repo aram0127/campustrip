@@ -9,6 +9,7 @@ import {
 import PageLayout, {
   ScrollingContent,
 } from "../../components/layout/PageLayout";
+import { useNavigate } from "react-router-dom";
 
 const NotificationList = styled.div``;
 
@@ -112,6 +113,8 @@ const getIcon = (type: string) => {
 };
 
 function NotificationListPage() {
+  const navigate = useNavigate();
+
   return (
     <PageLayout
       title="알림"
@@ -125,6 +128,7 @@ function NotificationListPage() {
           </HeaderActionButton>
         </RightHeaderGroup>
       }
+      onBackClick={() => navigate("/")}
     >
       <ScrollingContent>
         <NotificationList>

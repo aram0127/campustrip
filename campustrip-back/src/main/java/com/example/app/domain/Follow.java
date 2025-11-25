@@ -1,5 +1,6 @@
 package com.example.app.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,16 +14,18 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Follow {
     @EmbeddedId
-    private FollowId id;
+    private FollowId id = new FollowId();
 
     @MapsId("membershipId")
     @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name="membership_id", nullable=false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User membership;
 
     @MapsId("targetId")
     @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name="target_id", nullable=false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User target;
 
     @Column(name = "created_at", nullable = false)
@@ -33,11 +36,16 @@ public class Follow {
     }
 
     @Embeddable
+    @Getter
+    @Setter
     @EqualsAndHashCode
     @NoArgsConstructor
     @AllArgsConstructor
     public static class FollowId implements Serializable {
+        private static final long serialVersionUID = 1L;
+        @Column(name="membership_id")
         private Integer membershipId;
+        @Column(name="target_id")
         private Integer targetId;
     }
 }

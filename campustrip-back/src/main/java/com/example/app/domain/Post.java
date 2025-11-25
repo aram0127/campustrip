@@ -61,5 +61,14 @@ public class Post {
     @JoinColumn(name="planner_id", nullable=false)
     private Planner planner;
 
+    @Column(name="start_at")
+    private java.time.LocalDate startAt;
+
+    @Column(name="end_at")
+    private java.time.LocalDate endAt;
+
+    @JsonManagedReference("post-assets")
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<PostAsset> assets = new HashSet<>();
     // 기본 생성자, getter, setter 생략
 }

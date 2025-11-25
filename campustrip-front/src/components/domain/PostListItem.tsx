@@ -3,7 +3,8 @@ import { type Post } from "../../types/post";
 import { Link } from "react-router-dom";
 
 const ListItemContainer = styled(Link)`
-  display: block;
+  display: flex;
+  gap: 16px;
   padding: ${({ theme }) => theme.spacings.medium};
   border-bottom: 1px solid ${({ theme }) => theme.colors.grey};
   cursor: pointer;
@@ -14,6 +15,20 @@ const ListItemContainer = styled(Link)`
     background-color: ${({ theme }) =>
       theme.colors.background === "#FFFFFF" ? "#f8f9fa" : "#2c2c2e"};
   }
+`;
+
+const TextContent = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const Thumbnail = styled.img`
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  object-fit: cover;
+  background-color: ${({ theme }) => theme.colors.inputBackground};
+  flex-shrink: 0;
 `;
 
 const PostTitle = styled.h2`
@@ -29,6 +44,25 @@ const PostInfo = styled.p`
   color: ${({ theme }) => theme.colors.grey};
 `;
 
+// 날짜 포맷팅
+const formatDateRange = (start: string | null, end: string | null): string => {
+  if (start && end) {
+    const startDate = start.split("T")[0];
+    const endDate = end.split("T")[0];
+    if (startDate === endDate) {
+      return startDate;
+    }
+    return `${startDate} ~ ${endDate}`;
+  }
+  if (start) {
+    return `${start.split("T")[0]} ~ 미정`;
+  }
+  if (end) {
+    return `미정 ~ ${end.split("T")[0]}`;
+  }
+  return "일정 미정";
+};
+
 interface PostListItemProps {
   post: Post;
 }
@@ -41,22 +75,21 @@ const getRegionNames = (regions: Post["regions"]): string => {
   return regions.map((r) => r.name).join(", ");
 };
 
-const getDummyPeriod = (postId: number): string => {
-  if (postId % 3 === 0) return "11/1 ~ 11/2 (1박 2일)";
-  if (postId % 2 === 0) return "9/14 ~ 9/17 (3박 4일)";
-  return "10/25 ~ 10/30 (5박 6일)";
-};
-
 const PostListItem: React.FC<PostListItemProps> = ({ post }) => {
-  console.log(post);
+  const thumbnailSrc =
+    post.postAssets && post.postAssets.length > 0 ? post.postAssets[0] : null;
+
   return (
     <ListItemContainer to={`/posts/${post.postId}`}>
-      <PostTitle>{post.title}</PostTitle>
-      <PostInfo>📍 {getRegionNames(post.regions)}</PostInfo>
-      <PostInfo>📅 {getDummyPeriod(post.postId)}</PostInfo>
-      <PostInfo>
-        👥 모집 인원 [{post.memberSize ?? 0}/{post.teamSize}]
-      </PostInfo>
+      <TextContent>
+        <PostTitle>{post.title}</PostTitle>
+        <PostInfo>📍 {getRegionNames(post.regions)}</PostInfo>
+        <PostInfo>📅 {formatDateRange(post.startAt, post.endAt)}</PostInfo>
+        <PostInfo>
+          👥 모집 인원 [{post.memberSize ?? 0}/{post.teamSize}]
+        </PostInfo>
+      </TextContent>
+      {thumbnailSrc && <Thumbnail src={thumbnailSrc} alt="thumbnail" />}
     </ListItemContainer>
   );
 };
