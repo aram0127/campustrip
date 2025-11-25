@@ -31,7 +31,6 @@ import ApplicantListPage from "./pages/post/ApplicantListPage";
 import LocationSharePage from "./pages/location/LocationSharePage";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import TravelTestPage from "@/pages/test/TravelTestPage";
-
 import ChatTestPage from "./test/ChatTestPage"; // 채팅테스트
 
 const RootRedirect: React.FC = () => {
