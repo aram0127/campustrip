@@ -1,152 +1,232 @@
 import React, { useState, useEffect, useMemo } from "react";
-import styled from "styled-components";
-import { useParams } from "react-router-dom"; // URL에서 ID를 가져오기 위해 사용
-// Google Maps API를 사용하기 위한 라이브러리
-import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
+import styled, { useTheme } from "styled-components";
+import { useParams, useNavigate } from "react-router-dom";
+import { GoogleMap, useJsApiLoader, Marker, Polyline } from "@react-google-maps/api";
+import { PlannerDetail } from "../../types/planner";
 
-// 스타일 컴포넌트 
+// --- 스타일 정의 (theme.ts 적용) ---
+
 const PageContainer = styled.div`
   width: 100%;
-  max-width: 390px;
-  margin: 0 auto;
-  box-sizing: border-box;
+  height: 100vh; /* GlobalStyle의 body height 100%을 상속 */
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* 전체 높이 */
+  position: relative;
+  background-color: ${({ theme }) => theme.colors.background};
 `;
 
 const MapSection = styled.div`
   width: 100%;
-  height: 250px; /* 지도 섹션 높이 고정 */
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  height: 45%; /* 화면 상단 45% */
+  flex-shrink: 0;
 `;
 
 const ContentContainer = styled.div`
   flex-grow: 1;
-  padding: 20px;
-  background-color: white; /* 지도 위에 콘텐츠 올라갈 수 있게 배경색 지정 */
-  z-index: 20;
+  background-color: ${({ theme }) => theme.colors.background};
+  border-top-left-radius: 24px; /* 바텀시트 느낌 */
+  border-top-right-radius: 24px;
+  margin-top: -24px; /* 지도를 살짝 덮음 */
+  padding: ${({ theme }) => theme.spacings.large} ${({ theme }) => theme.spacings.medium};
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
 `;
 
-const DetailTitle = styled.h1`
-  font-size: 24px;
-  margin-bottom: 10px;
+const Header = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacings.large};
+  text-align: center;
+`;
+
+const HandleBar = styled.div`
+  width: 40px;
+  height: 4px;
+  background-color: ${({ theme }) => theme.colors.borderColor};
+  margin: 0 auto ${({ theme }) => theme.spacings.medium};
+  border-radius: 2px;
+`;
+
+const Title = styled.h2`
+  font-size: ${({ theme }) => theme.fontSizes.title};
+  font-weight: ${({ theme }) => theme.fontWeights.bold};
   color: ${({ theme }) => theme.colors.text};
+  margin-bottom: ${({ theme }) => theme.spacings.xsmall};
 `;
 
-const DetailInfo = styled.p`
-  font-size: 16px;
-  margin: 8px 0;
+const Period = styled.p`
+  font-size: ${({ theme }) => theme.fontSizes.body};
   color: ${({ theme }) => theme.colors.secondaryTextColor};
 `;
 
-const ScheduleSection = styled.div`
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
+const DaySection = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacings.large};
 `;
 
-const ScheduleItem = styled.div`
+const DayTitle = styled.h3`
+  font-size: ${({ theme }) => theme.fontSizes.subtitle};
+  font-weight: ${({ theme }) => theme.fontWeights.bold};
+  color: ${({ theme }) => theme.colors.text};
+  margin-bottom: ${({ theme }) => theme.spacings.medium};
+  padding-left: ${({ theme }) => theme.spacings.xxsmall};
+`;
+
+// 리스트 아이템: theme.colors.inputBackground 사용 (리스트 페이지와 통일감)
+const PlaceItem = styled.div`
   display: flex;
   align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid #f0f0f0;
+  padding: ${({ theme }) => theme.spacings.medium};
+  background-color: ${({ theme }) => theme.colors.inputBackground};
+  border-radius: ${({ theme }) => theme.borderRadius.large};
+  margin-bottom: ${({ theme }) => theme.spacings.small};
 `;
 
-const ItemNumber = styled.span`
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
+// 숫자 배지: theme.colors.primary 사용 (브랜드 컬러 강조)
+const NumberBadge = styled.div`
   width: 24px;
   height: 24px;
-  border-radius: 50%;
-  background-color: #ff5722; /* 임시 색상 */
+  border-radius: ${({ theme }) => theme.borderRadius.circle};
+  background-color: ${({ theme }) => theme.colors.primary};
   color: white;
-  font-size: 14px;
-  margin-right: 10px;
-  font-weight: bold;
+  font-size: ${({ theme }) => theme.fontSizes.caption};
+  font-weight: ${({ theme }) => theme.fontWeights.bold};
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: ${({ theme }) => theme.spacings.medium};
+  flex-shrink: 0;
 `;
 
-const ItemName = styled.span`
-  flex-grow: 1;
-  font-size: 16px;
+const PlaceName = styled.span`
+  font-size: ${({ theme }) => theme.fontSizes.body};
+  font-weight: ${({ theme }) => theme.fontWeights.medium};
+  color: ${({ theme }) => theme.colors.text};
 `;
 
-// 임시 데이터(ListPage의 더미 데이터에서 추가) 
-const dummyPlannerDetails = [
-  {
-    id: 1,
-    title: "부산 2박 3일 여행",
-    period: "2025.10.10 ~ 2025.10.12",
-    members: ["홍길동", "김영희"],
-    // 내용 추가
-    location: "부산",
-    schedule: "1일차: 해운대, 2일차: 광안리, 3일차: 마무리",
-  },
-  {
-    id: 2,
-    title: "경주 당일치기",
-    period: "2025.11.01",
-    members: ["나", "김철수", "박민지"],
-    location: "경주",
-    schedule: "황리단길, 첨성대, 불국사",
-  },
-  // 나머지 플래너 데이터
-];
+// --- 더미 데이터 (백엔드 연동 전) ---
+const DUMMY_PLANNER: PlannerDetail = {
+  plannerId: 1,
+  title: "부산 2박 3일 식도락 여행",
+  startDate: "2025.09.14",
+  endDate: "2025.09.16",
+  description: "부산 맛집 뿌시기",
+  memberCount: 3,
+  user: { id: 1, name: "User1" },
+  schedules: [
+    {
+      day: 1,
+      places: [
+        { placeId: 1, placeName: "부산역", latitude: 35.1149, longitude: 129.0414, order: 1 },
+        { placeId: 2, placeName: "본전돼지국밥", latitude: 35.1155, longitude: 129.0422, order: 2 },
+        { placeId: 3, placeName: "광안리 해수욕장", latitude: 35.1532, longitude: 129.1186, order: 3 },
+      ],
+    },
+    {
+      day: 2,
+      places: [
+        { placeId: 4, placeName: "해운대 해수욕장", latitude: 35.1587, longitude: 129.1603, order: 1 },
+        { placeId: 5, placeName: "해리단길", latitude: 35.1625, longitude: 129.1630, order: 2 },
+      ],
+    },
+  ],
+};
 
-// 메인 컴포넌트
 function PlannerDetailPage() {
-  // 1. URL에서 :id 값(플래너 ID) 가져옴
   const { id } = useParams();
-  const plannerId = parseInt(id);
+  const theme = useTheme(); // JS 코드(지도 설정) 안에서 테마 값을 쓰기 위해 호출
 
-  // 2. 상태 관리를 위한 state 정의
-  const [planner, setPlanner] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // 구글 맵 로드
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+  });
 
-  // 3. 컴포넌트가 마운트되거나 ID가 변경될 때 데이터를 불러
+  const [planner, setPlanner] = useState<PlannerDetail | null>(null);
+
   useEffect(() => {
-    // 실제로 여기에 API 호출 코드를 넣음
-    
-    // 현재는 더미 데이터
-    const fetchedPlanner = dummyPlannerDetails.find(p => p.id === plannerId);
-    
-    // 데이터 로딩 시뮬레이션
-    setTimeout(() => {
-        setPlanner(fetchedPlanner);
-        setLoading(false);
-    }, 500);
+    // 나중에 여기에 API 호출 코드 작성
+    setPlanner(DUMMY_PLANNER);
+  }, [id]);
 
-  }, [plannerId]); // id 변경될 때마다 실행
+  // 지도 경로 좌표 계산
+  const pathCoordinates = useMemo(() => {
+    if (!planner) return [];
+    return planner.schedules.flatMap((schedule) =>
+      schedule.places.map((p) => ({ lat: p.latitude, lng: p.longitude }))
+    );
+  }, [planner]);
 
-  if (loading) {
-    return <PageContainer>로딩 중...</PageContainer>;
-  }
+  // 지도 로드 시 줌 자동 조절
+  const onLoadMap = (map: google.maps.Map) => {
+    const bounds = new window.google.maps.LatLngBounds();
+    pathCoordinates.forEach((coord) => bounds.extend(coord));
+    map.fitBounds(bounds);
+  };
 
-  if (!planner) {
-    return <PageContainer>플래너 정보를 찾을 수 없습니다.</PageContainer>;
-  }
+  if (!isLoaded || !planner) return <div>로딩 중...</div>;
 
   return (
     <PageContainer>
-      <DetailTitle>{planner.title}</DetailTitle>
-      
-      {/* 기본 정보 */}
-      <DetailInfo>🗺️ 장소: {planner.location}</DetailInfo>
-      <DetailInfo>📅 기간: {planner.period}</DetailInfo>
-      <DetailInfo>👥 참여자: {planner.members.join(", ")}</DetailInfo>
+      {/* 상단 지도 */}
+      <MapSection>
+        <GoogleMap
+          mapContainerStyle={{ width: "100%", height: "100%" }}
+          center={{ lat: 35.1149, lng: 129.0414 }}
+          zoom={10}
+          onLoad={onLoadMap}
+          options={{ 
+            disableDefaultUI: true, // 기본 UI 숨김
+            zoomControl: true,      // 줌 버튼은 보이게
+          }} 
+        >
+          {/* 경로 선 그리기 (테마의 Primary 컬러 사용) */}
+          <Polyline
+            path={pathCoordinates}
+            options={{
+              strokeColor: theme.colors.primary, // 테마 색상 적용 (#007AFF)
+              strokeOpacity: 0.8,
+              strokeWeight: 5,
+            }}
+          />
 
-      {/* 상세 일정 */}
-      <ScheduleSection>
-        <h3>상세 일정</h3>
-        <p>{planner.schedule}</p>
-        {/* 지도, 시간별 일정표 등의 상세 UI 들어가는 부분 */}
-      </ScheduleSection>
+          {/* 마커 찍기 */}
+          {planner.schedules.map((day) =>
+            day.places.map((place) => (
+              <Marker
+                key={place.placeId}
+                position={{ lat: place.latitude, lng: place.longitude }}
+                label={{
+                    text: String(place.order),
+                    color: "white",
+                    fontWeight: "bold"
+                }}
+                // 마커 색상 변경은 복잡하므로 일단 기본 빨간 마커 사용
+                // 필요시 SVG 아이콘으로 교체 가능
+              />
+            ))
+          )}
+        </GoogleMap>
+      </MapSection>
 
-      
-      {/* 수정/삭제 버튼 등의 추가 */}
+      {/* 하단 일정 리스트 */}
+      <ContentContainer>
+        <Header>
+          <HandleBar />
+          <Title>{planner.title}</Title>
+          <Period>{planner.startDate} ~ {planner.endDate}</Period>
+        </Header>
+
+        {planner.schedules.map((schedule) => (
+          <DaySection key={schedule.day}>
+            <DayTitle>{schedule.day}일차</DayTitle>
+            {schedule.places.map((place) => (
+              <PlaceItem key={place.placeId}>
+                <NumberBadge>{place.order}</NumberBadge>
+                <PlaceName>{place.placeName}</PlaceName>
+              </PlaceItem>
+            ))}
+          </DaySection>
+        ))}
+      </ContentContainer>
     </PageContainer>
   );
 }

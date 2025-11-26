@@ -213,6 +213,12 @@ const PostCreateDetailsPage: React.FC = () => {
   const [teamSize, setTeamSize] = useState(formData.teamSize);
   const [images, setImages] = useState<File[]>(formData.images);
 
+  // 오늘 날짜 계산 (YYYY-MM-DD 형식)
+  const today = new Date();
+  const todayString = `${today.getFullYear()}-${String(
+    today.getMonth() + 1
+  ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
   useEffect(() => {
     // 1단계(지역 선택)를 건너뛰고 이 페이지로 바로 온 경우
     if (formData.regions.length === 0) {
@@ -259,8 +265,12 @@ const PostCreateDetailsPage: React.FC = () => {
     setTeamSize((prev) => Math.max(2, prev + amount));
   };
 
-  // 폼 유효성 검사
-  const isFormValid = title.trim().length > 0 && body.trim().length > 0;
+  // 폼 유효성 검사: 제목, 본문, 시작일, 종료일이 모두 존재해야 함
+  const isFormValid =
+    title.trim().length > 0 &&
+    body.trim().length > 0 &&
+    startDate !== "" &&
+    endDate !== "";
 
   // '이전' 버튼 클릭
   const handlePrev = () => {
@@ -274,14 +284,9 @@ const PostCreateDetailsPage: React.FC = () => {
   // '다음' 버튼 클릭
   const handleNext = () => {
     if (!isFormValid) {
-      alert("제목과 본문 내용을 입력해주세요.");
+      alert("제목, 본문, 일정을 모두 입력해주세요.");
       return;
     }
-
-    const today = new Date();
-    const todayString = `${today.getFullYear()}-${String(
-      today.getMonth() + 1
-    ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
     if (startDate && startDate < todayString) {
       alert("여행 시작일은 오늘 날짜 이후여야 합니다.");
@@ -367,11 +372,13 @@ const PostCreateDetailsPage: React.FC = () => {
             <FormInput
               type="date"
               value={startDate}
+              min={todayString}
               onChange={(e) => setStartDate(e.target.value)}
             />
             <FormInput
               type="date"
               value={endDate}
+              min={startDate || todayString}
               onChange={(e) => setEndDate(e.target.value)}
             />
           </DateInputs>
