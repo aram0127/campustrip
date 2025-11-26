@@ -5,15 +5,18 @@ import { VitePWA } from "vite-plugin-pwa";
 export default defineConfig({
   plugins: [
     react(),
-    // VitePWA 플러그인 설정 추가
     VitePWA({
+      devOptions: { enabled: true },
       registerType: "autoUpdate",
-      // PWA 설치 시 보일 앱 정보
+      includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
       manifest: {
         name: "Campus Trip",
         short_name: "CampusTrip",
         description: "대학생들을 위한 여행 동행 플랫폼",
-        theme_color: "#28a745", // 우리 앱의 기본 색상
+        theme_color: "#28a745",
+        background_color: "#ffffff",
+        display: "standalone",
+        start_url: "/",
         icons: [
           {
             src: "icon-192x192.png",
@@ -24,6 +27,13 @@ export default defineConfig({
             src: "icon-512x512.png",
             sizes: "512x512",
             type: "image/png",
+          },
+          // 안드로이드 적응형 아이콘
+          {
+            src: "icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable",
           },
         ],
       },
