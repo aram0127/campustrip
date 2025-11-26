@@ -125,45 +125,8 @@ export const deletePost = async (postId: string): Promise<void> => {
   await apiClient.delete(`/api/posts/${postId}`);
 };
 
-export interface PostSlice<T> {
-  content: T[];
-  first: boolean;
-  last: boolean;
-  number: number; // page number
-  size: number; // requested size
-  numberOfElements: number;
-  empty: boolean;
-  sort?: { sorted: boolean; unsorted: boolean; empty: boolean };
-  pageable?: { pageNumber: number; pageSize: number; offset: number };
-}
-
-export interface InfinitePostsParams {
-  page?: number; // 0-based
-  size?: number; // default 3
-  sort?: string; // e.g. 'postId,asc' or 'createdAt,desc'
-  regionIds?: number[] | null; // 지역 필터
-}
-
-// getInfinitePosts는 테스트 페이지 및 PostListPage에서 사용됨
-export const getInfinitePosts = async (
-  { page = 0, size = 3, sort, regionIds }: InfinitePostsParams = {}
-): Promise<PostSlice<Post>> => {
-  const params = new URLSearchParams();
-  params.append("page", page.toString());
-  params.append("size", size.toString());
-  if (sort) params.append("sort", sort); // Spring 형태: field,direction
-
-  // regionIds가 있으면 각각 추가
-  if (regionIds && regionIds.length > 0) {
-    regionIds.forEach((id) => {
-      params.append("regionIds", id.toString());
-    });
-  }
-
-  const url = regionIds && regionIds.length > 0
-    ? `/api/posts/regions?${params.toString()}`
-    : `/api/posts?${params.toString()}`;
-
-  const response = await apiClient.get<PostSlice<Post>>(url);
+/* 특정 사용자가 작성한 게시글 목록 조회 */
+export const getPostsByUserId = async (userId: number): Promise<Post[]> => {
+  const response = await apiClient.get<Post[]>(`/api/posts/user/${userId}`);
   return response.data;
 };
