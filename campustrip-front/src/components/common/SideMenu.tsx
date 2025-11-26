@@ -29,6 +29,7 @@ const MenuContainer = styled(animated.div)`
   padding-top: env(safe-area-inset-top); /* 상단 노치 영역 패딩 */
   padding-bottom: env(safe-area-inset-bottom); /* 하단 홈바 영역 패딩 */
   box-sizing: border-box; /* 패딩을 높이에 포함 */
+  touch-action: none;
 `;
 
 const MenuProfile = styled.div`

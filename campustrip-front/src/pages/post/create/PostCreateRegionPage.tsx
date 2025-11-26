@@ -25,16 +25,16 @@ const TabContainer = styled.div`
   flex-shrink: 0;
 `;
 
-const TabButton = styled.button<{ isActive: boolean }>`
+const TabButton = styled.button<{ $isActive: boolean }>`
   flex: 1;
   padding: 14px 16px;
   border: none;
   background-color: transparent;
-  color: ${({ theme, isActive }) =>
-    isActive ? theme.colors.primary : theme.colors.grey};
+  color: ${({ theme, $isActive }) =>
+    $isActive ? theme.colors.primary : theme.colors.grey};
   border-bottom: 2px solid
-    ${({ theme, isActive }) =>
-      isActive ? theme.colors.primary : "transparent"};
+    ${({ theme, $isActive }) =>
+      $isActive ? theme.colors.primary : "transparent"};
   cursor: pointer;
   font-size: 16px;
   font-weight: bold;
@@ -59,18 +59,18 @@ const RegionList = styled.ul`
   }
 `;
 
-const RegionItem = styled.li<{ isSelected: boolean }>`
+const RegionItem = styled.li<{ $isSelected: boolean }>`
   padding: 14px 20px;
   cursor: pointer;
-  background-color: ${({ theme, isSelected }) =>
-    isSelected ? theme.colors.primary : "transparent"};
-  color: ${({ theme, isSelected }) =>
-    isSelected ? "white" : theme.colors.text};
-  font-weight: ${({ isSelected }) => (isSelected ? "bold" : "normal")};
+  background-color: ${({ theme, $isSelected }) =>
+    $isSelected ? theme.colors.primary : "transparent"};
+  color: ${({ theme, $isSelected }) =>
+    $isSelected ? "white" : theme.colors.text};
+  font-weight: ${({ $isSelected }) => ($isSelected ? "bold" : "normal")};
 
   &:hover {
-    background-color: ${({ theme, isSelected }) =>
-      !isSelected &&
+    background-color: ${({ theme, $isSelected }) =>
+      !$isSelected &&
       (theme.colors.background === "#FFFFFF" ? "#f1f1f1" : "#333")};
   }
 `;
@@ -190,7 +190,7 @@ const PostCreateRegionPage: React.FC = () => {
     if (!province) return null;
 
     const parentName = province.province;
-    // 1차 지역 ID는 2차 지역 ID(e.g., 101)에서 추론합니다.
+    // 1차 지역 ID는 2차 지역 ID에서 추론
     const firstChildId = province.regions[0]?.id ?? 0;
 
     if (firstChildId > 0) {
@@ -269,7 +269,7 @@ const PostCreateRegionPage: React.FC = () => {
       activeTab === "domestic" ? domesticRegions : overseasRegions;
     const province = dataList.find((p) => p.province === selectedMain);
 
-    // 1차 지역 DTO(e.g., {id: 200, name: "부산광역시"})를 헬퍼로 생성
+    // 1차 지역 DTO(예: {id: 200, name: "부산광역시"})를 헬퍼로 생성
     const parentDTO = getParentDTO(province);
 
     if (parentDTO) {
@@ -279,22 +279,20 @@ const PostCreateRegionPage: React.FC = () => {
 
   // 2차 지역 (시/군/구 또는 국가) 선택
   const handleSelectSub = (subRegion: RegionDTO) => {
-    // 1차 지역 이름(e.g., "부산광역시")을 selectedMain State에서 가져옵니다.
+    // 1차 지역 이름(예: 부산광역시)을 selectedMain State에서 가져옴
     const parentName = selectedMain;
 
-    // "부산광역시 중구" 형태의 full name을 생성합니다.
-    // parentName이 null이 아닌지 확인합니다.
+    // "부산광역시 중구" 형태의 full name을 생성
     const fullName = parentName
       ? `${parentName} ${subRegion.name}`
       : subRegion.name;
 
-    // ID는 2차 지역 ID, name은 full name을 가진 새 DTO 객체를 생성합니다.
+    // ID는 2차 지역 ID, name은 full name을 가진 새 DTO 객체를 생성
     const fullRegionDTO: RegionDTO = {
       id: subRegion.id,
       name: fullName,
     };
 
-    // 이 새 객체로 선택 로직을 실행합니다.
     handleSelectRegion(fullRegionDTO);
   };
 
@@ -353,13 +351,13 @@ const PostCreateRegionPage: React.FC = () => {
       <ScrollableContent>
         <TabContainer>
           <TabButton
-            isActive={activeTab === "domestic"}
+            $isActive={activeTab === "domestic"}
             onClick={() => handleTabClick("domestic")}
           >
             국내
           </TabButton>
           <TabButton
-            isActive={activeTab === "overseas"}
+            $isActive={activeTab === "overseas"}
             onClick={() => handleTabClick("overseas")}
           >
             해외
@@ -372,7 +370,7 @@ const PostCreateRegionPage: React.FC = () => {
               {domesticRegions.map((province) => (
                 <RegionItem
                   key={province.province}
-                  isSelected={selectedMain === province.province}
+                  $isSelected={selectedMain === province.province}
                   onClick={() => handleSelectMain(province)}
                 >
                   {province.province}
@@ -384,7 +382,7 @@ const PostCreateRegionPage: React.FC = () => {
           {activeTab === "domestic" && selectedMain && (
             <RegionList>
               <RegionItem
-                isSelected={isParentSelected} // 수정된 헬퍼 사용
+                $isSelected={isParentSelected} // 수정된 헬퍼 사용
                 onClick={handleSelectProvinceAsFinal} // 수정된 핸들러 사용
               >
                 전체
@@ -392,7 +390,7 @@ const PostCreateRegionPage: React.FC = () => {
               {subRegions.map((subRegion) => (
                 <RegionItem
                   key={subRegion.id}
-                  isSelected={isSubSelected(subRegion.id)}
+                  $isSelected={isSubSelected(subRegion.id)}
                   onClick={() => handleSelectSub(subRegion)}
                 >
                   {subRegion.name}
@@ -406,7 +404,7 @@ const PostCreateRegionPage: React.FC = () => {
               {overseasRegions.map((continent) => (
                 <RegionItem
                   key={continent.province}
-                  isSelected={selectedMain === continent.province}
+                  $isSelected={selectedMain === continent.province}
                   onClick={() => handleSelectMain(continent)}
                 >
                   {continent.province}
@@ -418,15 +416,15 @@ const PostCreateRegionPage: React.FC = () => {
           {activeTab === "overseas" && selectedMain && (
             <RegionList>
               <RegionItem
-                isSelected={isParentSelected} // 수정된 헬퍼 사용
-                onClick={handleSelectProvinceAsFinal} // 수정된 핸들러 사용
+                $isSelected={isParentSelected}
+                onClick={handleSelectProvinceAsFinal}
               >
                 전체
               </RegionItem>
               {subRegions.map((country) => (
                 <RegionItem
                   key={country.id}
-                  isSelected={isSubSelected(country.id)}
+                  $isSelected={isSubSelected(country.id)}
                   onClick={() => handleSelectSub(country)}
                 >
                   {country.name}

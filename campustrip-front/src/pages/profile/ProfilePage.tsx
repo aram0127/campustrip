@@ -74,18 +74,18 @@ const TabMenu = styled.div`
   z-index: 5;
 `;
 
-const TabButton = styled.button<{ active?: boolean }>`
+const TabButton = styled.button<{ $active?: boolean }>`
   flex: 1;
   padding: 14px;
   border: none;
   background-color: transparent;
-  color: ${({ theme, active }) =>
-    active ? theme.colors.primary : theme.colors.secondaryTextColor};
+  color: ${({ theme, $active }) =>
+    $active ? theme.colors.primary : theme.colors.secondaryTextColor};
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
   border-bottom: 2px solid
-    ${({ theme, active }) => (active ? theme.colors.primary : "transparent")};
+    ${({ theme, $active }) => ($active ? theme.colors.primary : "transparent")};
 `;
 
 const ContentFeed = styled.div`
@@ -111,8 +111,8 @@ const TempBarContainer = styled.div`
   overflow: hidden;
 `;
 
-const TempBar = styled.div<{ percentage: number }>`
-  width: ${({ percentage }) => percentage}%;
+const TempBar = styled.div<{ $percentage: number }>`
+  width: ${({ $percentage }) => $percentage}%;
   height: 100%;
   /* 0~100도를 0~100%로 매핑. 예시: 36.5도 -> 36.5% */
   background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
@@ -346,7 +346,7 @@ function ProfilePage() {
         <Section>
           <SectionTitle>여행 온도</SectionTitle>
           <TempBarContainer>
-            <TempBar percentage={tempPercentage} />
+            <TempBar $percentage={tempPercentage} />
           </TempBarContainer>
           <TempValue>{profileUser.userScore.toFixed(1)}°C</TempValue>
         </Section>
@@ -367,19 +367,19 @@ function ProfilePage() {
 
         <TabMenu>
           <TabButton
-            active={activeTab === "여행 기록"}
+            $active={activeTab === "여행 기록"}
             onClick={() => setActiveTab("여행 기록")}
           >
             여행 기록
           </TabButton>
           <TabButton
-            active={activeTab === "작성한 게시글"}
+            $active={activeTab === "작성한 게시글"}
             onClick={() => setActiveTab("작성한 게시글")}
           >
             작성한 게시글
           </TabButton>
           <TabButton
-            active={activeTab === "받은 후기"}
+            $active={activeTab === "받은 후기"}
             onClick={() => setActiveTab("받은 후기")}
           >
             받은 후기
