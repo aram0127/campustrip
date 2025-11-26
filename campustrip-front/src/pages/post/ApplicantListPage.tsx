@@ -8,7 +8,7 @@ import {
   rejectApplication,
 } from "../../api/applications";
 import { type Applicant } from "../../types/applicant";
-import { IoArrowBack, IoCheckmark, IoClose } from "react-icons/io5";
+import { IoCheckmark, IoClose } from "react-icons/io5";
 import PageLayout from "../../components/layout/PageLayout";
 
 const ApplicantList = styled.main`
@@ -61,7 +61,7 @@ const ActionContainer = styled.div`
   flex-shrink: 0;
 `;
 
-const ActionButton = styled.button<{ variant: "accept" | "reject" }>`
+const ActionButton = styled.button<{ $variant: "accept" | "reject" }>`
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -72,15 +72,15 @@ const ActionButton = styled.button<{ variant: "accept" | "reject" }>`
   font-size: 20px;
   cursor: pointer;
 
-  ${({ theme, variant }) =>
-    variant === "accept" &&
+  ${({ theme, $variant }) =>
+    $variant === "accept" &&
     css`
       background-color: ${theme.colors.primary};
       color: white;
     `}
 
-  ${({ theme, variant }) =>
-    variant === "reject" &&
+  ${({ theme, $variant }) =>
+    $variant === "reject" &&
     css`
       background-color: ${theme.colors.error};
       color: white;
@@ -92,21 +92,21 @@ const ActionButton = styled.button<{ variant: "accept" | "reject" }>`
   }
 `;
 
-const StatusText = styled.span<{ status: "accepted" | "rejected" }>`
+const StatusText = styled.span<{ $status: "accepted" | "rejected" }>`
   font-size: 14px;
   font-weight: bold;
   padding: 6px 10px;
   border-radius: 6px;
 
-  ${({ theme, status }) =>
-    status === "accepted" &&
+  ${({ theme, $status }) =>
+    $status === "accepted" &&
     css`
       color: ${theme.colors.primary};
       background-color: ${theme.colors.inputBackground};
     `}
 
-  ${({ theme, status }) =>
-    status === "rejected" &&
+  ${({ theme, $status }) =>
+    $status === "rejected" &&
     css`
       color: ${theme.colors.error};
       background-color: ${theme.colors.inputBackground};
@@ -206,14 +206,14 @@ const ApplicantListPage: React.FC = () => {
               {applicant.applicationStatus === null && ( // 대기중
                 <>
                   <ActionButton
-                    variant="accept"
+                    $variant="accept"
                     onClick={() => handleAccept(applicant.id)}
                     disabled={isAccepting || isRejecting}
                   >
                     <IoCheckmark />
                   </ActionButton>
                   <ActionButton
-                    variant="reject"
+                    $variant="reject"
                     onClick={() => handleReject(applicant.id)}
                     disabled={isAccepting || isRejecting}
                   >
@@ -222,10 +222,10 @@ const ApplicantListPage: React.FC = () => {
                 </>
               )}
               {applicant.applicationStatus === true && ( // 수락됨
-                <StatusText status="accepted">수락됨</StatusText>
+                <StatusText $status="accepted">수락됨</StatusText>
               )}
               {applicant.applicationStatus === false && ( // 거절됨
-                <StatusText status="rejected">거절됨</StatusText>
+                <StatusText $status="rejected">거절됨</StatusText>
               )}
             </ActionContainer>
           </ApplicantItem>
