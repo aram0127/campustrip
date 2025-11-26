@@ -1,6 +1,10 @@
+import { useEffect, useState } from "react";
 import styled from "styled-components";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import FloatingActionButton from "../../components/common/FloatingActionButton";
+import SearchBar from "../../components/common/SearchBar";
+import { getReviews } from "../../api/reviews";
+import { type Review } from "../../types/review";
 
 const PageContainer = styled.div`
   width: 100%;
@@ -17,25 +21,38 @@ const ControlsContainer = styled.div`
   gap: 12px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
   flex-shrink: 0;
-`;
-
-const SearchInput = styled.input`
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid ${({ theme }) => theme.colors.borderColor};
-  border-radius: 8px;
-  background-color: ${({ theme }) => theme.colors.inputBackground};
-  color: ${({ theme }) => theme.colors.text};
-  box-sizing: border-box;
-`;
-
-const SortSelect = styled.select`
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid ${({ theme }) => theme.colors.borderColor};
   background-color: ${({ theme }) => theme.colors.background};
-  color: ${({ theme }) => theme.colors.text};
-  align-self: flex-start;
+`;
+
+const SortContainer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-right: 4px;
+`;
+
+const SortButton = styled.button<{ $isActive: boolean }>`
+  background: none;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  color: ${({ $isActive, theme }) =>
+    $isActive ? theme.colors.text : theme.colors.secondaryTextColor};
+  font-weight: ${({ $isActive }) => ($isActive ? "bold" : "normal")};
+
+  padding: 4px;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.text};
+  }
+`;
+
+const Divider = styled.span`
+  color: ${({ theme }) => theme.colors.borderColor};
+  font-size: 12px;
+  display: flex;
+  align-items: center;
 `;
 
 const PostListContainer = styled.div`
@@ -52,16 +69,21 @@ const PostItem = styled(Link)`
   color: inherit;
 `;
 
-const Thumbnail = styled.div`
+const Thumbnail = styled.div<{ $imageUrl?: string }>`
   width: 90px;
   height: 90px;
   border-radius: 8px;
   background-color: ${({ theme }) => theme.colors.inputBackground};
   flex-shrink: 0;
+  background-image: ${({ $imageUrl }) =>
+    $imageUrl ? `url(${$imageUrl})` : "none"};
+  background-size: cover;
+  background-position: center;
 `;
 
 const PostContent = styled.div`
   flex-grow: 1;
+  min-width: 0;
 `;
 
 const PostTitle = styled.h2`
@@ -80,6 +102,7 @@ const PostExcerpt = styled.p`
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  line-height: 1.4;
 `;
 
 const PostMeta = styled.div`
@@ -87,68 +110,109 @@ const PostMeta = styled.div`
   color: ${({ theme }) => theme.colors.secondaryTextColor};
 `;
 
-// --- 임시 데이터 ---
-const dummyReviews = [
-  {
-    id: 1,
-    title: "실패없는 부산 여행",
-    excerpt:
-      "이번 여름에 다녀온 부산 여행 후기입니다. 해운대부터 광안리까지 맛집 위주로 정리했어요...",
-    author: "사용자3",
-    date: "2025/09/10",
-    likes: 27,
-  },
-  {
-    id: 2,
-    title: "일본 먹방 여행",
-    excerpt:
-      "오사카와 교토에서 3박 4일동안 먹기만 한 후기! 라멘, 스시, 타코야끼 맛집 정보 공유합니다.",
-    author: "사용자2",
-    date: "2025/08/10",
-    likes: 15,
-  },
-  {
-    id: 3,
-    title: "여름맞이 제주 여행 후기",
-    excerpt:
-      "친구와 함께한 2박 3일 제주 여행! 예쁜 카페와 사진 명소 위주로 다녀왔습니다.",
-    author: "사용자1",
-    date: "2025/07/10",
-    likes: 30,
-  },
-];
-
-// --- 컴포넌트 ---
 function ReviewListPage() {
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sortOrder, setSortOrder] = useState<"latest" | "likes">("latest"); // 정렬 상태 관리
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  const fetchReviews = async () => {
+    try {
+      const data = await getReviews();
+      // 여기서 sortOrder에 따라 data를 정렬하거나, API 요청 시 파라미터로 보낼 수 있음
+      // 현재는 클라이언트 사이드 정렬 예시:
+      if (sortOrder === "latest") {
+        data.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+      setReviews(data);
+    } catch (error) {
+      console.error("리뷰 목록을 불러오는데 실패했습니다.", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 정렬 변경 핸들러
+  const handleSortChange = (order: "latest" | "likes") => {
+    setSortOrder(order);
+    // 실제로는 여기서 API를 다시 호출하거나 state를 정렬해야 함
+    // 예시: setReviews([...reviews].sort(...))
+  };
+
   const handleCreateReview = () => {
-    alert("새 후기 작성 페이지로 이동합니다.");
+    navigate("/reviews/new");
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("ko-KR");
   };
 
   return (
     <PageContainer>
       <ControlsContainer>
-        <SearchInput type="search" placeholder="후기 게시글 검색" />
-        <SortSelect>
-          <option>최신순</option>
-          <option>좋아요순</option>
-        </SortSelect>
+        <SearchBar placeholder="후기 게시글 검색" />
+
+        <SortContainer>
+          <SortButton
+            $isActive={sortOrder === "latest"}
+            onClick={() => handleSortChange("latest")}
+          >
+            최신순
+          </SortButton>
+          <Divider>|</Divider>
+          <SortButton
+            $isActive={sortOrder === "likes"}
+            onClick={() => handleSortChange("likes")}
+          >
+            좋아요순
+          </SortButton>
+        </SortContainer>
       </ControlsContainer>
 
       <PostListContainer>
-        {dummyReviews.map((review) => (
-          <PostItem to={`/reviews/${review.id}`} key={review.id}>
-            <Thumbnail />
-            <PostContent>
-              <PostTitle>{review.title}</PostTitle>
-              <PostExcerpt>{review.excerpt}</PostExcerpt>
-              <PostMeta>
-                <span>
-                  {review.author} · {review.date} · ❤️ {review.likes}
-                </span>
-              </PostMeta>
-            </PostContent>
-          </PostItem>
-        ))}
+        {loading ? (
+          <div style={{ padding: "16px", textAlign: "center" }}>로딩 중...</div>
+        ) : reviews.length === 0 ? (
+          <div style={{ padding: "16px", textAlign: "center" }}>
+            등록된 후기가 없습니다.
+          </div>
+        ) : (
+          reviews.map((review) => {
+            const excerpt =
+              review.body.replace(/<[^>]*>?/gm, "").substring(0, 100) + "...";
+            const thumbnailImage =
+              review.imageUrls && review.imageUrls.length > 0
+                ? review.imageUrls[0]
+                : undefined;
+
+            return (
+              <PostItem
+                to={`/reviews/${review.reviewId}`}
+                key={review.reviewId}
+              >
+                <Thumbnail $imageUrl={thumbnailImage} />
+                <PostContent>
+                  <PostTitle>{review.title}</PostTitle>
+                  <PostExcerpt>{excerpt}</PostExcerpt>
+                  <PostMeta>
+                    <span>
+                      {review.user.name} · {formatDate(review.createdAt)}
+                    </span>
+                  </PostMeta>
+                </PostContent>
+              </PostItem>
+            );
+          })
+        )}
       </PostListContainer>
 
       <FloatingActionButton onClick={handleCreateReview} />
