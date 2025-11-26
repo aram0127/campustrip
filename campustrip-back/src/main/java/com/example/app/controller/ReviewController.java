@@ -3,6 +3,7 @@ package com.example.app.controller;
 import com.example.app.dto.CreateReview;
 import com.example.app.dto.ReviewDTO;
 import com.example.app.service.ReviewService;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,14 +31,14 @@ public class ReviewController {
     }
 
     // 리뷰 생성
-    @PostMapping("/")
-    public ReviewDTO createReview(@RequestBody CreateReview createReview) {
+    @PostMapping(value = "/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ReviewDTO createReview(@ModelAttribute CreateReview createReview) {
         return reviewService.createReview(createReview);
     }
 
     // 리뷰 수정
-    @PutMapping("/{id}")
-    public ReviewDTO updateReview(@PathVariable Integer id, @RequestBody CreateReview createReview) {
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ReviewDTO updateReview(@PathVariable Integer id, @ModelAttribute CreateReview createReview) {
         return reviewService.updateReview(id, createReview);
     }
 

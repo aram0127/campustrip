@@ -124,3 +124,9 @@ export const updatePost = async (
 export const deletePost = async (postId: string): Promise<void> => {
   await apiClient.delete(`/api/posts/${postId}`);
 };
+
+/* 특정 사용자가 작성한 게시글 목록 조회 */
+export const getPostsByUserId = async (userId: number): Promise<Post[]> => {
+  const response = await apiClient.get<Post[]>(`/api/posts/user/${userId}`);
+  return response.data;
+};

@@ -68,3 +68,13 @@ export const rejectApplication = async (
   );
   return response.data;
 };
+
+// 내 신청 내역 조회
+export const getMyApplications = async (
+  userId: number
+): Promise<Application[]> => {
+  const response = await apiClient.get<Application[]>(
+    `/api/applications/user/${userId}`
+  );
+  return response.data;
+};
