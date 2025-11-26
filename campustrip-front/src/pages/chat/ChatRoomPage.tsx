@@ -18,30 +18,30 @@ const MessageListContainer = styled(ScrollingContent)`
   flex-direction: column;
 `;
 
-const MessageBubble = styled.div<{ isMe?: boolean }>`
+const MessageBubble = styled.div<{ $isMe?: boolean }>`
   max-width: 70%;
   padding: 10px 14px;
   border-radius: 18px;
   margin-bottom: 4px;
-  align-self: ${({ isMe }) => (isMe ? "flex-end" : "flex-start")};
-  background-color: ${({ isMe, theme }) =>
-    isMe ? theme.colors.primary : theme.colors.inputBackground};
-  color: ${({ isMe, theme }) => (isMe ? "white" : theme.colors.text)};
+  align-self: ${({ $isMe }) => ($isMe ? "flex-end" : "flex-start")};
+  background-color: ${({ $isMe, theme }) =>
+    $isMe ? theme.colors.primary : theme.colors.inputBackground};
+  color: ${({ $isMe, theme }) => ($isMe ? "white" : theme.colors.text)};
   white-space: pre-wrap;
 `;
 
-const Timestamp = styled.span<{ isMe?: boolean }>`
+const Timestamp = styled.span<{ $isMe?: boolean }>`
   font-size: 10px;
   color: ${({ theme }) => theme.colors.secondaryTextColor};
   margin-bottom: 12px;
-  align-self: ${({ isMe }) => (isMe ? "flex-end" : "flex-start")};
+  align-self: ${({ $isMe }) => ($isMe ? "flex-end" : "flex-start")};
   flex-shrink: 0;
 `;
 
-const MessageContainer = styled.div<{ isMe?: boolean }>`
+const MessageContainer = styled.div<{ $isMe?: boolean }>`
   display: flex;
   flex-direction: column;
-  align-items: ${({ isMe }) => (isMe ? "flex-end" : "flex-start")};
+  align-items: ${({ $isMe }) => ($isMe ? "flex-end" : "flex-start")};
   margin-bottom: 12px;
 `;
 
@@ -65,11 +65,11 @@ const UserName = styled.span`
   color: ${({ theme }) => theme.colors.secondaryTextColor};
 `;
 
-const BubbleContainer = styled.div<{ isMe?: boolean }>`
+const BubbleContainer = styled.div<{ $isMe?: boolean }>`
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  align-self: ${({ isMe }) => (isMe ? "flex-end" : "flex-start")};
+  align-self: ${({ $isMe }) => ($isMe ? "flex-end" : "flex-start")};
 `;
 
 const InputContainer = styled.div`
@@ -274,7 +274,7 @@ function ChatRoomPage() {
             return (
               <MessageContainer
                 key={msg.timestamp ? msg.timestamp + index : index}
-                isMe={isMe}
+                $isMe={isMe}
               >
                 {!isMe && (
                   <SenderInfo>
@@ -282,11 +282,11 @@ function ChatRoomPage() {
                     <UserName>{msg.userName}</UserName>
                   </SenderInfo>
                 )}
-                <BubbleContainer isMe={isMe}>
+                <BubbleContainer $isMe={isMe}>
                   {isMe && (
                     <Timestamp>{formatTimestamp(msg.timestamp)}</Timestamp>
                   )}
-                  <MessageBubble isMe={isMe}>{msg.message}</MessageBubble>
+                  <MessageBubble $isMe={isMe}>{msg.message}</MessageBubble>
                   {!isMe && (
                     <Timestamp>{formatTimestamp(msg.timestamp)}</Timestamp>
                   )}
