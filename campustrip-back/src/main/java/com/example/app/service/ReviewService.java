@@ -100,16 +100,24 @@ public class ReviewService {
     }
 
     private boolean uploadReviewAssets(Review review, List<MultipartFile> images) {
+        // 현재 review의 기존 asset 개수를 조회하여 assetId 시작값 결정
+        List<ReviewAsset> existingAssets = new ArrayList<>();
+        reviewAssetRepository.findAllByReviewId(review.getId()).forEach(existingAssets::add);
+        int assetIdCounter = existingAssets.size() + 1;
+
         for (var image : images) {
             try {
                 String imageUrl = s3Service.uploadFile(image);
                 ReviewAsset reviewAsset = new ReviewAsset();
+                reviewAsset.setAssetId(assetIdCounter++); // 복합키이므로 수동 설정
+                reviewAsset.setReviewId(review.getId());   // 복합키이므로 수동 설정
                 reviewAsset.setReview(review);
                 reviewAsset.setStorageUrl(imageUrl);
+                reviewAsset.setFileSize(Math.toIntExact(image.getSize()));
                 reviewAssetRepository.save(reviewAsset);
             } catch (Exception e) {
                 e.printStackTrace();
-                // 파일 업로드 실패 시의 처리 로직 추가 가능
+                return false;
             }
         }
         return true;
@@ -124,13 +132,20 @@ public class ReviewService {
         if (review == null) {
             return false; // 또는 예외 처리
         }
+        // User와 Review의 ID가 null이 아닌지 확인
+        if (user.getId() == null || review.getId() == null) {
+            throw new IllegalStateException("User or Review ID is null");
+        }
         // 이미 좋아요가 눌렸는지 확인
         ReviewLike existingLike = reviewLikeRepository.findByUserAndReview(user, review);
         if (existingLike != null) {
             return false; // 이미 좋아요가 눌린 상태이므로 아무 작업도 하지 않음
         }
         // 좋아요 저장
-        reviewLikeRepository.save(new ReviewLike(user, review));
+        ReviewLike newLike = new ReviewLike();
+        newLike.setUser(user);
+        newLike.setReview(review);
+        reviewLikeRepository.save(newLike);
         return true;
     }
 

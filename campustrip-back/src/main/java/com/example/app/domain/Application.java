@@ -1,6 +1,7 @@
 package com.example.app.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,7 +19,7 @@ public class Application {
     @Id
     @ManyToOne
     @JoinColumn(name="post_id", nullable=false)
-    @JsonBackReference("post-applications")  // 고유 이름 지정
+    @JsonIgnoreProperties({"applications", "postAssets"})
     private Post post;
 
     @Id
