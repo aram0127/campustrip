@@ -32,13 +32,7 @@ import LocationSharePage from "./pages/location/LocationSharePage";
 import PostEditLoader from "./pages/post/edit/PostEditLoader";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import TravelTestPage from "@/pages/test/TravelTestPage";
-<<<<<<< HEAD
-=======
 import { PostCreateProvider } from "./context/PostCreateContext";
-
-import TravelTestPage from "@/pages/test/TravelTestPage";
->>>>>>> dc13741c94b914182561ee15d4255872c96cd140
-import ChatTestPage from "./test/ChatTestPage"; // 채팅테스트
 
 const RootRedirect: React.FC = () => {
   const { isLoggedIn } = useAuth();
@@ -113,8 +107,6 @@ function App() {
                 path="/location/:chatRoomId"
                 element={<LocationSharePage />}
               />
-
-              <Route path="/test/chat" element={<ChatTestPage />} />
 
               {/* MainLayout을 사용하는 페이지들 */}
               <Route

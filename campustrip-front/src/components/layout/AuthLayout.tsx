@@ -11,7 +11,7 @@ const AuthPageContainer = styled.div`
   align-items: center;
   justify-content: center;
   padding: 20px;
-  min-height: 100vh;
+  min-height: 100dvh;
 `;
 
 const Title = styled.h1`
