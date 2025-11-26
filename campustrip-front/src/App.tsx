@@ -34,9 +34,6 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import TravelTestPage from "@/pages/test/TravelTestPage";
 import { PostCreateProvider } from "./context/PostCreateContext";
 
-import TravelTestPage from "@/pages/test/TravelTestPage";
-import ChatTestPage from "./test/ChatTestPage"; // 채팅테스트
-
 const RootRedirect: React.FC = () => {
   const { isLoggedIn } = useAuth();
   // 로그인 상태면 /posts로, 아니면 /login으로 리디렉션
@@ -110,8 +107,6 @@ function App() {
                 path="/location/:chatRoomId"
                 element={<LocationSharePage />}
               />
-
-              <Route path="/test/chat" element={<ChatTestPage />} />
 
               {/* MainLayout을 사용하는 페이지들 */}
               <Route

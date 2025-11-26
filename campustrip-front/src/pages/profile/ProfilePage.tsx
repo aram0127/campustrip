@@ -89,7 +89,7 @@ const TabButton = styled.button<{ active?: boolean }>`
 `;
 
 const ContentFeed = styled.div`
-  min-height: 100vh;
+  min-height: 100dvh;
 `;
 
 const Section = styled.section`
