@@ -185,7 +185,7 @@ public class PostService {
     }
 
     public Slice<Post> getAllPostsSlice(Pageable pageable) {
-        return postRepository.findAll(pageable);
+        return postRepository.findAllBy(pageable);
     }
 
     public Slice<Post> getPostsByRegionIdsSlice(List<Integer> regionIds, Pageable pageable) {
