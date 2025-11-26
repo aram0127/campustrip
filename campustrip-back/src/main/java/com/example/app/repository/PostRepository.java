@@ -61,6 +61,25 @@ public interface PostRepository extends JpaRepository<Post,Integer>
     @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.chat JOIN FETCH p.regions r LEFT JOIN FETCH p.assets WHERE r.regionId IN :regionIds ORDER BY p.createdAt DESC")
     List<Post> findPostsByRegionIds(@Param("regionIds") List<Integer> regionIds);
 
+    /**
+     * 주어진 regionId 리스트에 포함된 지역과 연관된 게시글을 Slice로 조회합니다.
+     * 무한 스크롤을 지원하기 위해 Slice 타입으로 반환합니다.
+     * 주의: FETCH JOIN과 Pageable을 함께 사용하면 메모리에서 페이징이 발생할 수 있습니다.
+     *
+     * @param regionIds 조회할 지역 ID의 리스트
+     * @param pageable 페이징 정보
+     * @return 조건에 맞는 Post Slice
+     */
+    @Query(value = "SELECT DISTINCT p.* FROM Post p " +
+            "JOIN Post_Region pr ON p.post_id = pr.post_id " +
+            "WHERE pr.region_id IN :regionIds " +
+            "ORDER BY p.created_at DESC",
+            countQuery = "SELECT COUNT(DISTINCT p.post_id) FROM Post p " +
+                    "JOIN Post_Region pr ON p.post_id = pr.post_id " +
+                    "WHERE pr.region_id IN :regionIds",
+            nativeQuery = true)
+    Slice<Post> findPostsByRegionIdsSlice(@Param("regionIds") List<Integer> regionIds, Pageable pageable);
+
     // 동적 쿼리 생성
 //    @Query(value= "select m from Member m where m.memberId = :id and m.email = :email" )
 //    Member findMemberByIdAndEmail(@Param("id") Long id, @Param("email") String email);
