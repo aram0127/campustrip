@@ -64,21 +64,25 @@ public interface PostRepository extends JpaRepository<Post,Integer>
     /**
      * 주어진 regionId 리스트에 포함된 지역과 연관된 게시글을 Slice로 조회합니다.
      * 무한 스크롤을 지원하기 위해 Slice 타입으로 반환합니다.
-     * 주의: FETCH JOIN과 Pageable을 함께 사용하면 메모리에서 페이징이 발생할 수 있습니다.
+     * EntityGraph를 사용하여 연관 엔티티를 함께 로드하여 N+1 문제를 방지합니다.
      *
      * @param regionIds 조회할 지역 ID의 리스트
      * @param pageable 페이징 정보
      * @return 조건에 맞는 Post Slice
      */
-    @Query(value = "SELECT DISTINCT p.* FROM Post p " +
-            "JOIN Post_Region pr ON p.post_id = pr.post_id " +
-            "WHERE pr.region_id IN :regionIds " +
-            "ORDER BY p.created_at DESC",
-            countQuery = "SELECT COUNT(DISTINCT p.post_id) FROM Post p " +
-                    "JOIN Post_Region pr ON p.post_id = pr.post_id " +
-                    "WHERE pr.region_id IN :regionIds",
-            nativeQuery = true)
+    @Query("SELECT DISTINCT p FROM Post p JOIN p.regions r WHERE r.regionId IN :regionIds")
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "chat", "regions", "assets", "applications"})
     Slice<Post> findPostsByRegionIdsSlice(@Param("regionIds") List<Integer> regionIds, Pageable pageable);
+
+    /**
+     * 전체 게시글을 Slice로 조회합니다.
+     * EntityGraph를 사용하여 연관 엔티티를 함께 로드하여 N+1 문제를 방지합니다.
+     *
+     * @param pageable 페이징 정보
+     * @return Post Slice
+     */
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "chat", "regions", "assets"})
+    Slice<Post> findAllBy(Pageable pageable);
 
     // 동적 쿼리 생성
 //    @Query(value= "select m from Member m where m.memberId = :id and m.email = :email" )
