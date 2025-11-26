@@ -3,6 +3,11 @@ package com.example.app.service;
 import com.example.app.domain.*;
 import com.example.app.dto.*;
 import com.example.app.repository.*;
+import com.sun.net.httpserver.Authenticator;
+import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;  // @Service 어노테이션
 import org.springframework.beans.factory.annotation.Autowired;  // 의존성 주입용 (선택적)
 
@@ -177,5 +182,13 @@ public class PostService {
                 .collect(Collectors.toList());
         postDTO.setPostAssets(assetUrls);
         return postDTO;
+    }
+
+    public Slice<Post> getAllPostsSlice(Pageable pageable) {
+        return postRepository.findAll(pageable);
+    }
+
+    public Slice<Post> getPostsByRegionIdsSlice(List<Integer> regionIds, Pageable pageable) {
+        return postRepository.findPostsByRegionIdsSlice(regionIds, pageable);
     }
 }
