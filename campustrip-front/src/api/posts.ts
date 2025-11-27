@@ -151,9 +151,12 @@ export interface InfinitePostsParams {
 }
 
 // getInfinitePosts는 테스트 페이지 및 PostListPage에서 사용됨
-export const getInfinitePosts = async (
-    { page = 0, size = 3, sort, regionIds }: InfinitePostsParams = {}
-): Promise<PostSlice<Post>> => {
+export const getInfinitePosts = async ({
+  page = 0,
+  size = 3,
+  sort,
+  regionIds,
+}: InfinitePostsParams = {}): Promise<PostSlice<Post>> => {
   const params = new URLSearchParams();
   params.append("page", page.toString());
   params.append("size", size.toString());
@@ -166,7 +169,8 @@ export const getInfinitePosts = async (
     });
   }
 
-  const url = regionIds && regionIds.length > 0
+  const url =
+    regionIds && regionIds.length > 0
       ? `/api/posts/regions?${params.toString()}`
       : `/api/posts?${params.toString()}`;
 

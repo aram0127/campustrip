@@ -70,7 +70,7 @@ function PostListPage() {
         page: pageParam,
         size: 10,
         sort: "createdAt,desc",
-        regionIds: selectedRegionIds || undefined
+        regionIds: selectedRegionIds || undefined,
       });
     },
     getNextPageParam: (lastPage) => {
@@ -103,7 +103,12 @@ function PostListPage() {
 
       return matchesSearch;
     });
-    console.log("🔎 filteredPosts 수:", filtered.length, "검색어:", searchQuery);
+    console.log(
+      "🔎 filteredPosts 수:",
+      filtered.length,
+      "검색어:",
+      searchQuery
+    );
     return filtered;
   }, [posts, searchQuery]);
 
