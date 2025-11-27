@@ -31,6 +31,14 @@ CREATE TABLE Chat (
     title VARCHAR(255) NOT NULL
 ) ENGINE=InnoDB;
 
+-- FCM 토큰 테이블
+CREATE TABLE FCMToken (
+	membership_id INT NOT NULL,
+	token VARCHAR(255) NOT NULL,
+	PRIMARY KEY(membership_id, token),
+	FOREIGN KEY(membership_id) REFERENCES User(membership_id)
+) ENGINE=InnoDB;
+
 -- 일정/플래너 테이블
 CREATE TABLE Planner (
     planner_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
