@@ -31,7 +31,6 @@ import ApplicantListPage from "./pages/post/ApplicantListPage";
 import LocationSharePage from "./pages/location/LocationSharePage";
 import PostEditLoader from "./pages/post/edit/PostEditLoader";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import TravelTestPage from "@/pages/test/TravelTestPage";
 import { PostCreateProvider } from "./context/PostCreateContext";
 import ReviewCreatePage from "./pages/review/ReviewCreatePage";
 
