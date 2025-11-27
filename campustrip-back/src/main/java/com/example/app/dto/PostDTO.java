@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 public class PostDTO {
     private Integer postId;
-    private User user;
+    private UserResponse user;
     private Float userScore;
     private String title;
     private String body;

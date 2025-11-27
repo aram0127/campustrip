@@ -6,7 +6,7 @@ import Button from "../../components/common/Button";
 import LocationFilterModal from "../../components/domain/LocationFilterModal";
 import { IoFilter } from "react-icons/io5";
 import FloatingActionButton from "../../components/common/FloatingActionButton";
-import { type Post } from "../../types/post";
+
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { getInfinitePosts } from "../../api/posts";

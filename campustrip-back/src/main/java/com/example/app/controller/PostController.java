@@ -108,16 +108,17 @@ public class PostController {
 
     // POST: 새 게시물 생성
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Post createPost(@ModelAttribute CreatePost createPost) throws Exception {
+    public PostDTO createPost(@ModelAttribute CreatePost createPost) throws Exception {
         Post post = postService.savePost(createPost, chatService, s3Service);
-        return post;
+        return postService.convertPostToDTO(post, chatService, regionService);
     }
 
     // PUT: 게시물 정보 수정
     @PutMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Post updatePost(@PathVariable Integer postId, @ModelAttribute CreatePost updateData) throws Exception {
+    public PostDTO updatePost(@PathVariable Integer postId, @ModelAttribute CreatePost updateData) throws Exception {
         updateData.setPostId(postId);
-        return postService.updatePost(updateData, s3Service);
+        Post updatedPost = postService.updatePost(updateData, s3Service);
+        return postService.convertPostToDTO(updatedPost, chatService, regionService);
     }
 
     // DELETE: 게시물 삭제

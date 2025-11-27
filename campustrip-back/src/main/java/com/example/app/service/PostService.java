@@ -131,7 +131,7 @@ public class PostService {
     public PostDTO convertPostToDTO(Post post, ChatService chatService, RegionService regionService) {
         PostDTO postDTO = new PostDTO();
         postDTO.setPostId(post.getPostId());
-        postDTO.setUser(post.getUser());
+        postDTO.setUser(new UserResponse(post.getUser()));
         postDTO.setUserScore(post.getUser().getUserScore());
         postDTO.setTitle(post.getTitle());
         postDTO.setBody(post.getBody());
