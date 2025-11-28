@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from "react";
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  Navigate,
-} from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import { ThemeProvider } from "styled-components";
 import { lightTheme, darkTheme } from "./styles/theme";
 import GlobalStyle from "./styles/GlobalStyle";
+
+
 import MainLayout from "./components/layout/MainLayout";
 import LoginPage from "./pages/auth/LoginPage";
 import SignupPage from "./pages/auth/SignupPage";
@@ -16,22 +13,25 @@ import FindIdResultPage from "./pages/auth/FindIdResultPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import SetNewPasswordPage from "./pages/auth/SetNewPasswordPage";
 import ProfilePage from "./pages/profile/ProfilePage";
-import PostListPage from "./pages/post/PostListPage";
-import ReviewListPage from "./pages/review/ReviewListPage";
+import FollowListPage from "./pages/follow/FollowListPage";
+import BlockedListPage from "./pages/follow/BlockedListPage";
 import ChatListPage from "./pages/chat/ChatListPage";
 import NewChatPage from "./pages/chat/NewChatPage";
 import ChatRoomPage from "./pages/chat/ChatRoomPage";
-import PlannerListPage from "./pages/planner/PlannerListPage";
-import FollowListPage from "./pages/follow/FollowListPage";
-import BlockedListPage from "./pages/follow/BlockedListPage";
-import NotificationListPage from "./pages/notification/NotificationListPage";
+import PostListPage from "./pages/post/PostListPage";
 import PostDetailPage from "./pages/post/PostDetailPage";
 import PostCreateFlow from "./pages/post/create/PostCreateFlow";
 import ApplicantListPage from "./pages/post/ApplicantListPage";
+import ReviewListPage from "./pages/review/ReviewListPage";
+import PlannerListPage from "./pages/planner/PlannerListPage";
+import PlannerDetailPage from "./pages/planner/PlannerDetailPage";
+import PlannerCreatePage from "./pages/planner/PlannerCreatePage";
+import PlannerEditPage from "./pages/planner/PlannerEditPage";
 import LocationSharePage from "./pages/location/LocationSharePage";
+import NotificationListPage from "./pages/notification/NotificationListPage";
 import PostEditLoader from "./pages/post/edit/PostEditLoader";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import TravelTestPage from "@/pages/test/TravelTestPage";
+import TravelTestPage from "./test/TravelTestPage";
 import { PostCreateProvider } from "./context/PostCreateContext";
 
 const RootRedirect: React.FC = () => {
@@ -69,30 +69,28 @@ function App() {
         <Router>
           <PostCreateProvider>
             <Routes>
-              {/* 루트 경로 접근 시 로그인 상태에 따라 리디렉션 */}
+              {/* Root */}
               <Route path="/" element={<RootRedirect />} />
 
-              {/* 로그인/인증 관련 페이지들 */}
+              {/* Auth */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/find-id" element={<FindIdPage />} />
               <Route path="/find-id/result" element={<FindIdResultPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route
-                path="/set-new-password"
-                element={<SetNewPasswordPage />}
-              />
+              <Route path="/set-new-password" element={<SetNewPasswordPage />} />
 
-              {/* 로그인이 필요한 페이지들 */}
+              {/* Profile */}
               <Route path="/profile/:userId" element={<ProfilePage />} />
-              <Route path="/chat/new" element={<NewChatPage />} />
-              <Route path="/chat/:chatId" element={<ChatRoomPage />} />
-              <Route
-                path="/profile/:userId/follows"
-                element={<FollowListPage />}
-              />
+              <Route path="/profile/:userId/follows" element={<FollowListPage />} />
               <Route path="/settings/blocked" element={<BlockedListPage />} />
               <Route path="/notifications" element={<NotificationListPage />} />
+
+              {/* Chat */}
+              <Route path="/chat/new" element={<NewChatPage />} />
+              <Route path="/chat/:chatId" element={<ChatRoomPage />} />
+
+              {/* Posts */}
               <Route path="/posts/:postId" element={<PostDetailPage />} />
               <Route path="/posts/new/*" element={<PostCreateFlow />} />
               <Route
@@ -108,7 +106,15 @@ function App() {
                 element={<LocationSharePage />}
               />
 
-              {/* MainLayout을 사용하는 페이지들 */}
+              {/* Test */}
+              <Route path="/test/travel" element={<TravelTestPage />} />
+
+              {/* Planner */}
+              <Route path="/planner/create" element={<PlannerCreatePage />} />
+              <Route path="/planner/edit/:id" element={<PlannerEditPage />} />
+              <Route path="/planner/:id" element={<PlannerDetailPage />} />
+
+              {/* Main Layout */}
               <Route
                 path="/*"
                 element={
