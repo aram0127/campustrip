@@ -118,6 +118,12 @@
 			<artifactId>aws-java-sdk-s3</artifactId>
 			<version>1.12.529</version>
 		</dependency>
+        <!-- FCM -->
+        <dependency>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>9.1.1</version>
+        </dependency>
 	</dependencies>
 
 	<build>

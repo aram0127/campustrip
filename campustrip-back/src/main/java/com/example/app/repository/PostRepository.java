@@ -84,6 +84,16 @@ public interface PostRepository extends JpaRepository<Post,Integer>
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "chat", "regions", "assets"})
     Slice<Post> findAllBy(Pageable pageable);
 
+    /* 검색어(keyword)가 제목(title) 또는 본문(body)에 포함된 게시글을 Slice로 조회 */
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "chat", "regions", "assets"})
+    @Query("SELECT DISTINCT p FROM Post p WHERE (p.title LIKE %:keyword% OR p.body LIKE %:keyword%)")
+    Slice<Post> findAllByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+    /* 특정 지역(regionIds)에 속하면서, 검색어(keyword)가 포함된 게시글을 Slice로 조회 */
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "chat", "regions", "assets", "applications"})
+    @Query("SELECT DISTINCT p FROM Post p JOIN p.regions r WHERE r.regionId IN :regionIds AND (p.title LIKE %:keyword% OR p.body LIKE %:keyword%)")
+    Slice<Post> findPostsByRegionIdsAndKeyword(@Param("regionIds") List<Integer> regionIds, @Param("keyword") String keyword, Pageable pageable);
+
     // 동적 쿼리 생성
 //    @Query(value= "select m from Member m where m.memberId = :id and m.email = :email" )
 //    Member findMemberByIdAndEmail(@Param("id") Long id, @Param("email") String email);
