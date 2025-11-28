@@ -47,7 +47,11 @@ public class ReviewService {
         reviewAssetRepository.findAllByReviewId(id).forEach(asset -> {
             assetList.add(asset.getStorageUrl());
         });
-        reviewDTO.setLikedByCurrentUser(reviewLikeRepository.existsByUserUserId(userId));
+        User user = userRepository.findByUserId(userId).orElse(null);
+        if (user == null) {
+            throw new IllegalStateException("User not found with userId: " + userId);
+        }
+        reviewDTO.setLikedByCurrentUser(reviewLikeRepository.existsByUser(user));
         reviewDTO.setImageUrls(assetList);
         return reviewDTO;
     }
