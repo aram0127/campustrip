@@ -144,25 +144,29 @@ export interface PostSlice<T> {
 }
 
 export interface InfinitePostsParams {
-  page?: number; // 0-based
-  size?: number; // default 3
-  sort?: string; // e.g. 'postId,asc' or 'createdAt,desc'
-  regionIds?: number[] | null; // 지역 필터
+  page?: number;
+  size?: number;
+  sort?: string;
+  regionIds?: number[] | null;
+  keyword?: string;
 }
 
-// getInfinitePosts는 테스트 페이지 및 PostListPage에서 사용됨
 export const getInfinitePosts = async ({
   page = 0,
   size = 3,
   sort,
   regionIds,
+  keyword,
 }: InfinitePostsParams = {}): Promise<PostSlice<Post>> => {
   const params = new URLSearchParams();
   params.append("page", page.toString());
   params.append("size", size.toString());
-  if (sort) params.append("sort", sort); // Spring 형태: field,direction
+  if (sort) params.append("sort", sort);
 
-  // regionIds가 있으면 각각 추가
+  if (keyword) {
+    params.append("keyword", keyword);
+  }
+
   if (regionIds && regionIds.length > 0) {
     regionIds.forEach((id) => {
       params.append("regionIds", id.toString());

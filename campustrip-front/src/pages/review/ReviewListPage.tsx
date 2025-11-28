@@ -159,7 +159,7 @@ function ReviewListPage() {
   return (
     <PageContainer>
       <ControlsContainer>
-        <SearchBar placeholder="후기 게시글 검색" />
+        <SearchBar placeholder="후기게시글 검색" />
 
         <SortContainer>
           <SortButton

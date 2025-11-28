@@ -6,7 +6,6 @@ import Button from "../../components/common/Button";
 import LocationFilterModal from "../../components/domain/LocationFilterModal";
 import { IoFilter } from "react-icons/io5";
 import FloatingActionButton from "../../components/common/FloatingActionButton";
-
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { getInfinitePosts } from "../../api/posts";
@@ -47,12 +46,12 @@ const ErrorMessage = styled.p`
 
 function PostListPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRegionIds, setSelectedRegionIds] = useState<number[] | null>(
     null
   );
   const observerTarget = useRef<HTMLDivElement>(null);
-
   const navigate = useNavigate();
 
   const {
@@ -63,57 +62,38 @@ function PostListPage() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["posts", "infinite", selectedRegionIds],
+    queryKey: ["posts", "infinite", selectedRegionIds, searchQuery],
     queryFn: ({ pageParam = 0 }) => {
-      console.log("🔍 queryFn 호출:", { pageParam, selectedRegionIds });
       return getInfinitePosts({
         page: pageParam,
         size: 10,
         sort: "createdAt,desc",
         regionIds: selectedRegionIds || undefined,
+        keyword: searchQuery || undefined,
       });
     },
     getNextPageParam: (lastPage) => {
-      console.log("📄 lastPage:", lastPage);
-      // last가 false이면 다음 페이지 번호 반환
       return lastPage.last ? undefined : lastPage.number + 1;
     },
     initialPageParam: 0,
   });
 
-  // 모든 페이지의 posts를 하나의 배열로 합침
   const posts = useMemo(() => {
-    const allPosts = data?.pages.flatMap((page) => page.content) ?? [];
-    console.log("📦 전체 posts 수:", allPosts.length);
-    console.log("📦 data 구조:", data);
-    return allPosts;
+    return data?.pages.flatMap((page) => page.content) ?? [];
   }, [data]);
+
+  const handleSearch = () => {
+    console.log("검색 실행:", inputValue);
+    setSearchQuery(inputValue);
+  };
 
   const handleApplyFilter = (regionIds: number[] | null) => {
     setSelectedRegionIds(regionIds);
     console.log("선택된 지역 ID 목록:", regionIds);
   };
 
-  // 검색어 로직
-  const filteredPosts = useMemo(() => {
-    const filtered = posts.filter((post) => {
-      const matchesSearch = post.title
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-
-      return matchesSearch;
-    });
-    console.log(
-      "🔎 filteredPosts 수:",
-      filtered.length,
-      "검색어:",
-      searchQuery
-    );
-    return filtered;
-  }, [posts, searchQuery]);
-
   const handleCreatePost = () => {
-    navigate("/posts/new/region"); // 1단계(지역 선택) 페이지로 이동
+    navigate("/posts/new/region");
   };
 
   // Intersection Observer를 사용한 무한 스크롤
@@ -143,8 +123,10 @@ function PostListPage() {
     <PageContainer>
       <ControlsContainer>
         <SearchBar
-          placeholder="게시글 검색"
-          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="모집게시글 검색"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onSearch={handleSearch}
         />
         <Button
           $variant="outline"
@@ -167,15 +149,17 @@ function PostListPage() {
         {isLoading && <LoadingMessage>게시글을 불러오는 중...</LoadingMessage>}
         {error && <ErrorMessage>{error.message}</ErrorMessage>}
 
-        {!isLoading && !error && filteredPosts.length === 0 && (
-          <LoadingMessage>표시할 게시글이 없습니다.</LoadingMessage>
+        {!isLoading && !error && posts.length === 0 && (
+          <LoadingMessage>
+            {searchQuery
+              ? "검색 결과가 없습니다."
+              : "표시할 게시글이 없습니다."}
+          </LoadingMessage>
         )}
 
         {!isLoading &&
           !error &&
-          filteredPosts.map((post) => (
-            <PostListItem key={post.postId} post={post} />
-          ))}
+          posts.map((post) => <PostListItem key={post.postId} post={post} />)}
 
         {/* 무한 스크롤 트리거 */}
         <div ref={observerTarget} style={{ height: "20px" }} />

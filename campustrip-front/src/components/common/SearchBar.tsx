@@ -11,7 +11,6 @@ const SearchInput = styled.input`
   width: 100%;
   padding: ${({ theme }) => theme.spacings.small}
     ${({ theme }) => theme.spacings.medium};
-  padding-left: 40px;
   border: 1px solid ${({ theme }) => theme.colors.grey};
   border-radius: ${({ theme }) => theme.borderRadius.medium};
   background-color: ${({ theme }) => theme.colors.background};
@@ -21,28 +20,44 @@ const SearchInput = styled.input`
 
 const SearchIcon = styled(AiOutlineSearch)`
   position: absolute;
-  left: ${({ theme }) => theme.spacings.small}; /* 12px */
+  right: ${({ theme }) => theme.spacings.small};
   top: 0;
   height: 100%;
   display: flex;
   align-items: center;
   color: ${({ theme }) => theme.colors.grey};
-  font-size: ${({ theme }) => theme.fontSizes.subtitle}; /* 20px */
+  font-size: ${({ theme }) => theme.fontSizes.subtitle};
+  cursor: pointer;
 `;
 
 interface SearchBarProps {
   placeholder?: string;
+  value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onSearch?: () => void;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
-  placeholder = "검색...",
+  placeholder = "검색",
+  value,
   onChange,
+  onSearch,
 }) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && onSearch) {
+      onSearch();
+    }
+  };
+
   return (
     <SearchContainer>
-      <SearchIcon />
-      <SearchInput placeholder={placeholder} onChange={onChange} />
+      <SearchInput
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        onKeyDown={handleKeyDown}
+      />
+      <SearchIcon onClick={onSearch} />
     </SearchContainer>
   );
 };
