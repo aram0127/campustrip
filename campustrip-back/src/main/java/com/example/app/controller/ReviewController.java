@@ -2,6 +2,7 @@ package com.example.app.controller;
 
 import com.example.app.dto.CommentDTO;
 import com.example.app.dto.CreateReview;
+import com.example.app.dto.CustomUserDetails;
 import com.example.app.dto.ReviewDTO;
 import com.example.app.service.ReviewService;
 import org.springframework.http.MediaType;
@@ -59,16 +60,16 @@ public class ReviewController {
 
     // 리뷰에 좋아요
     @PostMapping("/{id}/like")
-    public void likeReview(@PathVariable Integer id, @AuthenticationPrincipal String userId) {
+    public void likeReview(@PathVariable Integer id, @AuthenticationPrincipal CustomUserDetails userDetails) {
         // @AuthenticationPrincipal 어노테이션을 사용하여 현재 로그인한 사용자의 ID를 가져올 수 있습니다.
-        reviewService.likeReview(id, userId);
+        reviewService.likeReview(id, userDetails.getUsername());
     }
 
     // 리뷰 좋아요 취소
     @PostMapping("/{id}/unlike")
-    public void unlikeReview(@PathVariable Integer id, @AuthenticationPrincipal String userId) {
+    public void unlikeReview(@PathVariable Integer id, @AuthenticationPrincipal CustomUserDetails userDetails) {
         // @AuthenticationPrincipal 어노테이션을 사용하여 현재 로그인한 사용자의 ID를 가져올 수 있습니다.
-        reviewService.unlikeReview(id, userId);
+        reviewService.unlikeReview(id, userDetails.getUsername());
     }
 
     // 리뷰의 댓글들 조회
@@ -79,21 +80,22 @@ public class ReviewController {
 
     // 리뷰에 댓글 추가
     @PostMapping("/{id}/comment")
-    public void addComment(@PathVariable Integer id, @AuthenticationPrincipal String userId, @RequestParam String comment) {
-        reviewService.addComment(id, userId, comment);
+    public void addComment(@PathVariable Integer id, @AuthenticationPrincipal CustomUserDetails userDetails, @RequestParam String comment) {
+        System.out.println("Adding comment to review ID: " + id + " by user: " + userDetails.getUsername() + " Comment: " + comment);
+        reviewService.addComment(id, userDetails.getUsername(), comment);
     }
 
     // 리뷰 댓글 수정
     @PutMapping("/{id}/comment/{commentId}")
-    public void updateComment(@PathVariable Integer id, @PathVariable Integer commentId, @AuthenticationPrincipal String userId, @RequestParam String comment) {
+    public void updateComment(@PathVariable Integer id, @PathVariable Integer commentId, @AuthenticationPrincipal CustomUserDetails userDetails, @RequestParam String comment) {
         // 로그인한 사용자가 자신의 댓글만 수정할 수 있도록 검증 로직이 필요할 수 있습니다.
-        reviewService.updateComment(id, commentId, userId, comment);
+        reviewService.updateComment(id, commentId, userDetails.getUsername(), comment);
     }
 
     // 리뷰 댓글 삭제
     @DeleteMapping("/{id}/comment/{commentId}")
-    public void deleteComment(@PathVariable Integer id, @PathVariable Integer commentId, @AuthenticationPrincipal String userId) {
+    public void deleteComment(@PathVariable Integer id, @PathVariable Integer commentId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         // 로그인한 사용자가 자신의 댓글만 삭제할 수 있도록 검증 로직이 필요할 수 있습니다.
-        reviewService.deleteComment(id, commentId, userId);
+        reviewService.deleteComment(id, commentId, userDetails.getUsername());
     }
 }

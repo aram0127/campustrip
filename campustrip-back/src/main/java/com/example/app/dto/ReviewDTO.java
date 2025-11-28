@@ -19,7 +19,7 @@ public class ReviewDTO {
     private java.time.LocalDateTime createdAt;
     private java.time.LocalDateTime updatedAt;
     private Integer postId;
-
+    private Integer likeCount;
     // 첨부 이미지 파일 URL 리스트 (reviewAsset와 매핑)
     private java.util.List<String> imageUrls;
 

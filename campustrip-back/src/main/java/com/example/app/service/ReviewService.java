@@ -237,6 +237,7 @@ public class ReviewService {
         reviewComment.setReview(review);
         reviewComment.setUser(user);
         reviewComment.setBody(comment);
+        reviewComment.setCreatedAt(java.time.LocalDateTime.now());
         // CommentRepository를 통해 댓글 저장
         commentRepository.save(reviewComment);
         return true;
