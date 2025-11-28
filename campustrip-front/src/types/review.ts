@@ -9,8 +9,8 @@ export interface Review {
   updatedAt: string;
   postId: number;
   imageUrls: string[] | null;
-  likeCount?: number;
-  isLiked?: boolean;
+  likeCount: number;
+  likedByCurrentUser: boolean;
 }
 
 export interface Comment {

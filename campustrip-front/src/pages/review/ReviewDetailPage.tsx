@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import styled, { css } from "styled-components";
+import styled from "styled-components";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   IoHeart,
@@ -310,7 +310,8 @@ const ReviewDetailPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const [commentText, setCommentText] = useState("");
-  const [isLiked, setIsLiked] = useState(false); // 로컬 상태 (API 응답에 isLiked가 있다고 가정하거나 별도 조회 필요)
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // 후기 상세 조회
@@ -324,6 +325,14 @@ const ReviewDetailPage: React.FC = () => {
     enabled: !!numericReviewId,
   });
 
+  // 데이터 로드 시 상태 동기화
+  useEffect(() => {
+    if (review) {
+      setIsLiked(review.likedByCurrentUser);
+      setLikeCount(review.likeCount);
+    }
+  }, [review]);
+
   // 댓글 목록 조회
   const { data: comments = [] } = useQuery<Comment[], Error>({
     queryKey: ["comments", numericReviewId],
@@ -334,23 +343,47 @@ const ReviewDetailPage: React.FC = () => {
   // 좋아요 Mutation
   const likeMutation = useMutation({
     mutationFn: () => likeReview(numericReviewId),
-    onSuccess: () => {
+    onMutate: async () => {
       setIsLiked(true);
-      // queryClient.invalidateQueries(...) // 필요시 리패치
+      setLikeCount((prev) => prev + 1);
+    },
+    onError: () => {
+      setIsLiked(false);
+      setLikeCount((prev) => prev - 1);
+      alert("좋아요 요청에 실패했습니다.");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["review", numericReviewId] });
     },
   });
 
+  // 좋아요 취소 Mutation
   const unlikeMutation = useMutation({
     mutationFn: () => unlikeReview(numericReviewId),
-    onSuccess: () => {
+    onMutate: async () => {
       setIsLiked(false);
+      setLikeCount((prev) => prev - 1);
+    },
+    onError: () => {
+      setIsLiked(true);
+      setLikeCount((prev) => prev + 1);
+      alert("좋아요 취소 요청에 실패했습니다.");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["review", numericReviewId] });
     },
   });
 
   const handleLikeToggle = () => {
     if (!user) return alert("로그인이 필요합니다.");
-    if (isLiked) unlikeMutation.mutate();
-    else likeMutation.mutate();
+
+    if (likeMutation.isPending || unlikeMutation.isPending) return;
+
+    if (isLiked) {
+      unlikeMutation.mutate();
+    } else {
+      likeMutation.mutate();
+    }
   };
 
   // 댓글 작성 Mutation
@@ -473,8 +506,7 @@ const ReviewDetailPage: React.FC = () => {
           <ActionSection>
             <LikeButton onClick={handleLikeToggle}>
               {isLiked ? <IoHeart /> : <IoHeartOutline />}
-              {/* 좋아요 수는 API 응답에 있다면 표시 */}
-              <span>좋아요</span>
+              <span>{likeCount}</span>
             </LikeButton>
 
             <LinkButton onClick={() => navigate(`/posts/${review.postId}`)}>
