@@ -74,6 +74,12 @@ public class PostService {
                 .orElseThrow(() -> new NoSuchElementException("Planner not found with id: 1"))
         );
         newPost = postRepository.save(newPost);
+
+        // 이미지 없을 때 처리
+        if (createPost.getImages() == null || createPost.getImages().isEmpty()) {
+            return newPost;
+        }
+        // 이미지 업로드 처리
         try{
             for(var image : createPost.getImages()){
                 String imageUrl = s3Service.uploadFile(image);
