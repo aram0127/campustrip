@@ -520,7 +520,7 @@ const PostDetailPage: React.FC = () => {
           </MenuContainer>
         ) : null
       }
-      onBackClick={() => navigate("/posts")}
+      onBackClick={() => navigate(-1)}
     >
       <TabMenu>
         <TabButton

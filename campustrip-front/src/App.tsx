@@ -33,6 +33,7 @@ import PostEditLoader from "./pages/post/edit/PostEditLoader";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { PostCreateProvider } from "./context/PostCreateContext";
 import ReviewCreatePage from "./pages/review/ReviewCreatePage";
+import ReviewDetailPage from "./pages/review/ReviewDetailPage";
 
 const RootRedirect: React.FC = () => {
   const { isLoggedIn } = useAuth();
@@ -108,6 +109,7 @@ function App() {
                 element={<LocationSharePage />}
               />
               <Route path="/reviews/new" element={<ReviewCreatePage />} />
+              <Route path="/reviews/:reviewId" element={<ReviewDetailPage />} />
 
               {/* MainLayout을 사용하는 페이지들 */}
               <Route
