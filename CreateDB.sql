@@ -161,6 +161,16 @@ CREATE TABLE ReviewLike (
     FOREIGN KEY (review_id) REFERENCES Review(review_id)
 ) ENGINE=InnoDB;
 
+-- 사용자평가 테이블
+CREATE TABLE UserRate (
+	rater_id INT NOT NULL,
+	target_id INT NOT NULL,
+	rate INT NOT NULL,
+	PRIMARY KEY (rater_id, target_id),
+	FOREIGN KEY (rater_id) REFERENCES User(membership_id),
+	FOREIGN KEY (target_id) REFERENCES User(membership_id)
+) ENGINE=InnoDB;
+
 -- 팔로우 테이블
 CREATE TABLE Follow (
     membership_id INT NOT NULL,

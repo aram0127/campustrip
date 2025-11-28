@@ -55,6 +55,8 @@ public class User {
     public void setRole(String role) {
         this.role = "ROLE_ADMIN".equals(role) ? 0 : 1;
     }
-
+    public void setScore(Integer score) {
+        this.userScore = 36.5F + (float)(score * 0.5);
+    }
     // 기본 생성자, getter, setter 생략
 }
