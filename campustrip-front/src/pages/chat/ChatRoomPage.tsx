@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { useNavigate, useParams } from "react-router-dom";
-import { IoMenu, IoAdd, IoSend } from "react-icons/io5";
+import { IoMenu, IoAdd, IoSend, IoLocationSharp } from "react-icons/io5";
 import { Client, type IMessage } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { useAuth } from "../../context/AuthContext";
@@ -244,9 +244,14 @@ function ChatRoomPage() {
     <PageLayout
       title={roomTitle}
       headerRight={
-        <HeaderButton style={{ marginRight: "-12px" }}>
-          <IoMenu />
-        </HeaderButton>
+        <>
+          <HeaderButton onClick={() => navigate(`/location/${chatId}`)}>
+            <IoLocationSharp />
+          </HeaderButton>
+          <HeaderButton style={{ marginRight: "-12px" }}>
+            <IoMenu />
+          </HeaderButton>
+        </>
       }
       onBackClick={() => navigate("/chat")}
     >

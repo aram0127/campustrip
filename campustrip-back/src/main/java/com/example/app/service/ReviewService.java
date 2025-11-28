@@ -1,6 +1,7 @@
 package com.example.app.service;
 
 import com.example.app.domain.*;
+import com.example.app.dto.CommentDTO;
 import com.example.app.dto.CreateReview;
 import com.example.app.dto.ReviewDTO;
 import com.example.app.repository.*;
@@ -161,6 +162,16 @@ public class ReviewService {
         return true;
     }
 
+    public void deleteReview(Integer id) {
+        // 리뷰에 연결된 모든 ReviewAsset 삭제
+        reviewAssetRepository.findAllByReviewId(id).forEach(asset -> {
+            s3Service.deleteFile(asset.getStorageUrl());
+            reviewAssetRepository.delete(asset);
+        });
+        // 리뷰 삭제
+        reviewRepository.deleteById(id);
+    }
+
     public boolean likeReview(Integer reviewId, String userId) {
         User user = userRepository.findByUserId(userId).orElse(null);
         if (user == null) {
@@ -203,6 +214,14 @@ public class ReviewService {
             return true;
         }
         return false;
+    }
+
+    public List<CommentDTO> getCommentsByReviewId(Integer reviewId) {
+        Review review = reviewRepository.findById(reviewId).orElse(null);
+        if (review == null) {
+            return new ArrayList<>(); // 또는 예외 처리
+        }
+        return commentRepository.findAllByReview(review).stream().map(comment -> new CommentDTO(comment)).toList();
     }
 
     public boolean addComment(Integer reviewId, String userId, String comment) {
