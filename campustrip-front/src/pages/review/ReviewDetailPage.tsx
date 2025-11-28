@@ -417,7 +417,7 @@ const ReviewDetailPage: React.FC = () => {
 
   return (
     <PageLayout
-      title="후기 상세"
+      title="후기게시글"
       onBackClick={() => navigate("/reviews")}
       headerRight={
         isMyReview && (
@@ -443,8 +443,8 @@ const ReviewDetailPage: React.FC = () => {
     >
       <Container>
         <ContentWrapper>
-          <AuthorHeader>
-            <Avatar onClick={() => navigate(`/profile/${review.user.id}`)} />
+          <AuthorHeader onClick={() => navigate(`/profile/${review.user.id}`)}>
+            <Avatar />
             <AuthorInfo>
               <AuthorName>{review.user.name}</AuthorName>
               <DateText>

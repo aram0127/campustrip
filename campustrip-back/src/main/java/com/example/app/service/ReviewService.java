@@ -54,9 +54,17 @@ public class ReviewService {
 
     public List<ReviewDTO> getAllReviews() {
         List<Review> reviews = reviewRepository.findAll();
+        List<Integer> reviewIds = reviews.stream().map(Review::getId).toList();
+        var likeCountMap = reviewLikeRepository.countLikesByReviewIds(reviewIds)
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        ReviewLikeRepository.ReviewLikeCount::getReviewId,
+                        ReviewLikeRepository.ReviewLikeCount::getLikeCount
+                ));
         List<ReviewDTO> reviewDTOs = new ArrayList<>();
         for (Review review : reviews) {
             ReviewDTO reviewDTO = new ReviewDTO(review);
+            reviewDTO.setLikeCount(likeCountMap.getOrDefault(review.getId(), 0));
             List<String> assetList = new ArrayList<>();
             reviewAssetRepository.findAllByReviewId(review.getId()).forEach(asset -> {
                 assetList.add(asset.getStorageUrl());
@@ -87,8 +95,19 @@ public class ReviewService {
             reviewSlice = reviewRepository.findSliceByKeyword(keyword, pageable);
         }
 
+        List<Integer> reviewIds = reviewSlice.stream()
+                .map(Review::getId)
+                .toList();
+        var likeCountMap = reviewLikeRepository.countLikesByReviewIds(reviewIds)
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        ReviewLikeRepository.ReviewLikeCount::getReviewId,
+                        ReviewLikeRepository.ReviewLikeCount::getLikeCount
+                ));
+
         return reviewSlice.map(review -> {
             ReviewDTO dto = new ReviewDTO(review);
+            dto.setLikeCount(likeCountMap.getOrDefault(review.getId(), 0));
 
             // 이미지 URL 리스트
             List<String> assetList = new ArrayList<>();
