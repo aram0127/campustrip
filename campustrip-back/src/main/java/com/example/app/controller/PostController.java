@@ -57,13 +57,14 @@ public class PostController {
 //    }
     @GetMapping
     public Slice<PostDTO> getAllPostsInfinite(
-            @PageableDefault(size = 3, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @RequestParam(required = false) String keyword,
+            @PageableDefault(size = 3, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable){
         System.out.println("=== getAllPostsInfinite 호출 ===");
         System.out.println("요청된 페이지 크기(Size): " + pageable.getPageSize());
         System.out.println("요청된 페이지 번호(Page): " + pageable.getPageNumber());
         System.out.println("정렬 정보: " + pageable.getSort());
 
-        Slice<Post> postSlice = postService.getAllPostsSlice(pageable);
+        Slice<Post> postSlice = postService.getAllPostsSlice(keyword, pageable);
 
         System.out.println("조회된 게시글 수: " + postSlice.getNumberOfElements());
         System.out.println("첫 페이지 여부: " + postSlice.isFirst());
@@ -71,9 +72,7 @@ public class PostController {
         System.out.println("현재 페이지 번호: " + postSlice.getNumber());
 
         // 엔티티 슬라이스를 DTO 슬라이스로 변환
-        Slice<PostDTO> dtoSlice = postSlice.map(post -> postService.convertPostToDTO(post, chatService, regionService));
-        System.out.println("DTO 변환 완료");
-        return dtoSlice;
+        return postSlice.map(post -> postService.convertPostToDTO(post, chatService, regionService));
     }
 
     // GET: ID로 게시물 조회 (기존 로직을 DTO 변환 메서드로 분리)
@@ -94,14 +93,16 @@ public class PostController {
     @GetMapping("/regions")
     public Slice<PostDTO> getPostsByRegionIds(
             @RequestParam(required = false) List<Integer> regionIds,
+            @RequestParam(required = false) String keyword,
             @PageableDefault(size = 3, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Slice<Post> postSlice;
         if (regionIds == null || regionIds.isEmpty()) {
-            postSlice = postService.getAllPostsSlice(pageable);
+            // 지역 선택 안 함 -> 전체 검색으로 위임
+            postSlice = postService.getAllPostsSlice(keyword, pageable);
         } else {
-            postSlice = postService.getPostsByRegionIdsSlice(regionIds, pageable);
+            // 지역 선택 함 -> 지역 + 검색
+            postSlice = postService.getPostsByRegionIdsSlice(regionIds, keyword, pageable);
         }
-
 
         return postSlice.map(post -> postService.convertPostToDTO(post, chatService, regionService));
     }
