@@ -184,11 +184,25 @@ public class PostService {
         return postDTO;
     }
 
-    public Slice<Post> getAllPostsSlice(Pageable pageable) {
+    /**
+     * 전체 게시글 조회
+     * keyword가 null이거나 빈 문자열이면 전체 조회, 있으면 검색 조회
+     */
+    public Slice<Post> getAllPostsSlice(String keyword, Pageable pageable) {
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            return postRepository.findAllByKeyword(keyword, pageable);
+        }
         return postRepository.findAllBy(pageable);
     }
 
-    public Slice<Post> getPostsByRegionIdsSlice(List<Integer> regionIds, Pageable pageable) {
+    /**
+     * 지역 필터링 게시글 조회
+     * keyword가 null이거나 빈 문자열이면 지역 필터만 적용, 있으면 지역+검색 조회
+     */
+    public Slice<Post> getPostsByRegionIdsSlice(List<Integer> regionIds, String keyword, Pageable pageable) {
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            return postRepository.findPostsByRegionIdsAndKeyword(regionIds, keyword, pageable);
+        }
         return postRepository.findPostsByRegionIdsSlice(regionIds, pageable);
     }
 }
