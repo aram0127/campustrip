@@ -9,12 +9,13 @@ build/
 dist/
 /dev-dist
 .env
-campustrip-5b014-firebase-adminsdk-fbsvc-503ae48435.json
 
 # Spring
 target/
 *.log
 application-secret.properties
+static/
+*firebase-adminsdk*.json
 
 # OS
 .DS_Store
