@@ -44,21 +44,14 @@ public class PlannerController {
     // 새 플래너 생성
     @PostMapping
     public PlannerResponseDTO createPlanner(@RequestBody CreatePlanner createPlanner) {
-        // 플래너 생성 로직 구현
-        Planner planner = new Planner();
-        planner.setUser(createPlanner.getUser());
-        planner.setStartDate(createPlanner.getStartDate());
-        planner.setEndDate(createPlanner.getEndDate());
-        plannerService.savePlanner(planner);
-
+        Planner planner = plannerService.savePlannerWithDetails(createPlanner);
         return new PlannerResponseDTO(planner);
     }
 
     // 플래너 수정
     @PutMapping("/{plannerId}")
-    public PlannerResponseDTO updatePlanner(@PathVariable Integer plannerId, @RequestBody Planner planner) {
-        planner.setPlannerId(plannerId);
-        plannerService.savePlanner(planner);
+    public PlannerResponseDTO updatePlanner(@PathVariable Integer plannerId, @RequestBody CreatePlanner createPlanner) {
+        Planner planner = plannerService.updatePlannerWithDetails(plannerId, createPlanner);
         return new PlannerResponseDTO(planner);
     }
 

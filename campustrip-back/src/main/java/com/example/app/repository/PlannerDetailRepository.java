@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface PlannerDetailRepository extends JpaRepository<PlannerDetail, PlannerDetailId> {
     List<PlannerDetail> findByPlannerPlannerIdOrderByIdPlannerOrder(Integer plannerId);
+
+    void deleteByPlannerPlannerId(Integer plannerId);
 }
