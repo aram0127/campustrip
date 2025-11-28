@@ -9,4 +9,15 @@ export interface Review {
   updatedAt: string;
   postId: number;
   imageUrls: string[] | null;
+  likeCount?: number;
+  isLiked?: boolean;
+}
+
+export interface Comment {
+  id: number;
+  userId: number;
+  userName: string;
+  reviewId: number;
+  body: string;
+  createdAt: string;
 }

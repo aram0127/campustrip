@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import { type Review } from "../types/review";
+import { type Review, type Comment } from "../types/review";
 
 export interface ReviewSlice {
   content: Review[];
@@ -66,4 +66,45 @@ export const createReview = async (data: CreateReviewData): Promise<Review> => {
 
   const response = await apiClient.post<Review>("/api/reviews/", formData);
   return response.data;
+};
+
+/* 좋아요 요청 */
+export const likeReview = async (reviewId: number): Promise<void> => {
+  await apiClient.post(`/api/reviews/${reviewId}/like`);
+};
+
+/* 좋아요 취소 요청 */
+export const unlikeReview = async (reviewId: number): Promise<void> => {
+  await apiClient.post(`/api/reviews/${reviewId}/unlike`);
+};
+
+/* 댓글 목록 조회 */
+export const getComments = async (reviewId: number): Promise<Comment[]> => {
+  const response = await apiClient.get<Comment[]>(
+    `/api/reviews/${reviewId}/comment`
+  );
+  return response.data;
+};
+
+/* 댓글 작성 */
+export const addComment = async (
+  reviewId: number,
+  comment: string
+): Promise<void> => {
+  const formData = new FormData();
+  formData.append("comment", comment);
+  await apiClient.post(`/api/reviews/${reviewId}/comment`, formData);
+};
+
+/* 댓글 삭제 */
+export const deleteReviewComment = async (
+  reviewId: number,
+  commentId: number
+): Promise<void> => {
+  await apiClient.delete(`/api/reviews/${reviewId}/comment/${commentId}`);
+};
+
+/* 후기 삭제 */
+export const deleteReview = async (reviewId: number): Promise<void> => {
+  await apiClient.delete(`/api/reviews/${reviewId}`);
 };
