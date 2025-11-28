@@ -498,7 +498,7 @@ const PostDetailPage: React.FC = () => {
 
   return (
     <PageLayout
-      title="게시글"
+      title="모집게시글"
       headerRight={
         isMyPost ? (
           <MenuContainer>
