@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import styled from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
 import FloatingActionButton from "../../components/common/FloatingActionButton";
 import SearchBar from "../../components/common/SearchBar";
-import { getReviews } from "../../api/reviews";
-import { type Review } from "../../types/review";
+import { getInfiniteReviews } from "../../api/reviews";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 const PageContainer = styled.div`
   width: 100%;
@@ -36,12 +36,10 @@ const SortButton = styled.button<{ $isActive: boolean }>`
   border: none;
   font-size: 13px;
   cursor: pointer;
-  padding: 0;
+  padding: 4px;
   color: ${({ $isActive, theme }) =>
     $isActive ? theme.colors.text : theme.colors.secondaryTextColor};
   font-weight: ${({ $isActive }) => ($isActive ? "bold" : "normal")};
-
-  padding: 4px;
 
   &:hover {
     color: ${({ theme }) => theme.colors.text};
@@ -55,12 +53,12 @@ const Divider = styled.span`
   align-items: center;
 `;
 
-const PostListContainer = styled.div`
+const ReviewListContainer = styled.div`
   overflow-y: auto;
   flex-grow: 1;
 `;
 
-const PostItem = styled(Link)`
+const ReviewItem = styled(Link)`
   display: flex;
   gap: 16px;
   padding: 16px;
@@ -84,6 +82,8 @@ const Thumbnail = styled.div<{ $imageUrl?: string }>`
 const PostContent = styled.div`
   flex-grow: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 `;
 
 const PostTitle = styled.h2`
@@ -103,53 +103,102 @@ const PostExcerpt = styled.p`
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   line-height: 1.4;
+  flex-grow: 1;
 `;
 
 const PostMeta = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-size: 12px;
   color: ${({ theme }) => theme.colors.secondaryTextColor};
 `;
 
+const LoadingMessage = styled.p`
+  text-align: center;
+  padding: 20px;
+  color: ${({ theme }) => theme.colors.secondaryTextColor};
+`;
+
+const ErrorMessage = styled.p`
+  text-align: center;
+  padding: 20px;
+  color: ${({ theme }) => theme.colors.error};
+`;
+
 function ReviewListPage() {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [sortOrder, setSortOrder] = useState<"latest" | "likes">("latest"); // 정렬 상태 관리
-
   const navigate = useNavigate();
+  const observerTarget = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetchReviews();
-  }, []);
+  // 검색어 상태 관리
+  const [inputValue, setInputValue] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchReviews = async () => {
-    try {
-      const data = await getReviews();
-      // 여기서 sortOrder에 따라 data를 정렬하거나, API 요청 시 파라미터로 보낼 수 있음
-      // 현재는 클라이언트 사이드 정렬 예시:
-      if (sortOrder === "latest") {
-        data.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      }
-      setReviews(data);
-    } catch (error) {
-      console.error("리뷰 목록을 불러오는데 실패했습니다.", error);
-    } finally {
-      setLoading(false);
-    }
+  // 정렬 상태 관리 ('latest' | 'likes')
+  // 백엔드 파라미터: latest -> 'createdAt,desc', likes -> 'likes'
+  const [sortOrder, setSortOrder] = useState<"latest" | "likes">("latest");
+
+  // useInfiniteQuery 훅 사용
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["reviews", "infinite", sortOrder, searchQuery],
+    queryFn: ({ pageParam = 0 }) => {
+      // 정렬 파라미터 변환
+      const sortParam = sortOrder === "likes" ? "likes" : "createdAt,desc";
+
+      return getInfiniteReviews({
+        page: pageParam,
+        size: 10,
+        sort: sortParam,
+        keyword: searchQuery || undefined,
+      });
+    },
+    getNextPageParam: (lastPage) => {
+      return lastPage.last ? undefined : lastPage.number + 1;
+    },
+    initialPageParam: 0,
+  });
+
+  // 모든 페이지의 데이터를 하나의 배열로 평탄화
+  const reviews = useMemo(() => {
+    return data?.pages.flatMap((page) => page.content) ?? [];
+  }, [data]);
+
+  // 검색 핸들러
+  const handleSearch = () => {
+    setSearchQuery(inputValue);
   };
 
   // 정렬 변경 핸들러
   const handleSortChange = (order: "latest" | "likes") => {
     setSortOrder(order);
-    // 실제로는 여기서 API를 다시 호출하거나 state를 정렬해야 함
-    // 예시: setReviews([...reviews].sort(...))
+    window.scrollTo(0, 0);
   };
 
-  const handleCreateReview = () => {
-    navigate("/reviews/new");
-  };
+  // 무한 스크롤 Observer
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [target] = entries;
+      if (target.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+    [fetchNextPage, hasNextPage, isFetchingNextPage]
+  );
+
+  useMemo(() => {
+    const element = observerTarget.current;
+    if (!element) return;
+    const observer = new IntersectionObserver(handleObserver, { threshold: 0 });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [handleObserver]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -159,7 +208,12 @@ function ReviewListPage() {
   return (
     <PageContainer>
       <ControlsContainer>
-        <SearchBar placeholder="후기게시글 검색" />
+        <SearchBar
+          placeholder="후기게시글 검색"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onSearch={handleSearch}
+        />
 
         <SortContainer>
           <SortButton
@@ -178,24 +232,30 @@ function ReviewListPage() {
         </SortContainer>
       </ControlsContainer>
 
-      <PostListContainer>
-        {loading ? (
-          <div style={{ padding: "16px", textAlign: "center" }}>로딩 중...</div>
-        ) : reviews.length === 0 ? (
-          <div style={{ padding: "16px", textAlign: "center" }}>
-            등록된 후기가 없습니다.
-          </div>
-        ) : (
+      <ReviewListContainer>
+        {isLoading && <LoadingMessage>후기를 불러오는 중...</LoadingMessage>}
+        {error && <ErrorMessage>{error.message}</ErrorMessage>}
+
+        {!isLoading && !error && reviews.length === 0 && (
+          <LoadingMessage>
+            {searchQuery ? "검색 결과가 없습니다." : "등록된 후기가 없습니다."}
+          </LoadingMessage>
+        )}
+
+        {!isLoading &&
+          !error &&
           reviews.map((review) => {
             const excerpt =
-              review.body.replace(/<[^>]*>?/gm, "").substring(0, 100) + "...";
+              review.body.replace(/<[^>]*>?/gm, "").substring(0, 80) +
+              (review.body.length > 80 ? "..." : "");
+
             const thumbnailImage =
               review.imageUrls && review.imageUrls.length > 0
                 ? review.imageUrls[0]
                 : undefined;
 
             return (
-              <PostItem
+              <ReviewItem
                 to={`/reviews/${review.reviewId}`}
                 key={review.reviewId}
               >
@@ -209,13 +269,19 @@ function ReviewListPage() {
                     </span>
                   </PostMeta>
                 </PostContent>
-              </PostItem>
+              </ReviewItem>
             );
-          })
-        )}
-      </PostListContainer>
+          })}
 
-      <FloatingActionButton onClick={handleCreateReview} />
+        {/* 무한 스크롤 트리거 */}
+        <div ref={observerTarget} style={{ height: "20px" }} />
+
+        {isFetchingNextPage && (
+          <LoadingMessage>더 불러오는 중...</LoadingMessage>
+        )}
+      </ReviewListContainer>
+
+      <FloatingActionButton onClick={() => navigate("/reviews/new")} />
     </PageContainer>
   );
 }

@@ -6,6 +6,10 @@ import com.example.app.service.ReviewService;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 
 import java.util.List;
 
@@ -24,10 +28,14 @@ public class ReviewController {
         return reviewService.getReviewById(id);
     }
 
-    // 모든 리뷰 조회
+    // 전체 리뷰 조회
     @GetMapping("/")
-    public List<ReviewDTO> getAllReviews() {
-        return reviewService.getAllReviews();
+    public Slice<ReviewDTO> getAllReviews(
+            @RequestParam(required = false) String keyword,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        // 프론트에서 ?sort=likes 로 요청하면 Pageable의 sort에 "likes"가 들어감
+        return reviewService.getReviewSlice(keyword, pageable);
     }
 
     // 리뷰 생성
