@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useCallback } from "react";
-import styled from "styled-components";
+import styled, { useTheme } from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
+import { IoHeart } from "react-icons/io5";
 import FloatingActionButton from "../../components/common/FloatingActionButton";
 import SearchBar from "../../components/common/SearchBar";
 import { getInfiniteReviews } from "../../api/reviews";
@@ -65,6 +66,7 @@ const ReviewItem = styled(Link)`
   border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
   text-decoration: none;
   color: inherit;
+  align-items: flex-start;
 `;
 
 const Thumbnail = styled.div<{ $imageUrl?: string }>`
@@ -84,6 +86,13 @@ const PostContent = styled.div`
   min-width: 0;
   display: flex;
   flex-direction: column;
+  height: 90px;
+  justify-content: space-between;
+`;
+
+const TextGroup = styled.div`
+  display: flex;
+  flex-direction: column;
 `;
 
 const PostTitle = styled.h2`
@@ -91,19 +100,21 @@ const PostTitle = styled.h2`
   font-weight: bold;
   margin: 0 0 4px 0;
   color: ${({ theme }) => theme.colors.text};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const PostExcerpt = styled.p`
   font-size: 14px;
   color: ${({ theme }) => theme.colors.secondaryTextColor};
-  margin: 0 0 8px 0;
+  margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   line-height: 1.4;
-  flex-grow: 1;
 `;
 
 const PostMeta = styled.div`
@@ -112,6 +123,14 @@ const PostMeta = styled.div`
   align-items: center;
   font-size: 12px;
   color: ${({ theme }) => theme.colors.secondaryTextColor};
+`;
+
+const LikeStat = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.text};
 `;
 
 const LoadingMessage = styled.p`
@@ -128,14 +147,14 @@ const ErrorMessage = styled.p`
 
 function ReviewListPage() {
   const navigate = useNavigate();
+  const theme = useTheme();
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // 검색어 상태 관리
   const [inputValue, setInputValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // 정렬 상태 관리 ('latest' | 'likes')
-  // 백엔드 파라미터: latest -> 'createdAt,desc', likes -> 'likes'
+  // 정렬 상태 관리
   const [sortOrder, setSortOrder] = useState<"latest" | "likes">("latest");
 
   // useInfiniteQuery 훅 사용
@@ -149,9 +168,7 @@ function ReviewListPage() {
   } = useInfiniteQuery({
     queryKey: ["reviews", "infinite", sortOrder, searchQuery],
     queryFn: ({ pageParam = 0 }) => {
-      // 정렬 파라미터 변환
       const sortParam = sortOrder === "likes" ? "likes" : "createdAt,desc";
-
       return getInfiniteReviews({
         page: pageParam,
         size: 10,
@@ -165,23 +182,19 @@ function ReviewListPage() {
     initialPageParam: 0,
   });
 
-  // 모든 페이지의 데이터를 하나의 배열로 평탄화
   const reviews = useMemo(() => {
     return data?.pages.flatMap((page) => page.content) ?? [];
   }, [data]);
 
-  // 검색 핸들러
   const handleSearch = () => {
     setSearchQuery(inputValue);
   };
 
-  // 정렬 변경 핸들러
   const handleSortChange = (order: "latest" | "likes") => {
     setSortOrder(order);
     window.scrollTo(0, 0);
   };
 
-  // 무한 스크롤 Observer
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const [target] = entries;
@@ -261,21 +274,25 @@ function ReviewListPage() {
               >
                 <Thumbnail $imageUrl={thumbnailImage} />
                 <PostContent>
-                  <PostTitle>{review.title}</PostTitle>
-                  <PostExcerpt>{excerpt}</PostExcerpt>
+                  <TextGroup>
+                    <PostTitle>{review.title}</PostTitle>
+                    <PostExcerpt>{excerpt}</PostExcerpt>
+                  </TextGroup>
                   <PostMeta>
                     <span>
                       {review.user.name} · {formatDate(review.createdAt)}
                     </span>
+                    <LikeStat>
+                      <IoHeart color={theme.colors.error} size={14} />
+                      {review.likeCount || 0}
+                    </LikeStat>
                   </PostMeta>
                 </PostContent>
               </ReviewItem>
             );
           })}
 
-        {/* 무한 스크롤 트리거 */}
         <div ref={observerTarget} style={{ height: "20px" }} />
-
         {isFetchingNextPage && (
           <LoadingMessage>더 불러오는 중...</LoadingMessage>
         )}
