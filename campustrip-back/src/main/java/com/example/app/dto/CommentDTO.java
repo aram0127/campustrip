@@ -2,7 +2,7 @@ package com.example.app.dto;
 
 import com.example.app.domain.Comment;
 import lombok.*;
-import org.joda.time.DateTime;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -14,7 +14,7 @@ public class CommentDTO {
     private String userName;
     private Integer reviewId;
     private String body;
-    private DateTime createdAt;
+    private LocalDateTime createdAt;
 
     public CommentDTO(Comment comment) {
         this.id = comment.getId();
@@ -22,6 +22,6 @@ public class CommentDTO {
         this.userName = comment.getUser().getName();
         this.reviewId = comment.getReview().getId();
         this.body = comment.getBody();
-        this.createdAt = new DateTime(comment.getCreatedAt());
+        this.createdAt = comment.getCreatedAt();
     }
 }
