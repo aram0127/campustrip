@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name="Comment")
 @Getter
@@ -28,4 +30,7 @@ public class Comment {
 
     @Column(name="body", nullable=false, columnDefinition="TEXT")
     private String body;
+
+    @Column(name="created_at", nullable=false)
+    private LocalDateTime createdAt;
 }

@@ -22,6 +22,9 @@ public class Planner {
     @JoinColumn(name = "membership_id", nullable = false)
     private User user;
 
+    @Column(name="title", nullable=false)
+    private String title;
+
     @Column(name="start_date", nullable=false)
     private java.time.LocalDate startDate;
 

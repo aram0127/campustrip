@@ -24,15 +24,17 @@ public class PostService {
     private final RegionRepository regionRepository;
     private final PlannerRepository plannerRepository;
     private final PostAssetRepository postAssetRepository;
+    private final S3Service s3Service;
 
     @Autowired
     public PostService(PostRepository postRepository,
-                       UserRepository userRepository, RegionRepository regionRepository, PlannerRepository plannerRepository, PostAssetRepository postAssetrepository) {
+                       UserRepository userRepository, RegionRepository regionRepository, PlannerRepository plannerRepository, PostAssetRepository postAssetrepository, S3Service s3Service) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.regionRepository = regionRepository;
         this.plannerRepository = plannerRepository;
         this.postAssetRepository = postAssetrepository;
+        this.s3Service = s3Service;
     }
 
     public List<Post> getAllPosts() {
@@ -125,6 +127,15 @@ public class PostService {
     }
 
     public void deletePost(Integer postId) {
+        // 관련된 PostAsset도 함께 삭제
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new NoSuchElementException("Post not found with id: " + postId));
+        List<PostAsset> assets = (List<PostAsset>) postAssetRepository.findAllByPost(post);
+        for (var asset : assets) {
+            s3Service.deleteFile(asset.getStorageUrl()); // S3에서 파일 삭제
+            postAssetRepository.delete(asset);
+        }
+        // 관련된 PostRegion, Application 등도 cascade 옵션에 의해 함께 삭제될 것임
         postRepository.deleteById(postId);
     }
 

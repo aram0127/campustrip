@@ -1,5 +1,6 @@
 package com.example.app.controller;
 
+import com.example.app.dto.CommentDTO;
 import com.example.app.dto.CreateReview;
 import com.example.app.dto.ReviewDTO;
 import com.example.app.service.ReviewService;
@@ -50,6 +51,12 @@ public class ReviewController {
         return reviewService.updateReview(id, createReview);
     }
 
+    // 리뷰 삭제
+    @DeleteMapping("/{id}")
+    public void deleteReview(@PathVariable Integer id) {
+        reviewService.deleteReview(id);
+    }
+
     // 리뷰에 좋아요
     @PostMapping("/{id}/like")
     public void likeReview(@PathVariable Integer id, @AuthenticationPrincipal String userId) {
@@ -64,12 +71,19 @@ public class ReviewController {
         reviewService.unlikeReview(id, userId);
     }
 
+    // 리뷰의 댓글들 조회
+    @GetMapping("/{id}/comment")
+    public List<CommentDTO> getCommentsByReviewId(@PathVariable Integer id) {
+        return reviewService.getCommentsByReviewId(id);
+    }
+
     // 리뷰에 댓글 추가
     @PostMapping("/{id}/comment")
     public void addComment(@PathVariable Integer id, @AuthenticationPrincipal String userId, @RequestParam String comment) {
         reviewService.addComment(id, userId, comment);
     }
 
+    // 리뷰 댓글 수정
     @PutMapping("/{id}/comment/{commentId}")
     public void updateComment(@PathVariable Integer id, @PathVariable Integer commentId, @AuthenticationPrincipal String userId, @RequestParam String comment) {
         // 로그인한 사용자가 자신의 댓글만 수정할 수 있도록 검증 로직이 필요할 수 있습니다.
