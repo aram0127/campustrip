@@ -7,6 +7,10 @@ import com.example.app.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +63,40 @@ public class ReviewService {
             reviewDTOs.add(reviewDTO);
         }
         return reviewDTOs;
+    }
+
+    /**
+     * 리뷰 목록 조회 (검색 + 페이징 + 정렬)
+     */
+    public Slice<ReviewDTO> getReviewSlice(String keyword, Pageable pageable) {
+        Slice<Review> reviewSlice;
+
+        // Pageable에서 정렬 정보 확인
+        boolean sortByLikes = pageable.getSort().stream()
+                .anyMatch(order -> order.getProperty().equals("likes"));
+
+        if (sortByLikes) {
+            // 좋아요순 정렬일 경우 (pageable의 sort 정보는 무시하고, Repository에서 직접 정렬 쿼리 실행)
+            // 단, page와 size 정보는 유지해야 하므로 PageRequest를 새로 만듦
+            Pageable likePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+            reviewSlice = reviewRepository.findSliceByKeywordOrderByLikes(keyword, likePageable);
+        } else {
+            // 최신순 정렬
+            reviewSlice = reviewRepository.findSliceByKeyword(keyword, pageable);
+        }
+
+        return reviewSlice.map(review -> {
+            ReviewDTO dto = new ReviewDTO(review);
+
+            // 이미지 URL 리스트
+            List<String> assetList = new ArrayList<>();
+            reviewAssetRepository.findAllByReviewId(review.getId()).forEach(asset -> {
+                assetList.add(asset.getStorageUrl());
+            });
+            dto.setImageUrls(assetList);
+
+            return dto;
+        });
     }
 
     public ReviewDTO createReview(CreateReview reviewDTO) {
