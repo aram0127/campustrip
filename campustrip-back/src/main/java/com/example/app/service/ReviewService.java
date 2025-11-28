@@ -37,7 +37,7 @@ public class ReviewService {
         this.commentRepository = commentRepository;
     }
 
-    public ReviewDTO getReviewById(Integer id) {
+    public ReviewDTO getReviewById(Integer id, String userId) {
         Review review = reviewRepository.findById(id).orElse(null);
         if (review == null) {
             return null; // 또는 예외 처리
@@ -47,6 +47,11 @@ public class ReviewService {
         reviewAssetRepository.findAllByReviewId(id).forEach(asset -> {
             assetList.add(asset.getStorageUrl());
         });
+        User user = userRepository.findByUserId(userId).orElse(null);
+        if (user == null) {
+            throw new IllegalStateException("User not found with userId: " + userId);
+        }
+        reviewDTO.setLikedByCurrentUser(reviewLikeRepository.existsByUser(user));
         reviewDTO.setImageUrls(assetList);
         return reviewDTO;
     }
@@ -162,7 +167,11 @@ public class ReviewService {
         List<ReviewAsset> existingAssets = new ArrayList<>();
         reviewAssetRepository.findAllByReviewId(review.getId()).forEach(existingAssets::add);
         int assetIdCounter = existingAssets.size() + 1;
-
+        // 이미지가 없을 때 처리
+        if (images == null || images.isEmpty()) {
+            return true;
+        }
+        // 이미지 업로드 처리
         for (var image : images) {
             try {
                 String imageUrl = s3Service.uploadFile(image);

@@ -26,8 +26,8 @@ public class ReviewController {
 
     // 리뷰를 ID로 조회
     @GetMapping("/{id}")
-    public ReviewDTO getReviewById(@PathVariable Integer id) {
-        return reviewService.getReviewById(id);
+    public ReviewDTO getReviewById(@PathVariable Integer id, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return reviewService.getReviewById(id, userDetails.getUsername());
     }
 
     // 전체 리뷰 조회
