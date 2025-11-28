@@ -67,6 +67,7 @@ const ReviewItem = styled(Link)`
   text-decoration: none;
   color: inherit;
   align-items: flex-start;
+  justify-content: space-between;
 `;
 
 const Thumbnail = styled.div<{ $imageUrl?: string }>`
@@ -86,7 +87,7 @@ const PostContent = styled.div`
   min-width: 0;
   display: flex;
   flex-direction: column;
-  height: 90px;
+  min-height: 90px;
   justify-content: space-between;
 `;
 
@@ -119,8 +120,8 @@ const PostExcerpt = styled.p`
 
 const PostMeta = styled.div`
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 8px;
   font-size: 12px;
   color: ${({ theme }) => theme.colors.secondaryTextColor};
 `;
@@ -128,7 +129,7 @@ const PostMeta = styled.div`
 const LikeStat = styled.div`
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   font-weight: 500;
   color: ${({ theme }) => theme.colors.text};
 `;
@@ -272,7 +273,6 @@ function ReviewListPage() {
                 to={`/reviews/${review.reviewId}`}
                 key={review.reviewId}
               >
-                <Thumbnail $imageUrl={thumbnailImage} />
                 <PostContent>
                   <TextGroup>
                     <PostTitle>{review.title}</PostTitle>
@@ -283,11 +283,13 @@ function ReviewListPage() {
                       {review.user.name} · {formatDate(review.createdAt)}
                     </span>
                     <LikeStat>
-                      <IoHeart color={theme.colors.error} size={14} />
+                      <IoHeart color={theme.colors.error} size={12} />
                       {review.likeCount || 0}
                     </LikeStat>
                   </PostMeta>
                 </PostContent>
+
+                {thumbnailImage && <Thumbnail $imageUrl={thumbnailImage} />}
               </ReviewItem>
             );
           })}
