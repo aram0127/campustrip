@@ -23,11 +23,13 @@ public class ChatController {
         this.chatMessageService = chatMessageService;
     }
 
+    // 채팅 메시지 전송
     @MessageMapping("/chat/message")  // 클라이언트가 /pub/chat/message로 전송
     public void sendMessage(ChatMessageDTO message) {
         chatMessageService.sendMessage(message);
     }
 
+    // 채팅방 목록 조회
     @GetMapping("/chat/{id}")
     public List<ChatDTO> getMyChatRoom(@PathVariable Integer id) {
         return chatService.getMyChatRoom(id).stream().map(chat -> new ChatDTO(
@@ -37,6 +39,7 @@ public class ChatController {
         )).toList();
     }
 
+    // 채팅방 메시지 조회
     @GetMapping("/chat/{chatId}/messages")
     public List<ChatMessageDTO> getChatMessages(@PathVariable Integer chatId) {
         return chatMessageService.getChatHistory(chatId);

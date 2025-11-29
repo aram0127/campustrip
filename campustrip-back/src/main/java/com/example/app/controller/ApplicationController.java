@@ -60,6 +60,8 @@ public class ApplicationController {
     // 동행 신청 수락 (신청받은 사람이 수락)
     @PutMapping("/accept")
     public Application acceptApplication(@RequestBody AcceptApplication application, Authentication authentication) {
+        Post post = postService.getPostById(application.getPostId());
+        chatMessageService.sendJoinMessage(post.getChat(), application.getUserId());
         return updateApplicationStatus(application, authentication, true);
     }
 

@@ -2,10 +2,7 @@ package com.example.app.controller;
 
 import com.example.app.domain.Post;
 import com.example.app.dto.*;
-import com.example.app.service.ChatService;
-import com.example.app.service.PostService;
-import com.example.app.service.RegionService;
-import com.example.app.service.S3Service;
+import com.example.app.service.*;
 import org.springframework.data.domain.*;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
@@ -20,41 +17,19 @@ import java.util.stream.Collectors;
 public class PostController {
     private final PostService postService;
     private final ChatService chatService;
+    private final ChatMessageService chatMessageService;
     private final RegionService regionService;
     private final S3Service s3Service;
 
     @Autowired
-    public PostController(PostService postService, ChatService chatService, RegionService regionService, S3Service s3Service) {
+    public PostController(PostService postService, ChatService chatService, ChatMessageService chatMessageService, RegionService regionService, S3Service s3Service) {
         this.postService = postService;
         this.chatService = chatService;
+        this.chatMessageService = chatMessageService;
         this.regionService = regionService;
         this.s3Service = s3Service;
     }
 
-    // GET: 전체 게시물 조회 (DTO 리스트를 반환하도록 수정)
-//    @GetMapping
-//    public List<PostDTO> getAllPosts() {
-//        List<Post> posts = postService.getAllPosts();
-//
-//        // 엔티티 리스트를 DTO 리스트로 변환
-//        return posts.stream().map(post -> postService.convertPostToDTO(post, chatService, regionService)).collect(Collectors.toList());
-//    }
-//      page 대신 slice로 바꾸기 - pagable 쓰는 코드 참고용임
-//    // GET: 전체 게시물 조회 (페이징 처리)
-//    //Parameter로 페이지번호(pageNo), 정렬 기준(criteria)을 받는다.
-//    //default 값은 페이지 번호 0, 정렬 기준 createdAt(작성일자)이다.
-//    // /paged?pageNo=1&size=10&sort=createdAt
-//    @GetMapping("/paged")
-//    public Page<PostDTO> getAllPostsPaged(
-//            @RequestParam(required = false, defaultValue = "0", value="page") int pageNo,
-//            @RequestParam(required = false, defaultValue = "5", value = "size") int size,
-//            @RequestParam(required = false, defaultValue = "createdAt", value="sort") String sort) {
-//
-//        Pageable pageable = PageRequest.of(pageNo, size, Sort.by(Sort.Direction.DESC, sort));
-//        Page<Post> postPage = postService.getAllPostsPaged(pageable);
-//        // 엔티티 페이지를 DTO 페이지로 변환
-//        return postPage.map(post -> postService.convertPostToDTO(post, chatService, regionService));
-//    }
     @GetMapping
     public Slice<PostDTO> getAllPostsInfinite(
             @RequestParam(required = false) String keyword,
@@ -110,7 +85,7 @@ public class PostController {
     // POST: 새 게시물 생성
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public PostDTO createPost(@ModelAttribute CreatePost createPost) throws Exception {
-        Post post = postService.savePost(createPost, chatService, s3Service);
+        Post post = postService.savePost(createPost, chatService, chatMessageService, s3Service);
         return postService.convertPostToDTO(post, chatService, regionService);
     }
 
