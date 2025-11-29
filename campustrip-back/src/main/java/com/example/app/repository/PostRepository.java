@@ -1,8 +1,8 @@
 package com.example.app.repository;
 
+import com.example.app.domain.Chat;
 import com.example.app.domain.Post;
 import com.example.app.domain.User;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -98,4 +98,6 @@ public interface PostRepository extends JpaRepository<Post,Integer>
 //    @Query(value= "select m from Member m where m.memberId = :id and m.email = :email" )
 //    Member findMemberByIdAndEmail(@Param("id") Long id, @Param("email") String email);
 //    출처: https://sjh9708.tistory.com/167 [데굴데굴 개발자의 기록:티스토리]
+
+    Post findByChat(Chat chat);
 }

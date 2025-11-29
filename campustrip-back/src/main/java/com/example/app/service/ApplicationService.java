@@ -85,4 +85,15 @@ public class ApplicationService {
 
         return applicationRepository.save(application);
     }
+
+    public void updateApplicationStatus(Integer postId, User user, boolean status) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
+
+        Application application = applicationRepository.findByUserAndPost(user, post)
+                .orElseThrow(() -> new RuntimeException("신청 내역을 찾을 수 없습니다."));
+
+        application.setApplicationStatus(status);
+        applicationRepository.save(application);
+    }
 }
