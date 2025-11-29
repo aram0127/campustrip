@@ -45,7 +45,7 @@ const InputGroup = styled.div`
 
 const TitleInput = styled.input`
   width: 100%;
-  max-width: 900px;
+  max-width: 700px;
   padding: 12px;
   margin-bottom: 8px;
   border-radius: 8px;
@@ -54,13 +54,14 @@ const TitleInput = styled.input`
   color: ${({ theme }) => theme.colors.text};
   font-size: 16px;
   font-weight: bold;
+  text-align: center;
 `;
 
 const DateRow = styled.div`
   display: flex;
   gap: 8px;
   width: 100%; 
-  max-width: 900px;
+  max-width: 600px;
   align-items: center;
 `;
 
@@ -231,7 +232,7 @@ function PlannerCreatePage() {
     { day: 1, places: [] }
   ]);
   const [currentDay, setCurrentDay] = useState(1);
-  const [mapCenter, setMapCenter] = useState({ lat: 37.5665, lng: 126.9780 }); // 서울 시청 좌표
+  const [mapCenter, setMapCenter] = useState({ lat: 37.5665, lng: 126.9780 }); // 초기 좌표: 서울 시청
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   const getCurrentDayColor = (day: number) => {
@@ -279,6 +280,7 @@ function PlannerCreatePage() {
       latitude: place.geometry.location.lat(),
       longitude: place.geometry.location.lng(),
       order: schedules[currentDay - 1].places.length + 1,
+      category: getCategoryFromTypes(place.types),
       memo: ""
     };
     
@@ -351,6 +353,7 @@ function PlannerCreatePage() {
           <Autocomplete
             onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
             onPlaceChanged={onPlaceSelected}
+            options={{ fields: ["name", "geometry", "types", "formatted_address", "place_id"] }}
           >
             <SearchWrapper>
               <SearchInput placeholder="장소를 검색해서 추가하세요" />
