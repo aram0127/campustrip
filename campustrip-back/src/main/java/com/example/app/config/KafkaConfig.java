@@ -31,17 +31,28 @@ public class KafkaConfig {
 
     // Producer 설정 (메시지 발행)
     @Bean
-    public ProducerFactory<String, ChatMessageDTO> producerFactory() {
+    public DefaultKafkaProducerFactory<String, ChatMessageDTO> chatProducerFactory() {
         Map<String, Object> config = new HashMap<>();
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+                org.springframework.kafka.support.serializer.JsonSerializer.class);
+
+        // 안정화 옵션
+        config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+        config.put(ProducerConfig.ACKS_CONFIG, "all");
+        config.put(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE);
+        config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 120_000);
+        config.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 30_000);
+        // 메타데이터 갱신 빈도(필요 시)
+        config.put(ProducerConfig.METADATA_MAX_AGE_CONFIG, 5_000);
+
         return new DefaultKafkaProducerFactory<>(config);
     }
 
     @Bean
     public KafkaTemplate<String, ChatMessageDTO> kafkaTemplate() {
-        return new KafkaTemplate<>(producerFactory());
+        return new KafkaTemplate<>(chatProducerFactory());
     }
 
     // 위치 정보용 추가 (String)
@@ -67,11 +78,15 @@ public class KafkaConfig {
     public ConsumerFactory<String, ChatMessageDTO> consumerFactory() {
         Map<String, Object> config = new HashMap<>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, "chat-group");  // 추가
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
         config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
         config.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
         config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, ChatMessageDTO.class);
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");  // 추가
+        config.put(ConsumerConfig.METADATA_MAX_AGE_CONFIG, "5000");  // 추가 - 토픽 메타데이터 갱신 주기
+        config.put(ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG, true);  // 추가
         return new DefaultKafkaConsumerFactory<>(config);
     }
 
@@ -111,6 +126,8 @@ public class KafkaConfig {
         ConcurrentKafkaListenerContainerFactory<String, ChatMessageDTO> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
+        factory.getContainerProperties().setPollTimeout(3000);  // 추가
+        factory.getContainerProperties().setIdleBetweenPolls(1000);  // 추가
         return factory;
     }
 

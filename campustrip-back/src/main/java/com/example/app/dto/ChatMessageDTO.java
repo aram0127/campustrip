@@ -1,6 +1,7 @@
 package com.example.app.dto;
 
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 
@@ -15,5 +16,22 @@ public class ChatMessageDTO {
     private Integer membershipId;
     private String userName;
     private String message;
+    private MultipartFile image;
     private LocalDateTime timestamp;
+    public ChatMessageDTO (MessageType messageType, Integer roomId, Integer membershipId, String userName, String message, LocalDateTime timestamp) {
+        this.messageType = messageType;
+        this.roomId = roomId;
+        this.membershipId = membershipId;
+        this.userName = userName;
+        this.message = message;
+        this.timestamp = timestamp;
+    }
+    public ChatMessageDTO (MessageType messageType, Integer roomId, Integer membershipId, String userName, MultipartFile image, LocalDateTime timestamp) {
+        this.messageType = messageType;
+        this.roomId = roomId;
+        this.membershipId = membershipId;
+        this.userName = userName;
+        this.image = image;
+        this.timestamp = timestamp;
+    }
 }
