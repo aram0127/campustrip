@@ -43,20 +43,17 @@ public class ReviewService {
             return null; // 또는 예외 처리
         }
         ReviewDTO reviewDTO = new ReviewDTO(review);
-
         List<String> assetList = new ArrayList<>();
         reviewAssetRepository.findAllByReviewId(id).forEach(asset -> {
             assetList.add(asset.getStorageUrl());
         });
-
         User user = userRepository.findByUserId(userId).orElse(null);
         if (user == null) {
             throw new IllegalStateException("User not found with userId: " + userId);
         }
 
-        long count = reviewLikeRepository.countByReviewId(id);
-        reviewDTO.setLikeCount((int) count);
-
+        Integer likeCount = reviewLikeRepository.countByReviewId(id);
+        reviewDTO.setLikeCount(likeCount);
         ReviewLike like = reviewLikeRepository.findByUserAndReview(user, review);
         reviewDTO.setLikedByCurrentUser(like != null);
 

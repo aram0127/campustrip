@@ -15,7 +15,7 @@ import java.util.List;
 public interface ReviewLikeRepository extends JpaRepository<ReviewLike, ReviewLikeId> {
     ReviewLike findByUserAndReview(User user, Review review);
     boolean existsByUser(User user);
-    long countByReviewId(Integer reviewId);
+    Integer countByReviewId(Integer reviewId);
 
     @Query("SELECT rl.review.id AS reviewId, COUNT(rl) AS likeCountLong " +
             "FROM ReviewLike rl WHERE rl.review.id IN :reviewIds GROUP BY rl.review.id")
