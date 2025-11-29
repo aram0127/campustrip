@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import styled, { useTheme } from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { GoogleMap, useJsApiLoader, Marker, Autocomplete, Polyline } from "@react-google-maps/api";
@@ -6,13 +6,19 @@ import { IoSearch } from "react-icons/io5";
 import type { PlannerPlace, PlannerSchedule, PlannerDetail } from "../../types/planner";
 import { savePlanner } from "../../api/planners";
 
-// 1~8일차 고정 색상
+// 일차별 색상 
 const DAY_COLORS = [
-  "#FF5722", "#2196F3", "#4CAF50", "#9C27B0", 
-  "#FFC107", "#E91E63", "#00BCD4", "#795548",
+  "#FF5722", // 1일차: 주황
+  "#2196F3", // 2일차: 파랑
+  "#4CAF50", // 3일차: 초록
+  "#9C27B0", // 4일차: 보라
+  "#FFC107", // 5일차: 노랑
+  "#E91E63", // 6일차: 분홍
+  "#00BCD4", // 7일차: 하늘
+  "#795548", // 8일차: 갈색
 ];
 
-// 스타일 컴포넌트
+// --- 스타일 컴포넌트 ---
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -61,6 +67,7 @@ const DateRow = styled.div`
 const DateInput = styled.input`
   flex: 1;
   min-width: 0;
+  width: 180px;
   padding: 10px;
   border-radius: 8px;
   border: 1px solid ${({ theme }) => theme.colors.borderColor};
@@ -126,7 +133,7 @@ const DaySelector = styled.div`
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding: 4px 4px 16px 4px;
+  padding-bottom: 12px;
   margin-bottom: 12px;
 `;
 
@@ -220,17 +227,13 @@ function PlannerCreatePage() {
   const [title, setTitle] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  
-  // 전체 일정 데이터
   const [schedules, setSchedules] = useState<PlannerSchedule[]>([
     { day: 1, places: [] }
   ]);
-  
   const [currentDay, setCurrentDay] = useState(1);
-  const [mapCenter, setMapCenter] = useState({ lat: 37.5665, lng: 126.9780 }); // 서울 시청
+  const [mapCenter, setMapCenter] = useState({ lat: 37.5665, lng: 126.9780 }); // 서울 시청 좌표
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
-  // 일차별 색상 계산 함수
   const getCurrentDayColor = (day: number) => {
     if (day <= DAY_COLORS.length) {
       return DAY_COLORS[day - 1];
@@ -241,71 +244,66 @@ function PlannerCreatePage() {
 
   const currentColor = getCurrentDayColor(currentDay);
 
-  // 현재 일차의 장소 목록 (리스트 표시용)
-  const currentPlaces = schedules[currentDay - 1]?.places || [];
+  const pathCoordinates = schedules[currentDay - 1]?.places.map(place => ({
+    lat: place.latitude,
+    lng: place.longitude
+  })) || [];
 
-  // 카테고리 분류 함수
+  // 점선 스타일 정의
+  const lineSymbol = {
+    path: "M 0,-1 0,1",
+    strokeOpacity: 1,
+    scale: 3,
+    strokeColor: currentColor
+  };
+
   const getCategoryFromTypes = (types: string[] | undefined): string => {
-    if (!types || types.length === 0) return "기타";
-    if (types.some(t => ["lodging", "campground", "hotel", "motel", "guest_house"].includes(t))) return "숙소";
-    if (types.some(t => ["restaurant", "food", "cafe", "bakery", "bar", "meal_takeaway"].includes(t))) return "맛집/카페";
-    if (types.some(t => ["shopping_mall", "department_store", "clothing_store", "convenience_store", "store"].includes(t))) return "쇼핑";
-    if (types.some(t => ["tourist_attraction", "amusement_park", "park", "museum", "art_gallery", "landmark", "point_of_interest"].includes(t))) return "명소";
-    if (types.some(t => ["airport", "bus_station", "subway_station", "train_station", "transit_station"].includes(t))) return "교통";
+    if (!types) return "기타";
+    if (types.includes("lodging")) return "숙소";
+    if (types.includes("restaurant") || types.includes("food") || types.includes("cafe")) return "맛집/카페";
+    if (types.includes("tourist_attraction") || types.includes("museum") || types.includes("park")) return "명소";
+    if (types.includes("transit_station") || types.includes("airport")) return "교통";
+    if (types.includes("shopping_mall") || types.includes("store")) return "쇼핑";
     return "기타";
   };
 
-  // 장소 추가 핸들러
   const onPlaceSelected = () => {
     const place = autocompleteRef.current?.getPlace();
     if (!place) return;
     if (!place.geometry || !place.geometry.location) {
-        alert(`"${place.name}"에 대한 세부 정보를 찾을 수 없습니다.`);
+        alert(`"${place.name}"에 대한 세부 정보를 찾을 수 없습니다.\n자동완성 목록에서 장소를 클릭해주세요!`);
         return;
     }
-
     const newPlace: PlannerPlace = {
       placeName: place.name || "알 수 없는 장소",
       latitude: place.geometry.location.lat(),
       longitude: place.geometry.location.lng(),
       order: schedules[currentDay - 1].places.length + 1,
-      category: getCategoryFromTypes(place.types),
       memo: ""
     };
     
     setMapCenter({ lat: newPlace.latitude, lng: newPlace.longitude });
 
-    setSchedules(prevSchedules => 
-      prevSchedules.map((schedule, index) => 
-        index === currentDay - 1 
-          ? { ...schedule, places: [...schedule.places, newPlace] } 
-          : schedule
-      )
-    );
+    // 불변성 유지하며 업데이트
+    const newSchedules = [...schedules];
+    newSchedules[currentDay - 1].places.push(newPlace);
+    setSchedules(newSchedules);
   };
 
-  // 장소 삭제 핸들러
   const removePlace = (dayIdx: number, placeIdx: number) => {
-    setSchedules(prevSchedules => {
-      const updatedSchedules = prevSchedules.map((schedule, idx) => {
-        if (idx !== dayIdx) return schedule;
-        const newPlaces = [...schedule.places];
-        newPlaces.splice(placeIdx, 1);
-        newPlaces.forEach((p, i) => { p.order = i + 1; });
-        return { ...schedule, places: newPlaces };
-      });
-      return updatedSchedules;
+    const newSchedules = [...schedules];
+    newSchedules[dayIdx].places.splice(placeIdx, 1);
+    newSchedules[dayIdx].places.forEach((p, idx) => {
+      p.order = idx + 1;
     });
+    setSchedules(newSchedules);
   };
 
-  // 일차 추가
   const addDay = () => {
-    const nextDay = schedules.length + 1;
-    setSchedules([...schedules, { day: nextDay, places: [] }]);
-    setCurrentDay(nextDay);
+    setSchedules([...schedules, { day: schedules.length + 1, places: [] }]);
+    setCurrentDay(schedules.length + 1);
   };
 
-  // 저장
   const handleSave = async () => {
     if (!title.trim()) return alert("여행 제목을 입력하세요.");
     const newPlannerData: Partial<PlannerDetail> = {
@@ -324,16 +322,6 @@ function PlannerCreatePage() {
       alert("저장 중 오류가 발생했습니다.");
     }
   };
-
-  // 일차 변경 시 지도 이동
-  useEffect(() => {
-    if (currentPlaces.length > 0) {
-      setMapCenter({ 
-        lat: currentPlaces[0].latitude, 
-        lng: currentPlaces[0].longitude 
-      });
-    }
-  }, [currentDay]); 
 
   if (!isLoaded) return <div>지도를 불러오는 중...</div>;
 
@@ -377,58 +365,40 @@ function PlannerCreatePage() {
           zoom={12}
           options={{ disableDefaultUI: true, clickableIcons: false }}
         >
-          {schedules.map((schedule) => {
-            const dayColor = getCurrentDayColor(schedule.day);
-            const path = schedule.places.map((p) => ({
-              lat: p.latitude,
-              lng: p.longitude,
-            }));
+          {/* 점선 그리기 - 경로가 있을 때만 렌더링 */}
+          {pathCoordinates.length > 1 && (
+            <Polyline
+              path={pathCoordinates}
+              options={{
+                strokeOpacity: 0, // 실선 숨김
+                icons: [{
+                  icon: lineSymbol,
+                  offset: "0",
+                  repeat: "20px", // 점선 간격
+                }],
+                zIndex: 1, // 마커 뒤에 위치
+              }}
+            />
+          )}
 
-            return (
-              <React.Fragment key={schedule.day}>
-                {/* 1. 경로 점선 그리기 */}
-                {path.length > 1 && (
-                  <Polyline
-                    path={path}
-                    options={{
-                      strokeOpacity: 0, // 실선 숨김
-                      icons: [{
-                        icon: {
-                          path: "M 0,-1 0,1",
-                          strokeOpacity: 1,
-                          scale: 3,
-                          strokeColor: dayColor, // 해당 일차의 색상 적용
-                        },
-                        offset: "0",
-                        repeat: "20px",
-                      }],
-                      zIndex: 1,
-                    }}
-                  />
-                )}
-
-                {/* 2. 마커 그리기 */}
-                {schedule.places.map((place, idx) => (
-                  <Marker
-                    key={`${schedule.day}-${idx}`}
-                    position={{ lat: place.latitude, lng: place.longitude }}
-                    label={{ text: String(idx + 1), color: "white", fontWeight: "bold" }}
-                    zIndex={2}
-                    icon={{
-                      path: "M 12 2 C 8.13 2 5 5.13 5 9 c 0 5.25 7 13 7 13 s 7 -7.75 7 -13 c 0 -3.87 -3.13 -7 -7 -7 z",
-                      fillColor: dayColor, // 해당 일차 색상 적용
-                      fillOpacity: 1,
-                      strokeColor: "white",
-                      strokeWeight: 2,
-                      scale: 1.5,
-                      labelOrigin: new google.maps.Point(12, 9),
-                      anchor: new google.maps.Point(12, 22),
-                    }}
-                  />
-                ))}
-              </React.Fragment>
-            );
-          })}
+          {schedules[currentDay - 1]?.places.map((place, idx) => (
+              <Marker
+                key={`${currentDay}-${idx}`} // key를 고유하게 변경하여 리렌더링 이슈 방지
+                position={{ lat: place.latitude, lng: place.longitude }}
+                label={{ text: String(idx + 1), color: "white", fontWeight: "bold" }}
+                zIndex={2}
+                icon={{
+                  path: "M 12 2 C 8.13 2 5 5.13 5 9 c 0 5.25 7 13 7 13 s 7 -7.75 7 -13 c 0 -3.87 -3.13 -7 -7 -7 z",
+                  fillColor: currentColor,
+                  fillOpacity: 1,
+                  strokeColor: "white",
+                  strokeWeight: 2,
+                  scale: 1.5,
+                  labelOrigin: new google.maps.Point(12, 9),
+                  anchor: new google.maps.Point(12, 22),
+                }}
+              />
+            ))}
         </GoogleMap>
       </MapContainer>
 
@@ -448,12 +418,12 @@ function PlannerCreatePage() {
         </DaySelector>
 
         <div style={{ paddingBottom: "20px" }}>
-          {currentPlaces.length === 0 ? (
+          {schedules[currentDay - 1]?.places.length === 0 ? (
             <p style={{textAlign: "center", color: "#999", marginTop: "20px"}}>
               검색창을 이용해<br/>일정을 추가하세요
             </p>
           ) : (
-            currentPlaces.map((place, idx) => (
+            schedules[currentDay - 1]?.places.map((place, idx) => (
               <PlaceItem key={idx}>
                 <NumberBadge $color={currentColor}>
                   {idx + 1}
