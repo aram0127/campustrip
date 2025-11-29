@@ -35,6 +35,7 @@ import { PostCreateProvider } from "./context/PostCreateContext";
 import ReviewCreatePage from "./pages/review/ReviewCreatePage";
 import ReviewDetailPage from "./pages/review/ReviewDetailPage";
 import { requestFcmToken, onMessageListener } from "./firebase";
+import PersonalInfoPage from "./pages/profile/PersonalInfoPage"; // 추가
 // import { apiClient } from "./api/client"; // 나중에 주석 해제
 
 const RootRedirect: React.FC = () => {
@@ -141,6 +142,10 @@ function App() {
               />
               <Route path="/reviews/new" element={<ReviewCreatePage />} />
               <Route path="/reviews/:reviewId" element={<ReviewDetailPage />} />
+              <Route
+                path="/settings/personal-info"
+                element={<PersonalInfoPage />}
+              />
 
               {/* MainLayout을 사용하는 페이지들 */}
               <Route
