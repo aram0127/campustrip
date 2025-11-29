@@ -23,14 +23,18 @@ export const deleteAllUserTokens = async (membershipId: number) => {
   return response.data;
 };
 
-// 테스트 알림 전송
+// 테스트 알림 전송 - DTO 기반
 export const sendTestNotification = async (
-  membershipId: number,
+  receiverId: number,
   title: string,
-  body: string
+  body: string,
+  senderId?: number,
+  type?: string
 ) => {
   const response = await apiClient.post("/api/fcm/test", {
-    membershipId,
+    receiverId,
+    senderId: senderId || null,
+    type: type || "TEST",
     title,
     body,
   });

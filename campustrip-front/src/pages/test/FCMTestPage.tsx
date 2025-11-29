@@ -135,7 +135,13 @@ const FCMTestPage: React.FC = () => {
     setLoading(true);
     setMessage("");
     try {
-      await sendTestNotification(Number(membershipId), testTitle, testBody);
+      await sendTestNotification(
+        Number(membershipId),
+        testTitle,
+        testBody,
+        user?.id,
+        "TEST"
+      );
       setMessage("✅ 테스트 알림이 전송되었습니다.");
     } catch (error) {
       console.error("알림 전송 오류:", error);
@@ -147,7 +153,8 @@ const FCMTestPage: React.FC = () => {
 
   return (
     <PageLayout title="FCM 알림 테스트" showBackButton>
-      <Container>
+      <ScrollContainer>
+        <Container>
         <Section>
           <SectionTitle>1. FCM 토큰 발급</SectionTitle>
           <Description>
@@ -288,16 +295,42 @@ fcmService.sendNotificationToUser(
           </GuideList>
         </Section>
       </Container>
+      </ScrollContainer>
     </PageLayout>
   );
 };
 
 export default FCMTestPage;
 
+const ScrollContainer = styled.div`
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* 스크롤바 스타일링 */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: ${({ theme }) => theme.colors.background};
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: ${({ theme }) => theme.colors.borderColor};
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: ${({ theme }) => theme.colors.secondaryTextColor};
+  }
+`;
+
 const Container = styled.div`
   padding: 20px;
   max-width: 800px;
   margin: 0 auto;
+  padding-bottom: 40px;
 `;
 
 const Section = styled.div`
