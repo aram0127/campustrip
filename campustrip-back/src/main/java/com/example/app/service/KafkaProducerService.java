@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -56,24 +57,38 @@ public class KafkaProducerService {
     }
 
     private void createTopicIfNotExists(String topicName) {
+        AdminClient adminClient = null;
         try {
-            AdminClient adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties());
+            adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties());
 
             ListTopicsResult topics = adminClient.listTopics();
-            Set<String> topicNames = topics.names().get();
+            Set<String> topicNames = topics.names().get(30, TimeUnit.SECONDS);
 
             if (!topicNames.contains(topicName)) {
                 NewTopic newTopic = new NewTopic(topicName, 1, (short) 1);
-                adminClient.createTopics(Collections.singleton(newTopic));
-                log.info("토픽 생성됨: {}", topicName);
-                Thread.sleep(1000); // 토픽 생성 후 메타데이터 갱신 대기
+                adminClient.createTopics(Collections.singleton(newTopic)).all().get(30, TimeUnit.SECONDS);
+                log.info("✅ 토픽 생성 완료: {}", topicName);
+
+                // 토픽 메타데이터 갱신 대기 (중요!)
+                Thread.sleep(2000);
+
+                // 토픽 생성 확인
+                Set<String> updatedTopics = adminClient.listTopics().names().get(10, TimeUnit.SECONDS);
+                if (updatedTopics.contains(topicName)) {
+                    log.info("✅ 토픽 메타데이터 갱신 확인: {}", topicName);
+                } else {
+                    log.warn("⚠️ 토픽이 생성되었으나 메타데이터에서 확인되지 않음: {}", topicName);
+                }
             } else {
                 log.debug("토픽 이미 존재: {}", topicName);
             }
-
-            adminClient.close();
         } catch (Exception e) {
-            log.warn("토픽 생성 실패 (이미 존재할 수 있음): {}", topicName);
+            log.error("❌ 토픽 생성/확인 실패: {}", topicName, e);
+            throw new RuntimeException("토픽 생성 실패: " + topicName, e);
+        } finally {
+            if (adminClient != null) {
+                adminClient.close();
+            }
         }
     }
 }

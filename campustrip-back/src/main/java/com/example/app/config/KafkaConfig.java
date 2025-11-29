@@ -85,7 +85,7 @@ public class KafkaConfig {
         config.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
         config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, ChatMessageDTO.class);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");  // 추가
-        config.put(ConsumerConfig.METADATA_MAX_AGE_CONFIG, "5000");  // 추가 - 토픽 메타데이터 갱신 주기
+        config.put(ConsumerConfig.METADATA_MAX_AGE_CONFIG, "3000");  // 추가 - 토픽 메타데이터 갱신 주기
         config.put(ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG, true);  // 추가
         return new DefaultKafkaConsumerFactory<>(config);
     }
@@ -117,6 +117,9 @@ public class KafkaConfig {
         ConcurrentKafkaListenerContainerFactory<String, LocationMessage> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(locationConsumerFactory());
+        factory.getContainerProperties().setPollTimeout(3000);
+        factory.getContainerProperties().setIdlePartitionEventInterval(5000L);
+
         return factory;
     }
 

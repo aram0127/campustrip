@@ -3,9 +3,6 @@ package com.example.app.service;
 import com.example.app.domain.*;
 import com.example.app.dto.*;
 import com.example.app.repository.*;
-import com.sun.net.httpserver.Authenticator;
-import jakarta.transaction.Transactional;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;  // @Service 어노테이션
@@ -64,9 +61,10 @@ public class PostService {
         //return postRepository.findAllByRegionIds(regionIds);
     }
 
-    public Post savePost(CreatePost createPost, ChatService chatService, S3Service s3Service) throws Exception {
+    public Post savePost(CreatePost createPost, ChatService chatService, ChatMessageService chatMessageService, S3Service s3Service) throws Exception {
         Post newPost = createPost.toEntity();
         Chat chat = chatService.saveChat(new CreateChat(newPost));
+        chatMessageService.sendJoinMessage(chat, newPost.getUser().getId());
         newPost.setChat(chat);
         List<Integer> regions = createPost.getRegions();
         newPost.setRegions(new HashSet<>(regionRepository.findByRegionIdIn(regions)));
