@@ -4,8 +4,8 @@ import { type Applicant } from "../types/applicant";
 
 // '동행 신청' 시 POST로 보낼 데이터의 타입 정의
 interface ApplicationData {
-  post: { postId: number };
-  user: { userId: string };
+  postId: number;
+  userId: string;
 }
 
 /* 동행 신청 */

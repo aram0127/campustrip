@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.app.domain.Application;
 import com.example.app.dto.CreateChatMember;
+import com.example.app.dto.CreateApplicationRequest;
 import java.util.List;
 
 @RestController
@@ -52,9 +53,8 @@ public class ApplicationController {
 
     // 새 동행 신청 생성
     @PostMapping
-    public Application createApplication(@RequestBody Application application) {
-        applicationService.saveApplication(application);
-        return application;
+    public Application createApplication(@RequestBody CreateApplicationRequest request) {
+        return applicationService.createApplication(request);
     }
 
     // 동행 신청 수락 (신청받은 사람이 수락)
