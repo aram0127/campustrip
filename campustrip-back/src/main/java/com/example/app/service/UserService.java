@@ -3,7 +3,6 @@ package com.example.app.service;
 import com.example.app.dto.CreateUserRate;
 import com.example.app.dto.CustomUserDetails;
 import com.example.app.dto.UserRateDTO;
-import com.example.app.dto.UserResponse;
 import com.example.app.repository.UserRateRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -34,6 +33,10 @@ public class UserService implements UserDetailsService {
 
     public User getUserByName(String name) {
         return userRepository.findByName(name);
+    }
+
+    public User getUserByUserId(String userId) {
+        return userRepository.findByUserId(userId).orElseThrow(() -> new NoSuchElementException("User not found with userId: " + userId));
     }
 
     public User getUserById(Integer id) {

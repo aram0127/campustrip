@@ -1,6 +1,8 @@
 package com.example.app.service;
 
 import com.example.app.domain.ChatMember;
+import com.example.app.domain.Post;
+import com.example.app.repository.PostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.example.app.repository.ChatRepository;
@@ -15,17 +17,19 @@ import java.util.List;
 
 @Service
 public class ChatService {
-    ChatRepository chatRepository;
-    ChatMemberRepository chatMemberRepository;
-    UserRepository userRepository;
+    private final ChatRepository chatRepository;
+    private final ChatMemberRepository chatMemberRepository;
+    private final UserRepository userRepository;
+    private final PostRepository postRepository;
 
     @Autowired
     public ChatService(ChatRepository chatRepository,
                        ChatMemberRepository chatMemberRepository,
-                       UserRepository userRepository) {
+                       UserRepository userRepository, PostRepository postRepository) {
         this.chatRepository = chatRepository;
         this.chatMemberRepository = chatMemberRepository;
         this.userRepository = userRepository;
+        this.postRepository = postRepository;
     }
 
     public Chat saveChat(CreateChat createChat) {
@@ -62,5 +66,20 @@ public class ChatService {
         return chatMembers.stream()
                           .map(ChatMember::getChat)
                           .toList();
+    }
+
+    public Integer getPostIdByChatId(Integer chatId) {
+        Chat chat = chatRepository.findById(chatId).orElseThrow();
+        Post post = postRepository.findByChat(chat);
+        if (post == null) {
+            throw new IllegalArgumentException("Post not found for the given chatId");
+        }
+        return post.getPostId();
+    }
+
+    public void removeChatMemberByPostAndUser(Integer postId, User user) {
+        Post post = postRepository.findById(postId).orElseThrow(() -> new IllegalArgumentException("Post not found"));
+        Chat chat = post.getChat();
+        chatMemberRepository.deleteByChatAndUser(chat, user);
     }
 }
