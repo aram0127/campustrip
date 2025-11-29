@@ -8,6 +8,7 @@ import com.example.app.service.PlannerService;
 import com.example.app.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,29 +32,27 @@ public class PlannerController {
     }
     // 사용자id로 플래너 목록 조회
     @GetMapping("/user/{memberId}")
-    public List<Planner> getPlannersByUserId(@PathVariable Integer memberId) {
-        return plannerService.findAllByUserId(memberId);
+    public List<PlannerResponseDTO> getPlannersByUserId(@PathVariable Integer memberId) {
+        return plannerService.findAllByUserId(memberId).stream().map(planner -> new PlannerResponseDTO(planner)).toList();
+    }
+
+    @GetMapping("/user")
+    public List<PlannerResponseDTO> getPlannersByUser(@AuthenticationPrincipal String userId) {
+        return plannerService.findAllByUserUserId(userId).stream().map(planner -> new PlannerResponseDTO(planner)).toList();
     }
 
     // 새 플래너 생성
     @PostMapping
-    public Planner createPlanner(@RequestBody CreatePlanner createPlanner) {
-        // 플래너 생성 로직 구현
-        Planner planner = new Planner();
-        planner.setUser(createPlanner.getUser());
-        planner.setStartDate(createPlanner.getStartDate());
-        planner.setEndDate(createPlanner.getEndDate());
-        plannerService.savePlanner(planner);
-
-        return planner;
+    public PlannerResponseDTO createPlanner(@RequestBody CreatePlanner createPlanner) {
+        Planner planner = plannerService.savePlannerWithDetails(createPlanner);
+        return new PlannerResponseDTO(planner);
     }
 
     // 플래너 수정
     @PutMapping("/{plannerId}")
-    public Planner updatePlanner(@PathVariable Integer plannerId, @RequestBody Planner planner) {
-        planner.setPlannerId(plannerId);
-        plannerService.savePlanner(planner);
-        return planner;
+    public PlannerResponseDTO updatePlanner(@PathVariable Integer plannerId, @RequestBody CreatePlanner createPlanner) {
+        Planner planner = plannerService.updatePlannerWithDetails(plannerId, createPlanner);
+        return new PlannerResponseDTO(planner);
     }
 
     // 플래너 삭제

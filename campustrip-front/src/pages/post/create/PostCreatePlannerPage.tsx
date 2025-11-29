@@ -23,7 +23,7 @@ const ScrollingListContainer = styled(ScrollingContent)`
   padding: 16px;
 `;
 
-const PlannerItem = styled.div<{ isSelected: boolean }>`
+const PlannerItem = styled.div<{ $isSelected: boolean }>`
   display: block;
   padding: 20px;
   margin-bottom: 16px;
@@ -34,8 +34,8 @@ const PlannerItem = styled.div<{ isSelected: boolean }>`
   cursor: pointer;
 
   border: 2px solid
-    ${({ theme, isSelected }) =>
-      isSelected ? theme.colors.primary : "transparent"};
+    ${({ theme, $isSelected }) =>
+      $isSelected ? theme.colors.primary : "transparent"};
 `;
 
 const PlannerTitle = styled.h2`
@@ -193,14 +193,14 @@ const PostCreatePlannerPage: React.FC = () => {
         {planners.map((planner) => (
           <PlannerItem
             key={planner.plannerId}
-            isSelected={selectedPlannerId === planner.plannerId}
+            $isSelected={selectedPlannerId === planner.plannerId}
             onClick={() => setSelectedPlannerId(planner.plannerId)}
           >
             <PlannerTitle>{planner.title}</PlannerTitle>
             <PlannerInfo>
               📅 기간: {planner.startDate} ~ {planner.endDate}
             </PlannerInfo>
-            <PlannerInfo>👥 제작자: {planner.user.name}</PlannerInfo>
+            <PlannerInfo>👥 제작자: {planner.userName}</PlannerInfo>
           </PlannerItem>
         ))}
 

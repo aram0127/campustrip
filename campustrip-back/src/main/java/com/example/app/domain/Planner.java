@@ -1,10 +1,7 @@
 package com.example.app.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name="Planner")
@@ -12,6 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Planner {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,6 +19,9 @@ public class Planner {
     @ManyToOne
     @JoinColumn(name = "membership_id", nullable = false)
     private User user;
+
+    @Column(name="title", nullable=false)
+    private String title;
 
     @Column(name="start_date", nullable=false)
     private java.time.LocalDate startDate;

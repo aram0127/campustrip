@@ -19,16 +19,16 @@ const TabContainer = styled.div`
   margin-bottom: ${({ theme }) => theme.spacings.medium};
 `;
 
-const TabButton = styled.button<{ isActive: boolean }>`
+const TabButton = styled.button<{ $isActive: boolean }>`
   padding: ${({ theme }) => theme.spacings.small}
     ${({ theme }) => theme.spacings.medium}; /* 12px 16px */
   border: none;
   background-color: transparent;
-  color: ${({ theme, isActive }) =>
-    isActive ? theme.colors.primary : theme.colors.grey};
+  color: ${({ theme, $isActive }) =>
+    $isActive ? theme.colors.primary : theme.colors.grey};
   border-bottom: 2px solid
-    ${({ theme, isActive }) =>
-      isActive ? theme.colors.primary : "transparent"};
+    ${({ theme, $isActive }) =>
+      $isActive ? theme.colors.primary : "transparent"};
   cursor: pointer;
   font-size: ${({ theme }) => theme.fontSizes.body};
 `;
@@ -52,18 +52,18 @@ const RegionList = styled.ul`
   }
 `;
 
-const RegionItem = styled.li<{ isSelected: boolean }>`
+const RegionItem = styled.li<{ $isSelected: boolean }>`
   padding: ${({ theme }) => theme.spacings.small}; /* 12px */
   border-radius: ${({ theme }) => theme.borderRadius.small};
   cursor: pointer;
-  background-color: ${({ theme, isSelected }) =>
-    isSelected ? theme.colors.primary : "transparent"};
-  color: ${({ theme, isSelected }) =>
-    isSelected ? "white" : theme.colors.text};
+  background-color: ${({ theme, $isSelected }) =>
+    $isSelected ? theme.colors.primary : "transparent"};
+  color: ${({ theme, $isSelected }) =>
+    $isSelected ? "white" : theme.colors.text};
 
   &:hover {
-    background-color: ${({ theme, isSelected }) =>
-      !isSelected &&
+    background-color: ${({ theme, $isSelected }) =>
+      !$isSelected &&
       (theme.colors.background === "#FFFFFF" ? "#f1f1f1" : "#333")};
   }
 `;
@@ -94,9 +94,15 @@ const getAllIdsFromRegionList = (regionList: RegionList[]): number[] => {
     province.regions.forEach((region) => {
       ids.push(region.id);
     });
+
+    const firstChildId = province.regions[0]?.id ?? 0;
+    if (firstChildId > 0) {
+      const parentId = Math.floor(firstChildId / 100) * 100;
+      ids.push(parentId);
+    }
   });
-  // ID가 0인 경우(DB 데이터 오류) 필터링
-  return ids.filter((id) => id > 0);
+
+  return Array.from(new Set(ids)).filter((id) => id > 0);
 };
 
 const LocationFilterModal: React.FC<LocationFilterModalProps> = ({
@@ -259,13 +265,13 @@ const LocationFilterModal: React.FC<LocationFilterModalProps> = ({
       <Title>어디로 떠나시나요?</Title>
       <TabContainer>
         <TabButton
-          isActive={activeTab === "domestic"}
+          $isActive={activeTab === "domestic"}
           onClick={() => handleTabClick("domestic")}
         >
           국내
         </TabButton>
         <TabButton
-          isActive={activeTab === "overseas"}
+          $isActive={activeTab === "overseas"}
           onClick={() => handleTabClick("overseas")}
         >
           해외
@@ -282,7 +288,7 @@ const LocationFilterModal: React.FC<LocationFilterModalProps> = ({
             <>
               <RegionList>
                 <RegionItem
-                  isSelected={selectedMain === null}
+                  $isSelected={selectedMain === null}
                   onClick={handleSelectAllProvinces}
                 >
                   전체
@@ -290,7 +296,7 @@ const LocationFilterModal: React.FC<LocationFilterModalProps> = ({
                 {domesticRegions.map((province) => (
                   <RegionItem
                     key={province.province}
-                    isSelected={selectedMain === province.province}
+                    $isSelected={selectedMain === province.province}
                     onClick={() => handleSelectMain(province)}
                   >
                     {province.province}
@@ -302,7 +308,7 @@ const LocationFilterModal: React.FC<LocationFilterModalProps> = ({
               {selectedMain && (
                 <RegionList>
                   <RegionItem
-                    isSelected={finalSelection.name === selectedMain}
+                    $isSelected={finalSelection.name === selectedMain}
                     onClick={handleSelectProvinceAsFinal}
                   >
                     전체
@@ -310,7 +316,7 @@ const LocationFilterModal: React.FC<LocationFilterModalProps> = ({
                   {subRegions.map((subRegion) => (
                     <RegionItem
                       key={subRegion.id}
-                      isSelected={finalSelection.id === subRegion.id}
+                      $isSelected={finalSelection.id === subRegion.id}
                       onClick={() => handleSelectSub(subRegion)}
                     >
                       {subRegion.name}
@@ -324,7 +330,7 @@ const LocationFilterModal: React.FC<LocationFilterModalProps> = ({
           {activeTab === "overseas" && (
             <RegionList>
               <RegionItem
-                isSelected={selectedMain === null}
+                $isSelected={selectedMain === null}
                 onClick={handleSelectAllProvinces}
               >
                 전체
@@ -332,7 +338,7 @@ const LocationFilterModal: React.FC<LocationFilterModalProps> = ({
               {overseasRegions.map((continent) => (
                 <RegionItem
                   key={continent.province}
-                  isSelected={selectedMain === continent.province}
+                  $isSelected={selectedMain === continent.province}
                   onClick={() => handleSelectMain(continent)}
                 >
                   {continent.province}
@@ -345,7 +351,7 @@ const LocationFilterModal: React.FC<LocationFilterModalProps> = ({
           {activeTab === "overseas" && selectedMain && (
             <RegionList>
               <RegionItem
-                isSelected={finalSelection.name === selectedMain}
+                $isSelected={finalSelection.name === selectedMain}
                 onClick={handleSelectProvinceAsFinal}
               >
                 전체
@@ -353,7 +359,7 @@ const LocationFilterModal: React.FC<LocationFilterModalProps> = ({
               {subRegions.map((country) => (
                 <RegionItem
                   key={country.id}
-                  isSelected={finalSelection.id === country.id}
+                  $isSelected={finalSelection.id === country.id}
                   onClick={() => handleSelectSub(country)}
                 >
                   {country.name}

@@ -4,8 +4,8 @@ import { type Applicant } from "../types/applicant";
 
 // '동행 신청' 시 POST로 보낼 데이터의 타입 정의
 interface ApplicationData {
-  post: { postId: number };
-  user: { userId: string };
+  postId: number;
+  userId: string;
 }
 
 /* 동행 신청 */
@@ -65,6 +65,16 @@ export const rejectApplication = async (
   const response = await apiClient.put<Application>(
     "/api/applications/reject",
     data
+  );
+  return response.data;
+};
+
+// 내 신청 내역 조회
+export const getMyApplications = async (
+  userId: number
+): Promise<Application[]> => {
+  const response = await apiClient.get<Application[]>(
+    `/api/applications/user/${userId}`
   );
   return response.data;
 };

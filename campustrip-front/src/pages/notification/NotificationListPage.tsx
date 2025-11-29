@@ -128,7 +128,7 @@ function NotificationListPage() {
           </HeaderActionButton>
         </RightHeaderGroup>
       }
-      onBackClick={() => navigate("/")}
+      onBackClick={() => navigate(-1)}
     >
       <ScrollingContent>
         <NotificationList>

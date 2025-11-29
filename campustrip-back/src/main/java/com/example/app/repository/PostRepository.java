@@ -1,7 +1,10 @@
 package com.example.app.repository;
 
+import com.example.app.domain.Chat;
 import com.example.app.domain.Post;
 import com.example.app.domain.User;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -58,8 +61,43 @@ public interface PostRepository extends JpaRepository<Post,Integer>
     @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.chat JOIN FETCH p.regions r LEFT JOIN FETCH p.assets WHERE r.regionId IN :regionIds ORDER BY p.createdAt DESC")
     List<Post> findPostsByRegionIds(@Param("regionIds") List<Integer> regionIds);
 
+    /**
+     * 주어진 regionId 리스트에 포함된 지역과 연관된 게시글을 Slice로 조회합니다.
+     * 무한 스크롤을 지원하기 위해 Slice 타입으로 반환합니다.
+     * EntityGraph를 사용하여 연관 엔티티를 함께 로드하여 N+1 문제를 방지합니다.
+     *
+     * @param regionIds 조회할 지역 ID의 리스트
+     * @param pageable 페이징 정보
+     * @return 조건에 맞는 Post Slice
+     */
+    @Query("SELECT DISTINCT p FROM Post p JOIN p.regions r WHERE r.regionId IN :regionIds")
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "chat", "regions", "assets", "applications"})
+    Slice<Post> findPostsByRegionIdsSlice(@Param("regionIds") List<Integer> regionIds, Pageable pageable);
+
+    /**
+     * 전체 게시글을 Slice로 조회합니다.
+     * EntityGraph를 사용하여 연관 엔티티를 함께 로드하여 N+1 문제를 방지합니다.
+     *
+     * @param pageable 페이징 정보
+     * @return Post Slice
+     */
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "chat", "regions", "assets"})
+    Slice<Post> findAllBy(Pageable pageable);
+
+    /* 검색어(keyword)가 제목(title) 또는 본문(body)에 포함된 게시글을 Slice로 조회 */
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "chat", "regions", "assets"})
+    @Query("SELECT DISTINCT p FROM Post p WHERE (p.title LIKE %:keyword% OR p.body LIKE %:keyword%)")
+    Slice<Post> findAllByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+    /* 특정 지역(regionIds)에 속하면서, 검색어(keyword)가 포함된 게시글을 Slice로 조회 */
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "chat", "regions", "assets", "applications"})
+    @Query("SELECT DISTINCT p FROM Post p JOIN p.regions r WHERE r.regionId IN :regionIds AND (p.title LIKE %:keyword% OR p.body LIKE %:keyword%)")
+    Slice<Post> findPostsByRegionIdsAndKeyword(@Param("regionIds") List<Integer> regionIds, @Param("keyword") String keyword, Pageable pageable);
+
     // 동적 쿼리 생성
 //    @Query(value= "select m from Member m where m.memberId = :id and m.email = :email" )
 //    Member findMemberByIdAndEmail(@Param("id") Long id, @Param("email") String email);
 //    출처: https://sjh9708.tistory.com/167 [데굴데굴 개발자의 기록:티스토리]
+
+    Post findByChat(Chat chat);
 }

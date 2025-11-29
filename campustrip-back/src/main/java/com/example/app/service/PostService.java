@@ -3,6 +3,8 @@ package com.example.app.service;
 import com.example.app.domain.*;
 import com.example.app.dto.*;
 import com.example.app.repository.*;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;  // @Service 어노테이션
 import org.springframework.beans.factory.annotation.Autowired;  // 의존성 주입용 (선택적)
 
@@ -19,15 +21,17 @@ public class PostService {
     private final RegionRepository regionRepository;
     private final PlannerRepository plannerRepository;
     private final PostAssetRepository postAssetRepository;
+    private final S3Service s3Service;
 
     @Autowired
     public PostService(PostRepository postRepository,
-                       UserRepository userRepository, RegionRepository regionRepository, PlannerRepository plannerRepository, PostAssetRepository postAssetrepository) {
+                       UserRepository userRepository, RegionRepository regionRepository, PlannerRepository plannerRepository, PostAssetRepository postAssetrepository, S3Service s3Service) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.regionRepository = regionRepository;
         this.plannerRepository = plannerRepository;
         this.postAssetRepository = postAssetrepository;
+        this.s3Service = s3Service;
     }
 
     public List<Post> getAllPosts() {
@@ -57,9 +61,10 @@ public class PostService {
         //return postRepository.findAllByRegionIds(regionIds);
     }
 
-    public Post savePost(CreatePost createPost, ChatService chatService, S3Service s3Service) throws Exception {
+    public Post savePost(CreatePost createPost, ChatService chatService, ChatMessageService chatMessageService, S3Service s3Service) throws Exception {
         Post newPost = createPost.toEntity();
         Chat chat = chatService.saveChat(new CreateChat(newPost));
+        chatMessageService.sendJoinMessage(chat, newPost.getUser().getId());
         newPost.setChat(chat);
         List<Integer> regions = createPost.getRegions();
         newPost.setRegions(new HashSet<>(regionRepository.findByRegionIdIn(regions)));
@@ -67,6 +72,12 @@ public class PostService {
                 .orElseThrow(() -> new NoSuchElementException("Planner not found with id: 1"))
         );
         newPost = postRepository.save(newPost);
+
+        // 이미지 없을 때 처리
+        if (createPost.getImages() == null || createPost.getImages().isEmpty()) {
+            return newPost;
+        }
+        // 이미지 업로드 처리
         try{
             for(var image : createPost.getImages()){
                 String imageUrl = s3Service.uploadFile(image);
@@ -120,13 +131,22 @@ public class PostService {
     }
 
     public void deletePost(Integer postId) {
+        // 관련된 PostAsset도 함께 삭제
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new NoSuchElementException("Post not found with id: " + postId));
+        List<PostAsset> assets = (List<PostAsset>) postAssetRepository.findAllByPost(post);
+        for (var asset : assets) {
+            s3Service.deleteFile(asset.getStorageUrl()); // S3에서 파일 삭제
+            postAssetRepository.delete(asset);
+        }
+        // 관련된 PostRegion, Application 등도 cascade 옵션에 의해 함께 삭제될 것임
         postRepository.deleteById(postId);
     }
 
     public PostDTO convertPostToDTO(Post post, ChatService chatService, RegionService regionService) {
         PostDTO postDTO = new PostDTO();
         postDTO.setPostId(post.getPostId());
-        postDTO.setUser(post.getUser());
+        postDTO.setUser(new UserResponse(post.getUser()));
         postDTO.setUserScore(post.getUser().getUserScore());
         postDTO.setTitle(post.getTitle());
         postDTO.setBody(post.getBody());
@@ -177,5 +197,27 @@ public class PostService {
                 .collect(Collectors.toList());
         postDTO.setPostAssets(assetUrls);
         return postDTO;
+    }
+
+    /**
+     * 전체 게시글 조회
+     * keyword가 null이거나 빈 문자열이면 전체 조회, 있으면 검색 조회
+     */
+    public Slice<Post> getAllPostsSlice(String keyword, Pageable pageable) {
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            return postRepository.findAllByKeyword(keyword, pageable);
+        }
+        return postRepository.findAllBy(pageable);
+    }
+
+    /**
+     * 지역 필터링 게시글 조회
+     * keyword가 null이거나 빈 문자열이면 지역 필터만 적용, 있으면 지역+검색 조회
+     */
+    public Slice<Post> getPostsByRegionIdsSlice(List<Integer> regionIds, String keyword, Pageable pageable) {
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            return postRepository.findPostsByRegionIdsAndKeyword(regionIds, keyword, pageable);
+        }
+        return postRepository.findPostsByRegionIdsSlice(regionIds, pageable);
     }
 }
