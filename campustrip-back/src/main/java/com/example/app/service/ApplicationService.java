@@ -2,6 +2,7 @@ package com.example.app.service;
 
 import com.example.app.domain.Post;
 import com.example.app.domain.User;
+import com.example.app.dto.CreateApplicationRequest;
 import org.springframework.stereotype.Service;  // @Service 어노테이션
 import org.springframework.beans.factory.annotation.Autowired;  // 의존성 주입용 (선택적)
 import com.example.app.repository.ApplicationRepository;
@@ -64,5 +65,24 @@ public class ApplicationService {
                 .orElseThrow(() -> new RuntimeException("신청 내역을 찾을 수 없습니다."));
 
         applicationRepository.deleteByUserAndPost(user, post);
+    }
+
+    public Application createApplication(CreateApplicationRequest request) {
+        // 1. User 조회
+        User user = userRepository.findByUserId(request.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + request.getUserId()));
+
+        // 2. Post 조회
+        Post post = postRepository.findById(request.getPostId())
+                .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + request.getPostId()));
+
+        // 3. Application 엔티티 생성 및 설정
+        Application application = new Application();
+        application.setUser(user);
+        application.setPost(post);
+        application.setApplicationStatus(null); // 초기 상태 (대기)
+        // applicationDate는 엔티티 생성 시 자동 설정되거나 여기서 설정
+
+        return applicationRepository.save(application);
     }
 }

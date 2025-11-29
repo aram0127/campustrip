@@ -187,8 +187,8 @@ const PostImage = styled.img`
 `;
 
 interface ApplicationData {
-  post: { postId: number };
-  user: { userId: string };
+  postId: number;
+  userId: string;
 }
 
 interface CancelApplicationData {
@@ -362,8 +362,9 @@ const PostDetailPage: React.FC = () => {
     switch (applicationStatus) {
       case "NOT_APPLIED":
         applyForTrip({
-          post: { postId: post.postId },
-          user: { userId: user.userId },
+          // [수정] 구조 단순화: 객체 래핑 제거
+          postId: post.postId,
+          userId: user.userId,
         });
         break;
       case "PENDING":
@@ -520,7 +521,7 @@ const PostDetailPage: React.FC = () => {
           </MenuContainer>
         ) : null
       }
-      onBackClick={() => navigate(-1)}
+      onBackClick={() => navigate("/posts")}
     >
       <TabMenu>
         <TabButton
