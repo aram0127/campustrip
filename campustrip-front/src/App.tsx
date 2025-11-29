@@ -34,6 +34,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { PostCreateProvider } from "./context/PostCreateContext";
 import ReviewCreatePage from "./pages/review/ReviewCreatePage";
 import ReviewDetailPage from "./pages/review/ReviewDetailPage";
+import FCMTestPage from "./pages/test/FCMTestPage";
 import { requestFcmToken, onMessageListener } from "./firebase";
 // import { apiClient } from "./api/client"; // 나중에 주석 해제
 
@@ -88,9 +89,10 @@ function App() {
     handleFcmToken();
 
     // 포그라운드 메시지 수신 리스너 (테스트용)
-    onMessageListener().then((payload: any) => {
+    onMessageListener().then((payload) => {
       console.log("🔔 포그라운드 알림 수신:", payload);
-      alert(`${payload.notification.title}: ${payload.notification.body}`);
+      const notif = payload as { notification?: { title?: string; body?: string } };
+      alert(`${notif.notification?.title}: ${notif.notification?.body}`);
     });
   }, []);
 
@@ -141,6 +143,7 @@ function App() {
               />
               <Route path="/reviews/new" element={<ReviewCreatePage />} />
               <Route path="/reviews/:reviewId" element={<ReviewDetailPage />} />
+              <Route path="/test/fcm" element={<FCMTestPage />} />
 
               {/* MainLayout을 사용하는 페이지들 */}
               <Route
