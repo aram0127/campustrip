@@ -25,14 +25,16 @@ public class ApplicationController {
     private final PostService postService;
     private final UserService userService;
     private final ChatMessageService chatMessageService;
+    private final FCMService fcmService;
 
     @Autowired
-    public ApplicationController(ApplicationService applicationService, ChatService chatService, PostService postService, UserService userService, ChatMessageService chatMessageService) {
+    public ApplicationController(ApplicationService applicationService, ChatService chatService, PostService postService, UserService userService, ChatMessageService chatMessageService, FCMService fcmService) {
         this.applicationService = applicationService;
         this.chatService = chatService;
         this.postService = postService;
         this.userService = userService;
         this.chatMessageService = chatMessageService;
+        this.fcmService = fcmService;
     }
 
     // 사용자 ID로 동행 신청 조회
