@@ -51,9 +51,12 @@ public class ReviewService {
         if (user == null) {
             throw new IllegalStateException("User not found with userId: " + userId);
         }
+
         Integer likeCount = reviewLikeRepository.countByReviewId(id);
         reviewDTO.setLikeCount(likeCount);
-        reviewDTO.setLikedByCurrentUser(reviewLikeRepository.existsByUser(user));
+        ReviewLike like = reviewLikeRepository.findByUserAndReview(user, review);
+        reviewDTO.setLikedByCurrentUser(like != null);
+
         reviewDTO.setImageUrls(assetList);
         return reviewDTO;
     }
