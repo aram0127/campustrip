@@ -1,17 +1,14 @@
 package com.example.app.controller;
 
 import com.example.app.domain.Post;
-import com.example.app.domain.Region;
 import com.example.app.dto.*;
-import com.example.app.service.ChatService;
-import com.example.app.service.PostService;
-import com.example.app.service.RegionService;
-import com.example.app.service.S3Service;
+import com.example.app.service.*;
+import org.springframework.data.domain.*;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,24 +17,37 @@ import java.util.stream.Collectors;
 public class PostController {
     private final PostService postService;
     private final ChatService chatService;
+    private final ChatMessageService chatMessageService;
     private final RegionService regionService;
     private final S3Service s3Service;
 
     @Autowired
-    public PostController(PostService postService, ChatService chatService, RegionService regionService, S3Service s3Service) {
+    public PostController(PostService postService, ChatService chatService, ChatMessageService chatMessageService, RegionService regionService, S3Service s3Service) {
         this.postService = postService;
         this.chatService = chatService;
+        this.chatMessageService = chatMessageService;
         this.regionService = regionService;
         this.s3Service = s3Service;
     }
 
-    // GET: 전체 게시물 조회 (DTO 리스트를 반환하도록 수정)
     @GetMapping
-    public List<PostDTO> getAllPosts() {
-        List<Post> posts = postService.getAllPosts();
+    public Slice<PostDTO> getAllPostsInfinite(
+            @RequestParam(required = false) String keyword,
+            @PageableDefault(size = 3, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable){
+        System.out.println("=== getAllPostsInfinite 호출 ===");
+        System.out.println("요청된 페이지 크기(Size): " + pageable.getPageSize());
+        System.out.println("요청된 페이지 번호(Page): " + pageable.getPageNumber());
+        System.out.println("정렬 정보: " + pageable.getSort());
 
-        // 엔티티 리스트를 DTO 리스트로 변환
-        return posts.stream().map(post -> postService.convertPostToDTO(post, chatService, regionService)).collect(Collectors.toList());
+        Slice<Post> postSlice = postService.getAllPostsSlice(keyword, pageable);
+
+        System.out.println("조회된 게시글 수: " + postSlice.getNumberOfElements());
+        System.out.println("첫 페이지 여부: " + postSlice.isFirst());
+        System.out.println("마지막 페이지 여부: " + postSlice.isLast());
+        System.out.println("현재 페이지 번호: " + postSlice.getNumber());
+
+        // 엔티티 슬라이스를 DTO 슬라이스로 변환
+        return postSlice.map(post -> postService.convertPostToDTO(post, chatService, regionService));
     }
 
     // GET: ID로 게시물 조회 (기존 로직을 DTO 변환 메서드로 분리)
@@ -54,29 +64,37 @@ public class PostController {
         return posts.stream().map(post -> postService.convertPostToDTO(post, chatService, regionService)).collect(Collectors.toList());
     }
 
-    // 지역 ID들로 게시물 조회 (DTO 리스트 반환)
+    // 지역 ID들로 게시물 조회 (Slice로 반환)
     @GetMapping("/regions")
-    public List<PostDTO> getPostsByRegionIds(@RequestParam List<Integer> regionIds) {
-        // 지역 ID가 비어있으면 전체 목록 반환
+    public Slice<PostDTO> getPostsByRegionIds(
+            @RequestParam(required = false) List<Integer> regionIds,
+            @RequestParam(required = false) String keyword,
+            @PageableDefault(size = 3, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Slice<Post> postSlice;
         if (regionIds == null || regionIds.isEmpty()) {
-            return getAllPosts();
+            // 지역 선택 안 함 -> 전체 검색으로 위임
+            postSlice = postService.getAllPostsSlice(keyword, pageable);
+        } else {
+            // 지역 선택 함 -> 지역 + 검색
+            postSlice = postService.getPostsByRegionIdsSlice(regionIds, keyword, pageable);
         }
-        List<Post> posts = postService.getPostsByRegionIds(regionIds);
-        return posts.stream().map(post -> postService.convertPostToDTO(post, chatService, regionService)).collect(Collectors.toList());
+
+        return postSlice.map(post -> postService.convertPostToDTO(post, chatService, regionService));
     }
 
     // POST: 새 게시물 생성
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Post createPost(@ModelAttribute CreatePost createPost) throws Exception {
-        Post post = postService.savePost(createPost, chatService, s3Service);
-        return post;
+    public PostDTO createPost(@ModelAttribute CreatePost createPost) throws Exception {
+        Post post = postService.savePost(createPost, chatService, chatMessageService, s3Service);
+        return postService.convertPostToDTO(post, chatService, regionService);
     }
 
     // PUT: 게시물 정보 수정
     @PutMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Post updatePost(@PathVariable Integer postId, @ModelAttribute CreatePost updateData) throws Exception {
+    public PostDTO updatePost(@PathVariable Integer postId, @ModelAttribute CreatePost updateData) throws Exception {
         updateData.setPostId(postId);
-        return postService.updatePost(updateData, s3Service);
+        Post updatedPost = postService.updatePost(updateData, s3Service);
+        return postService.convertPostToDTO(updatedPost, chatService, regionService);
     }
 
     // DELETE: 게시물 삭제

@@ -45,6 +45,8 @@ public class User {
     private Float userScore = 36.5F;
     @Column(name="role", nullable=false, length=20)
     private Integer role = 1;
+    @Column(name="profile_photo_url", length=200)
+    private String profilePhotoUrl;
     @JsonManagedReference("user-chatMembers")  // 정방향 참조 (JSON에 포함)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private java.util.List<ChatMember> chatMembers = new java.util.ArrayList<>();
@@ -52,9 +54,21 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private java.util.List<Application> applications = new java.util.ArrayList<>();
 
+    public User(String name, String gender, String encodedPassword, String userId, String phoneNumber, String email, String schoolEmail) {
+        this.name = name;
+        this.gender = gender;
+        this.password = encodedPassword;
+        this.userId = userId;
+        this.phoneNumber = phoneNumber;
+        this.email = email;
+        this.schoolEmail = schoolEmail;
+    }
+
     public void setRole(String role) {
         this.role = "ROLE_ADMIN".equals(role) ? 0 : 1;
     }
-
+    public void setScore(Integer score) {
+        this.userScore = 36.5F + (float)(score * 0.5);
+    }
     // 기본 생성자, getter, setter 생략
 }

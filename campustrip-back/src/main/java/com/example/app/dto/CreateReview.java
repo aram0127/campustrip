@@ -17,8 +17,8 @@ import java.util.List;
 @AllArgsConstructor
 public class CreateReview {
     private Integer reviewId;
-    private User user;
-    private Post post;
+    private Integer userId;
+    private Integer postId;
     private String title;
     private String body;
     private java.time.LocalDateTime createdAt = java.time.LocalDateTime.now();
@@ -28,8 +28,6 @@ public class CreateReview {
 
     public Review toEntity() {
         Review newReview = new Review();
-        newReview.setUser(this.user);
-        newReview.setPost(this.post);
         newReview.setTitle(this.title);
         newReview.setBody(this.body);
         newReview.setCreatedAt(this.createdAt);

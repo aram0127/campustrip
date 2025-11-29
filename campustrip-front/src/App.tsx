@@ -31,8 +31,17 @@ import LocationSharePage from "./pages/location/LocationSharePage";
 import NotificationListPage from "./pages/notification/NotificationListPage";
 import PostEditLoader from "./pages/post/edit/PostEditLoader";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+<<<<<<< HEAD
 import TravelTestPage from "./test/TravelTestPage";
+=======
+>>>>>>> d56d7f4bb82081862dbf8805a21f095f464437fc
 import { PostCreateProvider } from "./context/PostCreateContext";
+import ReviewCreatePage from "./pages/review/ReviewCreatePage";
+import ReviewDetailPage from "./pages/review/ReviewDetailPage";
+import FCMTestPage from "./pages/test/FCMTestPage";
+import { requestFcmToken, onMessageListener } from "./firebase";
+import PersonalInfoPage from "./pages/profile/PersonalInfoPage";
+// import { apiClient } from "./api/client"; // 나중에 주석 해제
 
 const RootRedirect: React.FC = () => {
   const { isLoggedIn } = useAuth();
@@ -61,6 +70,36 @@ function App() {
   };
 
   const currentTheme = theme === "light" ? lightTheme : darkTheme;
+
+  useEffect(() => {
+    // FCM 초기화 및 토큰 확인 로그 (백엔드 전송 X)
+    const handleFcmToken = async () => {
+      const token = await requestFcmToken();
+      if (token) {
+        console.log("✅ FCM 토큰 발급 성공:", token);
+
+        // --- [나중에 백엔드 준비되면 주석 해제할 부분, api 경로는 예시] ---
+        // try {
+        //    await apiClient.post("/api/users/fcm-token", { token });
+        //    console.log("토큰 서버 전송 완료");
+        // } catch (e) {
+        //    console.error("토큰 서버 전송 실패", e);
+        // }
+        // ----------------------------------------------
+      } else {
+        console.log("❌ 알림 권한이 없거나 토큰 발급 실패");
+      }
+    };
+
+    handleFcmToken();
+
+    // 포그라운드 메시지 수신 리스너 (테스트용)
+    onMessageListener().then((payload) => {
+      console.log("🔔 포그라운드 알림 수신:", payload);
+      const notif = payload as { notification?: { title?: string; body?: string } };
+      alert(`${notif.notification?.title}: ${notif.notification?.body}`);
+    });
+  }, []);
 
   return (
     <ThemeProvider theme={currentTheme}>
@@ -105,6 +144,13 @@ function App() {
                 path="/location/:chatRoomId"
                 element={<LocationSharePage />}
               />
+              <Route path="/reviews/new" element={<ReviewCreatePage />} />
+              <Route path="/reviews/:reviewId" element={<ReviewDetailPage />} />
+              <Route
+                path="/settings/personal-info"
+                element={<PersonalInfoPage />}
+              />
+              <Route path="/test/fcm" element={<FCMTestPage />} />
 
               {/* Test */}
               <Route path="/test/travel" element={<TravelTestPage />} />

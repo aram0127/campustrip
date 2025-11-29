@@ -62,16 +62,18 @@ const ActionContainer = styled.div`
 `;
 
 const ActionButton = styled.button<{ $variant: "accept" | "reject" }>`
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  padding: 8px 16px;
+  border-radius: 8px;
   border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  cursor: pointer;
+  transition: opacity 0.2s;
 
+  /* 수락 버튼 */
   ${({ theme, $variant }) =>
     $variant === "accept" &&
     css`
@@ -79,16 +81,21 @@ const ActionButton = styled.button<{ $variant: "accept" | "reject" }>`
       color: white;
     `}
 
+  /* 거절 버튼 */
   ${({ theme, $variant }) =>
     $variant === "reject" &&
     css`
-      background-color: ${theme.colors.error};
-      color: white;
+      background-color: ${theme.colors.inputBackground};
+      color: ${theme.colors.text};
     `}
   
   &:disabled {
-    background-color: ${({ theme }) => theme.colors.grey};
+    opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  &:active {
+    opacity: 0.8;
   }
 `;
 

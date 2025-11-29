@@ -98,7 +98,7 @@ function PlannerListPage() {
               <PlannerInfo>
                 📅 기간: {planner.startDate} ~ {planner.endDate}
               </PlannerInfo>
-              <PlannerInfo>👥 제작자: {planner.user.name}</PlannerInfo>
+              <PlannerInfo>👥 제작자: {planner.userName}</PlannerInfo>
             </PlannerItem>
           ))
         )}

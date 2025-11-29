@@ -124,3 +124,60 @@ export const updatePost = async (
 export const deletePost = async (postId: string): Promise<void> => {
   await apiClient.delete(`/api/posts/${postId}`);
 };
+
+/* 특정 사용자가 작성한 게시글 목록 조회 */
+export const getPostsByUserId = async (userId: number): Promise<Post[]> => {
+  const response = await apiClient.get<Post[]>(`/api/posts/user/${userId}`);
+  return response.data;
+};
+
+export interface PostSlice<T> {
+  content: T[];
+  first: boolean;
+  last: boolean;
+  number: number; // page number
+  size: number; // requested size
+  numberOfElements: number;
+  empty: boolean;
+  sort?: { sorted: boolean; unsorted: boolean; empty: boolean };
+  pageable?: { pageNumber: number; pageSize: number; offset: number };
+}
+
+export interface InfinitePostsParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+  regionIds?: number[] | null;
+  keyword?: string;
+}
+
+export const getInfinitePosts = async ({
+  page = 0,
+  size = 3,
+  sort,
+  regionIds,
+  keyword,
+}: InfinitePostsParams = {}): Promise<PostSlice<Post>> => {
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("size", size.toString());
+  if (sort) params.append("sort", sort);
+
+  if (keyword) {
+    params.append("keyword", keyword);
+  }
+
+  if (regionIds && regionIds.length > 0) {
+    regionIds.forEach((id) => {
+      params.append("regionIds", id.toString());
+    });
+  }
+
+  const url =
+    regionIds && regionIds.length > 0
+      ? `/api/posts/regions?${params.toString()}`
+      : `/api/posts?${params.toString()}`;
+
+  const response = await apiClient.get<PostSlice<Post>>(url);
+  return response.data;
+};

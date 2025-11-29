@@ -5,17 +5,16 @@ import com.example.app.domain.User;
 import com.example.app.dto.AcceptApplication;
 import com.example.app.dto.CustomUserDetails;
 import com.example.app.dto.SearchApplication;
-import com.example.app.service.ApplicationService;
-import com.example.app.service.ChatService;
-import com.example.app.service.PostService;
-import com.example.app.service.UserService;
+import com.example.app.service.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.app.domain.Application;
 import com.example.app.dto.CreateChatMember;
+import com.example.app.dto.CreateApplicationRequest;
 import java.util.List;
 
 @RestController
@@ -25,13 +24,17 @@ public class ApplicationController {
     private final ChatService chatService;
     private final PostService postService;
     private final UserService userService;
+    private final ChatMessageService chatMessageService;
+    private final FCMService fcmService;
 
     @Autowired
-    public ApplicationController(ApplicationService applicationService, ChatService chatService, PostService postService, UserService userService) {
+    public ApplicationController(ApplicationService applicationService, ChatService chatService, PostService postService, UserService userService, ChatMessageService chatMessageService, FCMService fcmService) {
         this.applicationService = applicationService;
         this.chatService = chatService;
         this.postService = postService;
         this.userService = userService;
+        this.chatMessageService = chatMessageService;
+        this.fcmService = fcmService;
     }
 
     // 사용자 ID로 동행 신청 조회
@@ -52,14 +55,15 @@ public class ApplicationController {
 
     // 새 동행 신청 생성
     @PostMapping
-    public Application createApplication(@RequestBody Application application) {
-        applicationService.saveApplication(application);
-        return application;
+    public Application createApplication(@RequestBody CreateApplicationRequest request) {
+        return applicationService.createApplication(request);
     }
 
     // 동행 신청 수락 (신청받은 사람이 수락)
     @PutMapping("/accept")
     public Application acceptApplication(@RequestBody AcceptApplication application, Authentication authentication) {
+        Post post = postService.getPostById(application.getPostId());
+        chatMessageService.sendJoinMessage(post.getChat(), application.getUserId());
         return updateApplicationStatus(application, authentication, true);
     }
 
@@ -92,5 +96,29 @@ public class ApplicationController {
     @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
     public void deleteApplication(@PathVariable Integer userId, @PathVariable Integer postId) {
         applicationService.deleteApplication(userId, postId);
+    }
+
+    @PutMapping("/unsubscribe/post/{postId}")
+    public void unsubscribeApplicationByPost(@PathVariable Integer postId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        unsubscribeApplication(postId, userDetails.getUser().getUserId());
+    }
+
+    @PutMapping("/unsubscribe/chat/{chatId}")
+    public void unsubscribeApplicationByChat(@PathVariable Integer chatId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        // 채팅방 ID로 게시물 ID 조회
+        Integer postId = chatService.getPostIdByChatId(chatId);
+        if (postId != null) {
+            unsubscribeApplication(postId, userDetails.getUser().getUserId());
+        }
+    }
+
+    private void unsubscribeApplication(Integer postId, String userId) {
+        User user = userService.getUserByUserId(userId);
+        // 동행 신청 상태 변경 (신청 취소)
+        applicationService.updateApplicationStatus(postId, user, false);
+        // 채팅방에 탈퇴 메세지 전송
+        chatMessageService.sendLeaveMessage(postId, user);
+        // 채팅방에서 사용자 제거
+        chatService.removeChatMemberByPostAndUser(postId, user);
     }
 }

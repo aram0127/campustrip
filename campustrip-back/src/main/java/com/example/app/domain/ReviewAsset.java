@@ -16,16 +16,13 @@ import lombok.Setter;
 public class ReviewAsset {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "asset_id")
     private Integer assetId;
 
-    // 복합 PK의 두번째 필드 — 숫자 형태로 저장
     @Id
     @Column(name = "review_id", nullable = false)
     private Integer reviewId;
 
-    // 연관관계는 읽기 전용으로 매핑
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "review_id", insertable = false, updatable = false)
     private Review review;
