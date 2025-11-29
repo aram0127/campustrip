@@ -22,6 +22,7 @@ export interface PlannerPlace {
   longitude: number; // 경도
   order: number; // 방문 순서
   memo?: string; // 메모
+  category?: string;
 }
 
 // 하루 일정
