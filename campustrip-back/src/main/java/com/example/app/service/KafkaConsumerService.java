@@ -19,7 +19,8 @@ public class KafkaConsumerService {
     @KafkaListener(
             topicPattern = "chat-room-.*",  // 모든 채팅방 토픽 구독
             groupId = "chat-group",
-            containerFactory = "kafkaListenerContainerFactory"
+            containerFactory = "kafkaListenerContainerFactory",
+            autoStartup = "true"
     )
     public void consumeMessage(ChatMessageDTO message) {
         try{
