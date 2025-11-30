@@ -1,6 +1,7 @@
 package com.example.app.repository;
 
 import com.example.app.domain.ChatMessage;
+import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
@@ -11,4 +12,13 @@ public interface ChatMessageRepository extends MongoRepository<ChatMessage, Inte
     List<ChatMessage> findByChatIdOrderByTimestampAsc(Integer chatId);
 
     ChatMessage findTopByChatIdOrderByTimestampDesc(Integer chatId);
+
+    @Aggregation(pipeline = {
+            "{ $match: { chatId: { $in: ?0 } } }",
+            "{ $sort: { timestamp: -1 } }",
+            "{ $group: { _id: '$chatId', latestMessage: { $first: '$$ROOT' } } }",
+            "{ $replaceRoot: { newRoot: '$latestMessage' } }",
+            "{ $sort: { timestamp: -1 } }"
+    })
+    List<ChatMessage> findLatestMessagesByChatIds(List<Integer> chatIds);
 }
