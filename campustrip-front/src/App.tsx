@@ -85,17 +85,28 @@ function App() {
 
   // 포그라운드 메시지 수신 리스너
   useEffect(() => {
-    const unsubscribe = onMessageListener((payload) => {
+    const unsubscribe = onMessageListener((payload: any) => {
       console.log("포그라운드 알림 수신:", payload);
 
-      const notif = payload as {
-        notification?: { title?: string; body?: string };
-      };
+      const { notification, data } = payload;
 
-      if (notif.notification) {
+      const currentPath = window.location.pathname;
+
+      const match = currentPath.match(/^\/chat\/(\d+)$/);
+      const currentChatId = match ? match[1] : null;
+
+      if (
+        data?.type === "CHAT_MESSAGE" &&
+        String(data?.referenceId) === currentChatId
+      ) {
+        console.log("현재 채팅방 알림이므로 무시합니다.");
+        return;
+      }
+
+      if (notification) {
         setToast({
-          title: notif.notification.title || "알림",
-          body: notif.notification.body || "새로운 메시지가 도착했습니다.",
+          title: notification.title || "알림",
+          body: notification.body || "새로운 메시지가 도착했습니다.",
           visible: true,
         });
       }
