@@ -58,7 +58,7 @@ public class Post {
     private Chat chat;
 
     @ManyToOne
-    @JoinColumn(name="planner_id", nullable=false)
+    @JoinColumn(name="planner_id")
     private Planner planner;
 
     @Column(name="start_at")

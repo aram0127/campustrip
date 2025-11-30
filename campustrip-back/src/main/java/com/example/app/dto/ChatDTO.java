@@ -15,4 +15,5 @@ public class ChatDTO {
     private String senderName;
     private String lastMessage;
     private java.time.LocalDateTime lastMessageTime;
+    private String profilePhotoUrl;
 }
