@@ -28,7 +28,7 @@ const DAY_COLORS = [
   "#795548", // 8일차: 갈색
 ];
 
-// --- 스타일 컴포넌트 ---
+// 스타일 컴포넌트
 const Container = styled.div`
   display: flex;
   flex-direction: column;
