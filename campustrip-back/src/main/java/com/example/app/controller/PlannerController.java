@@ -1,9 +1,12 @@
 package com.example.app.controller;
 
 import com.example.app.domain.Planner;
+import com.example.app.domain.User;
 import com.example.app.dto.CreatePlanner;
+import com.example.app.dto.CustomUserDetails;
 import com.example.app.dto.PlannerResponseDTO;
 import com.example.app.service.PlannerService;
+import com.example.app.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,10 +18,12 @@ import java.util.List;
 @RequestMapping("/api/planners")
 public class PlannerController {
     private final PlannerService plannerService;
+    private final UserService userService;
 
     @Autowired
-    public PlannerController(PlannerService plannerService) {
+    public PlannerController(PlannerService plannerService, UserService userService) {
         this.plannerService = plannerService;
+        this.userService = userService;
     }
 
     // 플래너 id로 상세 조회
@@ -38,15 +43,17 @@ public class PlannerController {
     }
 
     @GetMapping("/user")
-    public List<PlannerResponseDTO> getPlannersByUser(@AuthenticationPrincipal String userId) {
-        return plannerService.findAllByUserUserId(userId).stream()
+    public List<PlannerResponseDTO> getPlannersByUser(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return plannerService.findAllByUserUserId(userDetails.getUsername()).stream()
                 .map(planner -> new PlannerResponseDTO(planner))
                 .toList();
     }
-    
+
     // 새 플래너 생성 
     @PostMapping
-    public PlannerResponseDTO createPlanner(@RequestBody CreatePlanner createPlanner) {
+    public PlannerResponseDTO createPlanner(@AuthenticationPrincipal CustomUserDetails customUserDetails, @RequestBody CreatePlanner createPlanner) {
+        User user = userService.getUserByUserId(customUserDetails.getUsername());
+        createPlanner.setMembershipId(user.getId());
         Planner planner = plannerService.savePlannerWithDetails(createPlanner);
         return new PlannerResponseDTO(planner);
     }   
