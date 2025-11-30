@@ -75,3 +75,25 @@ export const verifyEmailVerification = async (
 
   return response.data.universityName;
 };
+
+/* SMS 인증 코드 발송 */
+export const sendSmsVerification = async (
+  phoneNumber: string
+): Promise<void> => {
+  await axios.post(`${API_BASE_URL}/api/users/send-sms`, { to: phoneNumber });
+};
+
+/* SMS 인증 코드 검증 */
+export const verifySmsCode = async (
+  phoneNumber: string,
+  code: string
+): Promise<boolean> => {
+  const response = await axios.post<boolean>(
+    `${API_BASE_URL}/api/users/verify-sms`,
+    {
+      phoneNumber,
+      verificationCode: code,
+    }
+  );
+  return response.data;
+};
