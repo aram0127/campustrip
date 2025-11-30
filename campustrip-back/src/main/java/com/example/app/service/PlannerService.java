@@ -109,9 +109,17 @@ public class PlannerService {
                             d.getDay(),
                             d.getGooglePlaceId()
                     ))
-                    .collect(Collectors.toList());
+                    .toList();
 
-            return new PlannerResponseDTO(planner);
+            return new PlannerResponseDTO(
+                    planner.getPlannerId(),
+                    planner.getUser().getId(),
+                    planner.getUser().getName(),
+                    planner.getTitle(),
+                    planner.getStartDate(),
+                    planner.getEndDate(),
+                    details
+            );
         });
     }
 }
