@@ -59,11 +59,15 @@ const AuthorInfo = styled.div`
   margin-bottom: 20px;
 `;
 
-const AuthorAvatar = styled.div`
+const AuthorAvatar = styled.div<{ $imageUrl?: string }>`
   width: 40px;
   height: 40px;
   border-radius: 50%;
   background-color: ${({ theme }) => theme.colors.secondaryTextColor};
+  background-image: ${({ $imageUrl }) =>
+    $imageUrl ? `url(${$imageUrl})` : "none"};
+  background-size: cover;
+  background-position: center;
 `;
 
 const AuthorName = styled.div`
@@ -543,7 +547,7 @@ const PostDetailPage: React.FC = () => {
         {activeTab === "post" && (
           <ContentContainer>
             <AuthorInfo onClick={handleProfileClick}>
-              <AuthorAvatar />
+              <AuthorAvatar $imageUrl={post.user.profilePhotoUrl} />{" "}
               <AuthorName>{post.user?.name || "작성자"}</AuthorName>
               <span>여행 온도: 🌡{post.user.userScore}</span>
             </AuthorInfo>

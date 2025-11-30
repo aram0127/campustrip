@@ -41,12 +41,16 @@ const AuthorHeader = styled.div`
   margin-bottom: 16px;
 `;
 
-const Avatar = styled.div`
+const Avatar = styled.div<{ $imageUrl?: string }>`
   width: 40px;
   height: 40px;
   border-radius: 50%;
   background-color: ${({ theme }) => theme.colors.inputBackground};
   flex-shrink: 0;
+  background-image: ${({ $imageUrl }) =>
+    $imageUrl ? `url(${$imageUrl})` : "none"};
+  background-size: cover;
+  background-position: center;
 `;
 
 const AuthorInfo = styled.div`
@@ -477,7 +481,7 @@ const ReviewDetailPage: React.FC = () => {
       <Container>
         <ContentWrapper>
           <AuthorHeader onClick={() => navigate(`/profile/${review.user.id}`)}>
-            <Avatar />
+            <Avatar $imageUrl={review.user.profilePhotoUrl} />
             <AuthorInfo>
               <AuthorName>{review.user.name}</AuthorName>
               <DateText>
