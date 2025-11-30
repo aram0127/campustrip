@@ -37,6 +37,23 @@ export const getInfiniteReviews = async ({
   return response.data;
 };
 
+// 특정 사용자가 작성한 리뷰 목록 조회
+export const getReviewsByUserId = async (
+  userId: number,
+  page = 0,
+  size = 5
+): Promise<ReviewSlice> => {
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("size", size.toString());
+  params.append("userId", userId.toString());
+
+  const response = await apiClient.get<ReviewSlice>(
+    `/api/reviews/user/${userId}?${params.toString()}`
+  );
+  return response.data;
+};
+
 // 특정 리뷰 상세 조회
 export const getReviewById = async (reviewId: number): Promise<Review> => {
   const response = await apiClient.get<Review>(`/api/reviews/${reviewId}`);

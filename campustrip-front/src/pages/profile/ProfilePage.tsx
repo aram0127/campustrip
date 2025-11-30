@@ -1,9 +1,15 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import styled from "styled-components";
 import { IoEllipsisHorizontal } from "react-icons/io5";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { getUserProfile } from "../../api/users";
+import { getReviewsByUserId } from "../../api/reviews";
 import { type User } from "../../types/user";
 import PageLayout, {
   ScrollingContent,
@@ -17,6 +23,7 @@ import {
 } from "../../api/follow";
 import { useAuth } from "../../context/AuthContext";
 import Button from "../../components/common/Button";
+import ReviewListItem from "../../components/domain/ReviewListItem";
 
 const IconButton = styled.button`
   background: none;
@@ -41,7 +48,8 @@ const Avatar = styled.div<{ imageUrl?: string }>`
   width: 70px;
   height: 70px;
   border-radius: 50%;
-  background-image: ${({ imageUrl }) => imageUrl ? `url(${imageUrl})` : 'none'};
+  background-image: ${({ imageUrl }) =>
+    imageUrl ? `url(${imageUrl})` : "none"};
   background-size: cover;
   background-color: ${({ theme }) => theme.colors.secondaryTextColor};
   margin-bottom: 12px;
@@ -168,6 +176,11 @@ const ActionButton = styled.button`
   }
 `;
 
+const LoadMoreTrigger = styled.div`
+  height: 20px;
+  margin-top: 10px;
+`;
+
 // 임시 여행 성향 태그 (preference 비트마스크에 따라 파싱)
 const parsePreferences = (preference: number | null) => {
   if (preference === null) return ["정보 없음"];
@@ -271,6 +284,36 @@ function ProfilePage() {
     }
   };
 
+  // 사용자가 작성한 후기(리뷰) 가져오기
+  const {
+    data: reviewData,
+    isLoading: isReviewsLoading,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["userReviews", profileUser?.id],
+    queryFn: ({ pageParam = 0 }) =>
+      getReviewsByUserId(profileUser!.id, pageParam, 10),
+    enabled: !!profileUser?.id && activeTab === "작성한 게시글",
+    getNextPageParam: (lastPage) => {
+      return lastPage.last ? undefined : lastPage.number + 1;
+    },
+    initialPageParam: 0,
+  });
+
+  const userReviews = useMemo(() => {
+    return reviewData?.pages.flatMap((page) => page.content) ?? [];
+  }, [reviewData]);
+
+  // 무한 스크롤
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    // 스크롤이 바닥에 가까워지면 다음 페이지 로드
+    if (scrollHeight - scrollTop <= clientHeight + 100 && hasNextPage) {
+      fetchNextPage();
+    }
+  };
+
   // 로딩 및 에러 상태 처리
   if (isLoading) {
     return (
@@ -316,9 +359,9 @@ function ProfilePage() {
         </IconButton>
       }
     >
-      <ScrollingContent>
+      <ScrollingContent onScroll={handleScroll}>
         <ProfileInfoContainer>
-          <Avatar imageUrl={profileUser.profilePhotoUrl}/>
+          <Avatar imageUrl={profileUser.profilePhotoUrl} />
           <UserName>{profileUser.name}</UserName>
           <FollowInfo>
             <FollowStat onClick={handleGoToFollowPage}>
@@ -344,7 +387,6 @@ function ProfilePage() {
             </Button>
           )}
         </ProfileInfoContainer>
-
         <Section>
           <SectionTitle>여행 온도</SectionTitle>
           <TempBarContainer>
@@ -352,7 +394,6 @@ function ProfilePage() {
           </TempBarContainer>
           <TempValue>{profileUser.userScore.toFixed(1)}°C</TempValue>
         </Section>
-
         <Section>
           <SectionTitle>여행 성향</SectionTitle>
           <TagContainer>
@@ -366,7 +407,6 @@ function ProfilePage() {
             </ActionButton>
           )}
         </Section>
-
         <TabMenu>
           <TabButton
             $active={activeTab === "여행 기록"}
@@ -387,13 +427,21 @@ function ProfilePage() {
             받은 후기
           </TabButton>
         </TabMenu>
-
         <ContentFeed>
           {activeTab === "여행 기록" && (
             <Message>여행 기록이 없습니다.</Message>
           )}
           {activeTab === "작성한 게시글" && (
-            <Message>작성한 게시글이 없습니다.</Message>
+            <>
+              {isReviewsLoading && <Message>로딩 중...</Message>}
+              {!isReviewsLoading && userReviews.length === 0 && (
+                <Message>작성한 후기가 없습니다.</Message>
+              )}
+              {userReviews.map((review) => (
+                <ReviewListItem key={review.reviewId} review={review} />
+              ))}
+              {hasNextPage && <LoadMoreTrigger />}
+            </>
           )}
           {activeTab === "받은 후기" && (
             <Message>받은 후기가 없습니다.</Message>
