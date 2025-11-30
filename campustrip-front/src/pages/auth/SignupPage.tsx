@@ -2,13 +2,15 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useMutation } from "@tanstack/react-query";
 import {
   signupUser,
   sendEmailVerification,
   verifyEmailVerification,
+  sendSmsVerification,
+  verifySmsCode,
 } from "../../api/auth";
 import AuthLayout from "../../components/layout/AuthLayout";
 
@@ -64,6 +66,14 @@ const RadioInput = styled.input`
   accent-color: ${({ theme }) => theme.colors.primary};
   width: 18px;
   height: 18px;
+`;
+
+const StyledLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.secondaryTextColor};
+  text-decoration: none;
+  font-size: 14px;
+  margin-top: 16px;
+  text-align: center;
 `;
 
 function SignupPage() {
@@ -134,8 +144,9 @@ function SignupPage() {
 
   // 전화번호 유효성 검사
   useEffect(() => {
+    const cleanNumber = phoneNumber.replace(/[^0-9]/g, "");
     const phoneRegex = /^010\d{8}$/;
-    setIsPhoneNumberValid(phoneRegex.test(phoneNumber));
+    setIsPhoneNumberValid(phoneRegex.test(cleanNumber));
   }, [phoneNumber]);
 
   // 타이머 카운트다운 효과
@@ -186,27 +197,45 @@ function SignupPage() {
 
   // 인증코드 발송 함수 (휴대폰)
   const handleSendSmsCode = async () => {
+    if (!isPhoneNumberValid) return;
+
     setIsPhoneLoading(true);
     try {
-      // TODO: 백엔드에 SMS 인증 코드 발송 API 호출
+      const cleanPhoneNumber = phoneNumber.replace(/[^0-9]/g, "");
+
+      await sendSmsVerification(cleanPhoneNumber);
+
       alert("휴대폰으로 인증코드가 발송되었습니다.");
       setPhoneCodeSent(true);
+      setTimer(180);
     } catch (err) {
-      alert("인증코드 발송에 실패했습니다.");
+      console.error(err);
+      alert("인증코드 발송에 실패했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setIsPhoneLoading(false);
     }
   };
 
-  // -인증코드 검증 함수 (휴대폰)
+  // 인증코드 검증 함수 (휴대폰)
   const handleVerifySmsCode = async () => {
+    if (!phoneCode) return;
+
     setIsPhoneLoading(true);
     try {
-      // TODO: 백엔드에 SMS 인증 코드 검증 API 호출
-      alert("휴대폰 인증에 성공했습니다.");
-      setIsPhoneVerified(true);
+      const cleanPhoneNumber = phoneNumber.replace(/[^0-9]/g, "");
+
+      const isSuccess = await verifySmsCode(cleanPhoneNumber, phoneCode);
+
+      if (isSuccess) {
+        alert("휴대폰 인증에 성공했습니다.");
+        setIsPhoneVerified(true);
+        setTimer(0);
+      } else {
+        alert("인증코드가 올바르지 않거나 만료되었습니다.");
+      }
     } catch (err) {
-      alert("인증코드가 올바르지 않습니다.");
+      console.error(err);
+      alert("인증 확인 중 오류가 발생했습니다.");
     } finally {
       setIsPhoneLoading(false);
     }
@@ -403,12 +432,12 @@ function SignupPage() {
         <InputWithButtonContainer>
           <Input
             type="tel"
-            placeholder="휴대폰 번호 ('-' 제외)"
+            placeholder="휴대폰 번호 ('-' 없이 입력)"
             style={{ flex: 1 }}
             value={phoneNumber}
             onChange={(e) => {
-              const cleanedPhone = e.target.value.replace(/[^0-9]/g, "");
-              setPhoneNumber(cleanedPhone);
+              const cleaned = e.target.value.replace(/[^0-9]/g, "");
+              setPhoneNumber(cleaned);
             }}
             required
             disabled={isPhoneVerified}
@@ -416,21 +445,24 @@ function SignupPage() {
           <Button
             type="button"
             onClick={handleSendSmsCode}
-            disabled={!isPhoneNumberValid || phoneCodeSent || isPhoneVerified}
+            disabled={!isPhoneNumberValid || isPhoneVerified || isPhoneLoading}
             style={{ width: "120px", padding: "12px 0" }}
           >
             {isPhoneLoading
               ? "전송중..."
+              : isPhoneVerified
+              ? "인증완료"
               : phoneCodeSent
               ? "재전송"
-              : "인증코드 받기"}
+              : "인증번호 전송"}
           </Button>
         </InputWithButtonContainer>
+
         {phoneCodeSent && !isPhoneVerified && (
           <InputWithButtonContainer>
             <Input
               type="text"
-              placeholder="인증코드"
+              placeholder="인증코드 입력"
               style={{ flex: 1 }}
               value={phoneCode}
               onChange={(e) => setPhoneCode(e.target.value)}
@@ -442,10 +474,17 @@ function SignupPage() {
               disabled={isPhoneLoading}
               style={{ width: "120px", padding: "12px 0" }}
             >
-              {isPhoneLoading ? "확인중..." : "인증코드 확인"}
+              {isPhoneLoading ? "확인중..." : "확인"}
             </Button>
           </InputWithButtonContainer>
         )}
+
+        {phoneCodeSent && !isPhoneVerified && timer > 0 && (
+          <ValidationMessage isValid={false} style={{ color: "#28a745" }}>
+            남은 시간: {Math.floor(timer / 60)}분 {timer % 60}초
+          </ValidationMessage>
+        )}
+
         {isPhoneVerified && (
           <ValidationMessage isValid={true}>
             휴대폰 인증이 완료되었습니다.
@@ -475,6 +514,7 @@ function SignupPage() {
           {isPending ? "가입 처리 중..." : "가입하기"}
         </Button>
       </Form>
+      <StyledLink to="/login">로그인 하러 가기</StyledLink>
     </AuthLayout>
   );
 }
