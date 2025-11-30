@@ -200,8 +200,8 @@ function App() {
 
               {/* Planner */}
               <Route path="/planner/create" element={<PlannerCreatePage />} />
-              <Route path="/planner/edit/:id" element={<PlannerEditPage />} />
-              <Route path="/planner/:id" element={<PlannerDetailPage />} />
+              <Route path="/planner/edit/:plannerId" element={<PlannerEditPage />} />
+              <Route path="/planner/:plannerId" element={<PlannerDetailPage />} />
 
               {/* Chat */}
               <Route path="/chat/:chatId" element={<ChatRoomPage />} />
