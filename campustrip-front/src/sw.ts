@@ -29,7 +29,7 @@ const messaging = getMessaging(app);
 
 // 백그라운드 메시지 핸들러
 onBackgroundMessage(messaging, (payload) => {
-  console.log("백그라운드 메시지 수신 (통합 SW):", payload);
+  console.log("백그라운드 메시지 수신:", payload);
 
   const notificationTitle = payload.notification?.title || "알림";
   const notificationOptions = {
