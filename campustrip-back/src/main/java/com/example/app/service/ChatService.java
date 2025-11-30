@@ -90,6 +90,6 @@ public class ChatService {
     @Transactional(readOnly = true)
     public List<ChatMemberDTO> getMembersByRoomId(Integer roomId) {
         Chat chat = chatRepository.findById(roomId).orElseThrow();
-        return chatMemberRepository.findAllByChat(chat).stream().map(m -> new ChatMemberDTO(m.getChat().getTitle(), m.getChat().getId(), m.getUser().getId())).toList();
+        return chatMemberRepository.findAllByChat(chat).stream().map(m -> new ChatMemberDTO(m.getChat().getTitle(), m.getChat().getId(), m.getUser().getId(), m.getUser().getProfilePhotoUrl())).toList();
     }
 }

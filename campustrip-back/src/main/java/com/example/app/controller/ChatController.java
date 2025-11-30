@@ -3,6 +3,7 @@ package com.example.app.controller;
 
 import com.example.app.domain.User;
 import com.example.app.dto.ChatDTO;
+import com.example.app.dto.ChatMemberDTO;
 import com.example.app.dto.ChatMessageDTO;
 import com.example.app.dto.PushNotificationRequest;
 import com.example.app.enumtype.PushNotificationType;
@@ -89,5 +90,10 @@ public class ChatController {
     @GetMapping("/chat/{chatId}/messages")
     public List<ChatMessageDTO> getChatMessages(@PathVariable Integer chatId) {
         return chatMessageService.getChatHistory(chatId);
+    }
+
+    @GetMapping("/chat/{chatId}/members")
+    public List<ChatMemberDTO> getChatMembers(@PathVariable Integer chatId) {
+        return chatService.getMembersByRoomId(chatId);
     }
 }
