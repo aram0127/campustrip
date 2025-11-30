@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Comparator;
 
 @Service
 public class PushNotificationService {
@@ -20,15 +21,10 @@ public class PushNotificationService {
     public List<PushResponseDTO> getNotificationsForUser(Integer receiverId) {
         return pushNotificationRepository.findByReceiverId(receiverId)
                 .stream()
-                .map(notification -> new PushResponseDTO(
-                        notification.getReceiverId(),
-                        notification.getSenderId(),
-                        notification.getType(),
-                        notification.getReferenceId(),
-                        notification.getTitle(),
-                        notification.getBody(),
-                        notification.getCreatedAt()
-                ))
+                // 최신순 정렬 (createdAt 내림차순)
+                .sorted(Comparator.comparing(PushNotification::getCreatedAt).reversed())
+                // 엔티티의 toDTO() 사용
+                .map(PushNotification::toDTO)
                 .toList();
     }
 }

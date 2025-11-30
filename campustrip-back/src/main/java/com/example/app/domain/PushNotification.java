@@ -1,5 +1,6 @@
 package com.example.app.domain;
 
+import com.example.app.dto.PushResponseDTO;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,5 +27,18 @@ public class PushNotification {
     public PushNotification() {
         // 기본 생성자에서 createdAt를 KST로 설정
         createdAt = java.time.LocalDateTime.now().atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+    }
+
+    // 엔티티 -> DTO 변환 메서드
+    public PushResponseDTO toDTO() {
+        return PushResponseDTO.builder()
+                .receiverId(receiverId)
+                .senderId(senderId)
+                .type(type)
+                .referenceId(referenceId)
+                .title(title)
+                .body(body)
+                .createdAt(createdAt)
+                .build();
     }
 }
