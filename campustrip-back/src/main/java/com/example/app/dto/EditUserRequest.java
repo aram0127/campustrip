@@ -15,4 +15,5 @@ public class EditUserRequest {
     private String email;
     private String schoolEmail;
     private String universityName;
+    private String description;
 }
