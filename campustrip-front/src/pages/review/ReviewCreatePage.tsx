@@ -10,7 +10,6 @@ import Button from "../../components/common/Button";
 import PageLayout, {
   ScrollingContent,
 } from "../../components/layout/PageLayout";
-import { type Application } from "../../types/application";
 
 const FormContainer = styled(ScrollingContent)`
   padding: 20px;
