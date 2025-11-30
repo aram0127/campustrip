@@ -12,14 +12,17 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import com.example.app.service.UserService;
+import com.example.app.service.SmsService;
+import org.springframework.core.io.ClassPathResource;
 import com.example.app.domain.User;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RestController  // REST API용 컨트롤러
-@RequestMapping("/api/users")  // 기본 URL 경로
+@RestController // REST API용 컨트롤러
+@RequestMapping("/api/users") // 기본 URL 경로
 public class UserController {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -27,12 +30,15 @@ public class UserController {
     private final UserService userService;
     private final UniversitiesRepository universitiesRepository;
     private final FCMService fcmService;
+    private final SmsService smsService;
 
     @Autowired
-    public UserController(UserService userService, UniversitiesRepository universitiesRepository, FCMService fCMService) {
+    public UserController(UserService userService, UniversitiesRepository universitiesRepository,
+            FCMService fCMService, SmsService smsService) {
         this.userService = userService;
         this.universitiesRepository = universitiesRepository;
         this.fcmService = fCMService;
+        this.smsService = smsService;
     }
 
     // GET: 전체 사용자 조회
@@ -77,7 +83,7 @@ public class UserController {
     // 학교 이메일 도메인 확인
     @PostMapping("/school-email")
     public SchoolEmailDTO getSchoolEmail(@PathVariable SchoolEmailDTO email) {
-        if(email.getSchoolEmail().endsWith(".ac.kr")) { // 데이터베이스 조회 로직 추가 필요
+        if (email.getSchoolEmail().endsWith(".ac.kr")) { // 데이터베이스 조회 로직 추가 필요
             return email;
         }
         return null;
@@ -94,7 +100,8 @@ public class UserController {
 
     // 사용자 평가 남기기
     @PutMapping("/{id}/rate")
-    public void rateUser(@PathVariable Integer id, @AuthenticationPrincipal UserDetails user, @RequestBody CreateUserRate rate) {
+    public void rateUser(@PathVariable Integer id, @AuthenticationPrincipal UserDetails user,
+            @RequestBody CreateUserRate rate) {
         userService.rateUser(user.getUsername(), rate);
         fcmService.sendNotificationToUser(
                 new com.example.app.dto.PushNotificationRequest(
@@ -103,9 +110,7 @@ public class UserController {
                         PushNotificationType.USER_RATED,
                         id,
                         "새로운 평가가 등록되었습니다.",
-                        user.getUsername() + "님이 회원님을 평가했습니다."
-                )
-        );
+                        user.getUsername() + "님이 회원님을 평가했습니다."));
     }
 
     // 내가 평가한 사람 조회
@@ -122,11 +127,22 @@ public class UserController {
 
     // 프로필 이미지 수정
     @PutMapping(value = "/{id}/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public void updateUserProfileImage(@PathVariable Integer id, @AuthenticationPrincipal UserDetails userDeatils, @ModelAttribute UpdateProfileImageRequest request) {
+    public void updateUserProfileImage(@PathVariable Integer id, @AuthenticationPrincipal UserDetails userDeatils,
+            @ModelAttribute UpdateProfileImageRequest request) {
         User user = userService.getUserByUserId(userDeatils.getUsername());
         if (!user.getId().equals(id)) {
             throw new SecurityException("권한이 없습니다.");
         }
         userService.updateUserProfilePhoto(user, request.getProfileImage());
+    }
+
+    @PostMapping("/send-sms")
+    public void sendSms(@RequestBody SmsRequest request) {
+        smsService.sendVerificationCode(request.getTo());
+    }
+
+    @PostMapping("/verify-sms")
+    public boolean verifySms(@RequestBody SmsVerificationRequest request) {
+        return smsService.verifyCode(request.getPhoneNumber(), request.getVerificationCode());
     }
 }
