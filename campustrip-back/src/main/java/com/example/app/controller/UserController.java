@@ -75,8 +75,14 @@ public class UserController {
 
     // DELETE: 사용자 삭제
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public void deleteUser(@PathVariable Integer id) {
+    public void deleteUser(@PathVariable Integer id, @AuthenticationPrincipal UserDetails userDetails, @RequestBody String password) {
+        User user = userService.getUserByUserId(userDetails.getUsername());
+        if (!user.getId().equals(id)) {
+            throw new SecurityException("권한이 없습니다.");
+        }
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new SecurityException("비밀번호가 일치하지 않습니다.");
+        }
         userService.deleteUser(id);
     }
 
