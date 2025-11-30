@@ -194,7 +194,7 @@ const SideMenu: React.FC<SideMenuProps> = ({
           <MenuProfile>
             <ProfileAvatar $imageUrl={user.profilePhotoUrl} />{" "}
             <ProfileName>{user.name}</ProfileName>
-            <ProfileId>@{user.userId}</ProfileId>
+            <ProfileId>{user.userId}</ProfileId>
             <FollowInfo>
               <span onClick={() => handleFollowClick("following")}>
                 <b>{followingCount}</b> 팔로잉
