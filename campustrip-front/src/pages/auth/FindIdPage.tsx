@@ -45,7 +45,7 @@ function FindIdPage() {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <Button size="large" type="submit" style={{ width: "100%" }}>
+        <Button $size="large" type="submit" style={{ width: "100%" }}>
           확인
         </Button>
       </Form>

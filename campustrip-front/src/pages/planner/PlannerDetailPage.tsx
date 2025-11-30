@@ -1,9 +1,14 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import styled, { useTheme } from "styled-components";
 import { useParams, useNavigate } from "react-router-dom";
-import { GoogleMap, useJsApiLoader, Marker, Polyline } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  useJsApiLoader,
+  Marker,
+  Polyline,
+} from "@react-google-maps/api";
 import type { PlannerDetail } from "../../types/planner";
-import { getPlannerDetail, deletePlanner } from "../../api/planners"; 
+import { getPlannerDetail, deletePlanner } from "../../api/planners";
 
 const PageContainer = styled.div`
   width: 100%;
@@ -131,7 +136,7 @@ function PlannerDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const theme = useTheme();
-  
+
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -160,7 +165,7 @@ function PlannerDetailPage() {
   };
 
   const handleEdit = () => {
-    navigate(`/posts/edit/${id}`); // 수정 페이지로 이동 
+    navigate(`/posts/edit/${id}`); // 수정 페이지로 이동
   };
 
   if (!isLoaded || !planner) return <div>Loading...</div>;
@@ -178,13 +183,19 @@ function PlannerDetailPage() {
             path={pathCoordinates}
             options={{ strokeColor: theme.colors.primary, strokeWeight: 5 }}
           />
-          {planner.schedules.flatMap(s => s.places).map((place, idx) => (
-             <Marker
+          {planner.schedules
+            .flatMap((s) => s.places)
+            .map((place, idx) => (
+              <Marker
                 key={idx}
                 position={{ lat: place.latitude, lng: place.longitude }}
-                label={{ text: String(place.order), color: "white", fontWeight: "bold" }}
-             />
-          ))}
+                label={{
+                  text: String(place.order),
+                  color: "white",
+                  fontWeight: "bold",
+                }}
+              />
+            ))}
         </GoogleMap>
       </MapSection>
 
@@ -192,12 +203,14 @@ function PlannerDetailPage() {
         <Header>
           <HandleBar />
           <Title>{planner.title}</Title>
-          <Period>{planner.startDate} ~ {planner.endDate}</Period>
+          <Period>
+            {planner.startDate} ~ {planner.endDate}
+          </Period>
         </Header>
 
         <ButtonGroup>
-           <ActionButton onClick={handleEdit}>수정</ActionButton>
-           <ActionButton onClick={handleDelete}>삭제</ActionButton>
+          <ActionButton onClick={handleEdit}>수정</ActionButton>
+          <ActionButton onClick={handleDelete}>삭제</ActionButton>
         </ButtonGroup>
 
         {planner.schedules.map((schedule) => (

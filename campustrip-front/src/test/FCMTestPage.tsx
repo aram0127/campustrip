@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import PageLayout from "../../components/layout/PageLayout";
-import Button from "../../components/common/Button";
-import Input from "../../components/common/Input";
-import { requestFcmToken, onMessageListener } from "../../firebase";
-import { registerFcmToken, deleteFcmToken, deleteAllUserTokens, sendTestNotification } from "../../api/fcm";
-import { useAuth } from "../../context/AuthContext";
+import PageLayout from "../components/layout/PageLayout.tsx";
+import Button from "../components/common/Button.tsx";
+import Input from "../components/common/Input.tsx";
+import { requestFcmToken, onMessageListener } from "../firebase.ts";
+import { registerFcmToken, deleteFcmToken, deleteAllUserTokens, sendTestNotification } from "../api/fcm.ts";
+import { useAuth } from "../context/AuthContext.tsx";
 
 interface NotificationPayload {
   notification?: {
