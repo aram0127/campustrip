@@ -89,8 +89,8 @@ public class ApplicationController {
         if(status) {
             chatService.saveChatMember(new CreateChatMember(app.getPost(), app.getUser()));
             notificationRequest = new PushNotificationRequest(
-                    post.getUser().getId(),//알림받는 상대방
                     user.getId(),
+                    post.getUser().getId(),
                     PushNotificationType.APPLICATION_ACCEPT,
                     post.getPostId(),
                     "동행 신청이 수락되었습니다.",
@@ -98,8 +98,8 @@ public class ApplicationController {
             );
         }else {
             notificationRequest = new PushNotificationRequest(
-                    post.getUser().getId(),
                     user.getId(),
+                    post.getUser().getId(),
                     PushNotificationType.APPLICATION_ACCEPT,
                     post.getPostId(),
                     "동행 신청이 거절되었습니다.",
