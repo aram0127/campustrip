@@ -3,8 +3,12 @@ package com.example.app.controller;
 
 import com.example.app.dto.ChatDTO;
 import com.example.app.dto.ChatMessageDTO;
+import com.example.app.dto.PushNotificationRequest;
+import com.example.app.enumtype.PushNotificationType;
 import com.example.app.service.ChatMessageService;
 import com.example.app.service.ChatService;
+import com.example.app.service.FCMService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
@@ -13,20 +17,39 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/chats")
+@Slf4j
 public class ChatController {
-    ChatService chatService;
+    private final ChatService chatService;
     private final ChatMessageService chatMessageService;
+    private final FCMService fcmService;
 
     @Autowired
-    public ChatController(ChatService chatService, ChatMessageService chatMessageService) {
+    public ChatController(ChatService chatService, ChatMessageService chatMessageService, FCMService fcmService) {
         this.chatService = chatService;
         this.chatMessageService = chatMessageService;
+        this.fcmService = fcmService;
     }
 
     // 채팅 메시지 전송
     @MessageMapping("/chat/message")  // 클라이언트가 /pub/chat/message로 전송
     public void sendMessage(ChatMessageDTO message) {
         chatMessageService.sendMessage(message);
+        // 상대방에게 푸시 알림 전송
+        chatService.getMembersByRoomId(message.getRoomId()).stream().forEach(m -> {
+            try{
+                log.info("푸시 알림 전송 대상자 ID: {}", m.getUserId());
+                fcmService.sendNotificationToUser(new PushNotificationRequest(
+                        m.getUserId(),
+                        message.getMembershipId(),
+                        PushNotificationType.CHAT_MESSAGE,
+                        m.getChatId(),
+                        m.getChatTitle(),
+                        message.getUserName() + ": " + message.getMessage()
+                ));
+            } catch (Exception e){
+                log.error("푸시 알림 전송 실패: {}", e.getMessage());
+            }
+        });
     }
 
     // 채팅방 목록 조회
