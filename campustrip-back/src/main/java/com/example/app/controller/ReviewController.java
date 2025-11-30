@@ -41,6 +41,14 @@ public class ReviewController {
         return reviewService.getReviewSlice(keyword, pageable);
     }
 
+    // 작성자의 리뷰들 조회
+    @GetMapping("/user/{userId}")
+    public Slice<ReviewDTO> getReviewsByUserId(
+            @RequestParam Integer userId,
+            @PageableDefault(size=5, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return reviewService.getReviewsByUserId(userId, pageable);
+    }
+
     // 리뷰 생성
     @PostMapping(value = "/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ReviewDTO createReview(@ModelAttribute CreateReview createReview) {
