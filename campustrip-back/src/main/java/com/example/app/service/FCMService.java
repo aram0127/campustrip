@@ -48,7 +48,8 @@ public class FCMService {
                 tokenService.deleteToken(token);
             }
         }
-        pushNotificationRepository.save(request.toEntity());
+        if (request.getType() != PushNotificationType.CHAT_MESSAGE)
+            pushNotificationRepository.save(request.toEntity());
     }
 
 //    // 사용자에게 알림 전송 (모든 디바이스) - 기존 메서드 호환성 유지
