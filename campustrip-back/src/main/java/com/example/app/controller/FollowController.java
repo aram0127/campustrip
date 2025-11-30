@@ -41,7 +41,7 @@ public class FollowController {
                         PushNotificationType.FOLLOW,
                         followerId,
                         "새로운 팔로워 알림",
-                        userService.getUserById(followeeId).getName() + "님이 당신을 팔로우하기 시작했습니다."
+                        userService.getUserById(followerId).getName() + "님이 당신을 팔로우하기 시작했습니다."
                 )
         );
         return followDTO;
