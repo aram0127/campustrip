@@ -1,8 +1,6 @@
 package com.example.app.service;
 
-import com.example.app.dto.CreateUserRate;
-import com.example.app.dto.CustomUserDetails;
-import com.example.app.dto.UserRateDTO;
+import com.example.app.dto.*;
 import com.example.app.repository.UserRateRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -50,6 +48,21 @@ public class UserService implements UserDetailsService {
 
     public void saveUser(User user) {
         userRepository.save(user);
+    }
+
+    public UserResponse updateUserFromRequest(Integer id, EditUserRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("User not found with id: " + id));
+        if (user == null) {
+            throw new NoSuchElementException("User not found with id: " + id);
+        }
+        user.setName(request.getName());
+        user.setGender(request.getGender());
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setEmail(request.getEmail());
+        user.setSchoolEmail(request.getSchoolEmail());
+        userRepository.save(user);
+        return new UserResponse(user);
     }
 
     public void deleteUser(Integer id) {
