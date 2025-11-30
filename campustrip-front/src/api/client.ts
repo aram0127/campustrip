@@ -6,6 +6,9 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000, // 10초 타임아웃
+  headers: {
+    "Content-Type": "application/json", // JSON으로 보내도록 설정
+  },
 });
 
 // 요청 인터셉터
