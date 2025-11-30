@@ -145,4 +145,9 @@ public class UserController {
     public boolean verifySms(@RequestBody SmsVerificationRequest request) {
         return smsService.verifyCode(request.getPhoneNumber(), request.getVerificationCode());
     }
+
+    @PostMapping("/id-check")
+    public boolean checkUserIdAvailability(@RequestBody String userId) {
+        return userService.isUserIdAvailable(userId);
+    }
 }

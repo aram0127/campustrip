@@ -139,4 +139,8 @@ public class UserService implements UserDetailsService {
             throw new RuntimeException("Failed to upload profile image: " + e.getMessage());
         }
     }
+
+    public boolean isUserIdAvailable(String userId) {
+        return !userRepository.existsByUserId(userId);
+    }
 }
