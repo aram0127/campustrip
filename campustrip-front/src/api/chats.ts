@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import { type Chat, type ChatMessage } from "../types/chat";
+import { type Chat, type ChatMessage, type ChatMember } from "../types/chat";
 
 /* 내가 참여중인 모든 채팅 목록을 가져옴 */
 export const getMyChats = async (userId: number): Promise<Chat[]> => {
@@ -17,6 +17,14 @@ export const getChatHistory = async (
 ): Promise<ChatMessage[]> => {
   const response = await apiClient.get<ChatMessage[]>(
     `/api/chats/chat/${roomId}/messages`
+  );
+  return response.data;
+};
+
+/* 특정 채팅방의 참여자 목록 조회 */
+export const getChatMembers = async (chatId: string): Promise<ChatMember[]> => {
+  const response = await apiClient.get<ChatMember[]>(
+    `/api/chats/chat/${chatId}/members`
   );
   return response.data;
 };
