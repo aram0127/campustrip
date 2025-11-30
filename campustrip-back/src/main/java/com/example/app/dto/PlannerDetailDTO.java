@@ -1,4 +1,3 @@
-// java
 package com.example.app.dto;
 
 import lombok.AllArgsConstructor;
@@ -8,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PlannerDetailDTO{
+public class PlannerDetailDTO {
     private Integer plannerOrder;
     private Integer day;
     private String googlePlaceId;

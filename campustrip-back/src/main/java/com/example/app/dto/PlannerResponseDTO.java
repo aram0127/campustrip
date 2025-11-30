@@ -19,6 +19,7 @@ public class PlannerResponseDTO {
     private LocalDate startDate;
     private LocalDate endDate;
     private List<PlannerDetailDTO> details;
+
     public PlannerResponseDTO(Planner planner) {
         this.plannerId = planner.getPlannerId();
         this.userId = planner.getUser().getId();
