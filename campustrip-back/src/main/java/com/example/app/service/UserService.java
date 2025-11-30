@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;  // 의존성 주
 import com.example.app.domain.User;
 import com.example.app.domain.UserRate;
 import com.example.app.repository.UserRepository;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -18,11 +19,13 @@ import java.util.NoSuchElementException;
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final UserRateRepository userRateRepository;
+    private final S3Service s3Service;
 
     @Autowired
-    public UserService(UserRepository userRepository, UserRateRepository userRateRepository) {
+    public UserService(UserRepository userRepository, UserRateRepository userRateRepository, S3Service s3Service) {
         this.userRepository = userRepository;
         this.userRateRepository = userRateRepository;
+        this.s3Service = s3Service;
     }
 
     public List<User> getAllUsers() {
@@ -121,5 +124,18 @@ public class UserService implements UserDetailsService {
             dto.setComment(rate.getComment());
             return dto;
         }).toList();
+    }
+
+    public void updateUserProfilePhoto(User user, MultipartFile file) {
+        if (user.getProfilePhotoUrl() != null) {
+            s3Service.deleteFile(user.getProfilePhotoUrl());
+        }
+        try {
+            String imageUrl = s3Service.uploadFile(file);
+            user.setProfilePhotoUrl(imageUrl);
+            userRepository.save(user);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to upload profile image: " + e.getMessage());
+        }
     }
 }

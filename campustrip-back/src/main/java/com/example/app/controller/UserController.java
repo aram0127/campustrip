@@ -85,11 +85,10 @@ public class UserController {
     // 사용자 선호도 수정
     @PutMapping("/preference/{id}")
     @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
-    public User updateUserPreference(@PathVariable Integer id, @RequestBody UserPreference user) {
+    public void updateUserPreference(@PathVariable Integer id, @RequestBody UserPreference user) {
         User existingUser = userService.getUserById(id);
         existingUser.setPreference(user.getPreference());
         userService.saveUser(existingUser);
-        return existingUser;
     }
 
     // 사용자 평가 남기기
@@ -118,5 +117,14 @@ public class UserController {
     @GetMapping("/{id}/my-rates")
     public List<UserRateDTO> getMyRates(@PathVariable Integer id) {
         return userService.getUserRatesByTargetId(id);
+    }
+
+    @PutMapping("/{id}/profile-image")
+    public void updateUserProfileImage(@PathVariable Integer id, @AuthenticationPrincipal UserDetails userDeatils, @RequestBody UpdateProfileImageRequest request) {
+        User user = userService.getUserByUserId(userDeatils.getUsername());
+        if (!user.getId().equals(id)) {
+            throw new SecurityException("권한이 없습니다.");
+        }
+        userService.updateUserProfilePhoto(user, request.getProfileImage());
     }
 }
