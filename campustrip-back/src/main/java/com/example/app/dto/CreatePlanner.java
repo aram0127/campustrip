@@ -1,6 +1,6 @@
 package com.example.app.dto;
 
-import com.example.app.domain.User;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,8 +12,9 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreatePlanner {
-    private User user; // 플래너 작성자의 membership_id
+    private Integer membershipId; // userId 또는 membershipId로 받을 수 있음
+    private String title;
     private java.time.LocalDate startDate;
     private java.time.LocalDate endDate;
-    private List<PlannerDetailDTO> plannerDetails;
+    private List<PlannerDetailDTO> schedules;
 }

@@ -33,14 +33,17 @@ public class PlannerService {
     @Transactional
     public Planner savePlannerWithDetails(CreatePlanner createPlanner) {
         Planner planner = Planner.builder()
-                .user(createPlanner.getUser())
+                .user(userRepository.findById(createPlanner.getMembershipId()).orElseThrow())
+                .title(createPlanner.getTitle())
                 .startDate(createPlanner.getStartDate())
                 .endDate(createPlanner.getEndDate())
                 .build();
+        System.out.println("Saving planner: " + planner.getTitle());
+        System.out.println("Saving planner: " + planner.getStartDate() + " - " + planner.getEndDate());
         plannerRepository.save(planner);
 
-        if (createPlanner.getPlannerDetails() != null) {
-            for (PlannerDetailDTO detailDTO : createPlanner.getPlannerDetails()) {
+        if (createPlanner.getSchedules() != null) {
+            for (PlannerDetailDTO detailDTO : createPlanner.getSchedules()) {
                 PlannerDetail detail = new PlannerDetail(
                         new PlannerDetailId(detailDTO.getPlannerOrder(), planner.getPlannerId()),
                         planner,
@@ -58,13 +61,14 @@ public class PlannerService {
         Planner planner = plannerRepository.findById(plannerId)
                 .orElseThrow(() -> new IllegalArgumentException("Planner not found with id: " + plannerId));
 
+        planner.setTitle(createPlanner.getTitle());
         planner.setStartDate(createPlanner.getStartDate());
         planner.setEndDate(createPlanner.getEndDate());
 
         plannerDetailRepository.deleteByPlannerPlannerId(plannerId);
 
-        if (createPlanner.getPlannerDetails() != null) {
-            for (PlannerDetailDTO detailDTO : createPlanner.getPlannerDetails()) {
+        if (createPlanner.getSchedules() != null) {
+            for (PlannerDetailDTO detailDTO : createPlanner.getSchedules()) {
                 PlannerDetail detail = new PlannerDetail(
                         new PlannerDetailId(detailDTO.getPlannerOrder(), planner.getPlannerId()),
                         planner,
