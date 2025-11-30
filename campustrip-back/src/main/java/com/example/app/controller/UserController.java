@@ -7,6 +7,7 @@ import com.example.app.repository.UniversitiesRepository;
 import com.example.app.service.FCMService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,16 +96,16 @@ public class UserController {
 
     // 사용자 평가 남기기
     @PutMapping("/{id}/rate")
-    public void rateUser(@PathVariable Integer id, @AuthenticationPrincipal String userId, @RequestBody CreateUserRate rate) {
-        userService.rateUser(userId, rate);
+    public void rateUser(@PathVariable Integer id, @AuthenticationPrincipal UserDetails user, @RequestBody CreateUserRate rate) {
+        userService.rateUser(user.getUsername(), rate);
         fcmService.sendNotificationToUser(
                 new com.example.app.dto.PushNotificationRequest(
-                        rate.getTargetId(),
                         id,
+                        userService.getUserByUserId(user.getUsername()).getId(),
                         PushNotificationType.USER_RATED,
                         id,
                         "새로운 평가가 등록되었습니다.",
-                        userService.getUserByUserId(userId).getName() + "님이 회원님을 평가했습니다."
+                        user.getUsername() + "님이 회원님을 평가했습니다."
                 )
         );
     }
