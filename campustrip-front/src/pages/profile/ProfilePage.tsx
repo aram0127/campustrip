@@ -351,7 +351,7 @@ function ProfilePage() {
   // 설정(개인정보) 페이지로 이동
   const handleSettings = () => {
     setIsMenuOpen(false);
-    navigate("/settings/personal-info");
+    navigate("/profile/personal-info");
   };
 
   // 사용자가 작성한 후기(리뷰) 가져오기

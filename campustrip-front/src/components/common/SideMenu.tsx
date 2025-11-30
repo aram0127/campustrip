@@ -214,7 +214,7 @@ const SideMenu: React.FC<SideMenuProps> = ({
           <StyledLink to={user ? `/profile/${user.id}` : "/login"}>
             <MenuItem onClick={onClose}>👤 프로필</MenuItem>
           </StyledLink>
-          <StyledLink to="/settings/personal-info">
+          <StyledLink to="/profile/personal-info">
             <MenuItem onClick={onClose}>ℹ️ 개인정보</MenuItem>
           </StyledLink>
           {user && <MenuItem onClick={handleLogout}>🚪 로그아웃</MenuItem>}
