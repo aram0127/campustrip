@@ -18,7 +18,7 @@ public class KafkaConsumerService {
     // Kafka에서 메시지를 수신하여 WebSocket 구독자들에게 전송
     @KafkaListener(
             topicPattern = "chat-room-.*",  // 모든 채팅방 토픽 구독
-            groupId = "chat-group",
+            groupId = "${CHAT_GROUP_ID:chat-group}",
             containerFactory = "kafkaListenerContainerFactory",
             autoStartup = "true"
     )
@@ -38,7 +38,7 @@ public class KafkaConsumerService {
         }
     }
 
-    @KafkaListener(topicPattern = "location-.*", groupId = "campustrip-group", containerFactory = "locationKafkaListenerContainerFactory")
+    @KafkaListener(topicPattern = "location-.*", groupId = "${LOCATION_GROUP_ID:campustrip-group}", containerFactory = "locationKafkaListenerContainerFactory")
     public void consumeLocation(LocationMessage locationMessage) {
         try {
             String groupId = locationMessage.getGroupId();

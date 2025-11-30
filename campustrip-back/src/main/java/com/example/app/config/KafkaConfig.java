@@ -84,7 +84,7 @@ public class KafkaConfig {
         config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
         config.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
         config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, ChatMessageDTO.class);
-        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
         // 리밸런싱 방지 설정 추가
         config.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 30000);  // 30초
@@ -111,7 +111,7 @@ public class KafkaConfig {
         config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
         config.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
         config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, LocationMessage.class);
-        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");  // latest
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
         config.put(ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG, false);  // 토픽 자동 생성 비활성화
 
