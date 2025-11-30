@@ -10,4 +10,5 @@ export interface User {
   preference: number | null;
   userScore: number;
   role: number;
+  profilePhotoUrl: string;
 }

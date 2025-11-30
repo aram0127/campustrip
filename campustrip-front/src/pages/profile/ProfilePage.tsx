@@ -37,10 +37,12 @@ const ProfileInfoContainer = styled.div`
   padding: 16px;
 `;
 
-const Avatar = styled.div`
+const Avatar = styled.div<{ imageUrl?: string }>`
   width: 70px;
   height: 70px;
   border-radius: 50%;
+  background-image: ${({ imageUrl }) => imageUrl ? `url(${imageUrl})` : 'none'};
+  background-size: cover;
   background-color: ${({ theme }) => theme.colors.secondaryTextColor};
   margin-bottom: 12px;
 `;
@@ -316,7 +318,7 @@ function ProfilePage() {
     >
       <ScrollingContent>
         <ProfileInfoContainer>
-          <Avatar />
+          <Avatar imageUrl={profileUser.profilePhotoUrl}/>
           <UserName>{profileUser.name}</UserName>
           <FollowInfo>
             <FollowStat onClick={handleGoToFollowPage}>

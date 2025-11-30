@@ -23,6 +23,7 @@ public class UserResponse {
         this.preference = user.getPreference();
         this.userScore = user.getUserScore();
         this.role = user.getRole();
+        this.profilePhotoUrl = user.getProfilePhotoUrl();
     }
     private Integer id;
     private String name;
@@ -35,4 +36,5 @@ public class UserResponse {
     private Integer preference;
     private Float userScore;
     private Integer role;
+    private String profilePhotoUrl;
 }
