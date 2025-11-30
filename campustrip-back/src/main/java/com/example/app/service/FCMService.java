@@ -42,7 +42,7 @@ public class FCMService {
 
         for (String token : tokens) {
             try {
-                sendMessageTo(token, request.getTitle(), request.getBody(), request.getType());
+                sendMessageTo(token, request.getTitle(), request.getBody(), request.getType(), request.getReferenceId());
             } catch (Exception e) {
                 // 실패한 토큰 삭제
                 tokenService.deleteToken(token);
@@ -59,7 +59,7 @@ public class FCMService {
 //    }
 
     // 단일 토큰으로 알림 전송
-    public void sendMessageTo(String targetToken, String title, String body, PushNotificationType type) throws IOException, FirebaseMessagingException {
+    public void sendMessageTo(String targetToken, String title, String body, PushNotificationType type, Integer referenceId) throws IOException, FirebaseMessagingException {
         //String message = makeMessage(targetToken, title, body);
         String message = FirebaseMessaging.getInstance().send(Message.builder()
                 .setNotification(Notification.builder()
@@ -67,6 +67,7 @@ public class FCMService {
                         .setBody(body)
                         .build())
                 .putData("type", String.valueOf(type))
+                .putData("referenceId", String.valueOf(referenceId))
                 .setToken(targetToken).build());
     }
 
