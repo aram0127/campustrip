@@ -31,7 +31,7 @@ public class SecurityConfig {
     private final JwtUtil jwtUtil;
 
     public SecurityConfig(@Qualifier("customUserDetailsService") UserDetailsService userDetailsService,
-                          JwtUtil jwtUtil) {
+            JwtUtil jwtUtil) {
         this.userDetailsService = userDetailsService;
         this.jwtUtil = jwtUtil;
     }
@@ -55,24 +55,25 @@ public class SecurityConfig {
         loginFilter.setFilterProcessesUrl("/login");
 
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            .formLogin(form -> form.disable())
-            .httpBasic(basic -> basic.disable())
-            .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/ws/**", "/ws/chat/**", "/ws/websocket/**").permitAll()
-                    .requestMatchers("/", "/index.html", "/login", "/api/login", "/api/users", "/api/auth/email/**",
-                            "assets/**", "/vite.svg", "manifest.webmanifest", "/registerSW.js", "/*.ico", "/*.png", "/*jpg").permitAll()
-                    .requestMatchers("/api/fcm/**").permitAll()
-                    .requestMatchers("/error").permitAll()
-                    .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                    .anyRequest().authenticated()
-            )
-            .addFilterBefore(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
-            .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class)
-            .sessionManagement(session -> session
-                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            );
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/ws/**", "/ws/chat/**", "/ws/websocket/**").permitAll()
+                        .requestMatchers("/", "/index.html", "/login", "/api/login", "/api/users", "/api/auth/email/**",
+                                "assets/**", "/vite.svg", "manifest.webmanifest", "/registerSW.js", "/*.ico", "/*.png",
+                                "/*jpg")
+                        .permitAll()
+                        .requestMatchers("/api/fcm/**").permitAll()
+                        .requestMatchers("/api/users/send-sms", "/api/users/verify-sms").permitAll()
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated())
+                .addFilterBefore(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class)
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
     }
