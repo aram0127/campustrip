@@ -1,52 +1,64 @@
 import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { useNavigate, useParams } from "react-router-dom";
-import { IoMenu, IoAdd, IoSend, IoLocationSharp } from "react-icons/io5";
+import { IoMenu, IoImage, IoSend, IoLocationSharp } from "react-icons/io5";
 import { Client, type IMessage } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { useAuth } from "../../context/AuthContext";
-import {
-  type ChatMessage,
-  type ChatMember,
-  MessageTypeValue,
-} from "../../types/chat";
+import { type ChatMessage, MessageTypeValue } from "../../types/chat";
 import PageLayout, {
   ScrollingContent,
 } from "../../components/layout/PageLayout";
 import { useQuery } from "@tanstack/react-query";
-import { getChatHistory, getChatMembers } from "../../api/chats";
+import {
+  getChatHistory,
+  getChatMembers,
+  sendImageMessage,
+} from "../../api/chats";
 
 const MessageListContainer = styled(ScrollingContent)`
   padding: 16px;
   display: flex;
   flex-direction: column;
+  gap: 12px;
 `;
 
 const MessageBubble = styled.div<{ $isMe?: boolean }>`
-  max-width: 70%;
   padding: 10px 14px;
   border-radius: 18px;
-  margin-bottom: 4px;
-  align-self: ${({ $isMe }) => ($isMe ? "flex-end" : "flex-start")};
+  border-top-right-radius: ${({ $isMe }) => ($isMe ? "4px" : "18px")};
+  border-top-left-radius: ${({ $isMe }) => (!$isMe ? "4px" : "18px")};
+
   background-color: ${({ $isMe, theme }) =>
     $isMe ? theme.colors.primary : theme.colors.inputBackground};
   color: ${({ $isMe, theme }) => ($isMe ? "white" : theme.colors.text)};
   white-space: pre-wrap;
+  word-break: break-word;
 `;
 
-const Timestamp = styled.span<{ $isMe?: boolean }>`
+const ImageBubble = styled.img`
+  width: 200px;
+  max-width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
+  cursor: pointer;
+  background-color: ${({ theme }) => theme.colors.inputBackground};
+`;
+
+const Timestamp = styled.span`
   font-size: 10px;
   color: ${({ theme }) => theme.colors.secondaryTextColor};
-  margin-bottom: 12px;
-  align-self: ${({ $isMe }) => ($isMe ? "flex-end" : "flex-start")};
+  margin-bottom: 2px;
   flex-shrink: 0;
 `;
 
 const MessageContainer = styled.div<{ $isMe?: boolean }>`
   display: flex;
   flex-direction: column;
+  width: 100%;
   align-items: ${({ $isMe }) => ($isMe ? "flex-end" : "flex-start")};
-  margin-bottom: 12px;
 `;
 
 const SenderInfo = styled.div`
@@ -57,8 +69,8 @@ const SenderInfo = styled.div`
 `;
 
 const Avatar = styled.div<{ $imageUrl?: string }>`
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background-color: ${({ theme }) => theme.colors.inputBackground};
   background-image: url(${({ $imageUrl }) =>
@@ -69,16 +81,15 @@ const Avatar = styled.div<{ $imageUrl?: string }>`
 `;
 
 const UserName = styled.span`
-  font-size: 14px;
-  font-weight: 500;
-  color: ${({ theme }) => theme.colors.secondaryTextColor};
+  font-size: 13px;
+  color: ${({ theme }) => theme.colors.text};
 `;
 
 const BubbleContainer = styled.div<{ $isMe?: boolean }>`
   display: flex;
   align-items: flex-end;
-  gap: 8px;
-  align-self: ${({ $isMe }) => ($isMe ? "flex-end" : "flex-start")};
+  gap: 6px;
+  max-width: 80%;
 `;
 
 const InputContainer = styled.div`
@@ -86,8 +97,9 @@ const InputContainer = styled.div`
   align-items: center;
   padding: 8px 12px;
   border-top: 1px solid ${({ theme }) => theme.colors.borderColor};
-  flex-shrink: 0; /* 줄어들지 않도록 설정 */
-  padding-bottom: env(safe-area-inset-bottom); /* 하단 홈바 대응 */
+  flex-shrink: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  background-color: ${({ theme }) => theme.colors.background};
 `;
 
 const MessageInput = styled.input`
@@ -109,8 +121,8 @@ const HeaderButton = styled.button`
   color: ${({ theme }) => theme.colors.text};
   font-size: 24px;
   cursor: pointer;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -126,6 +138,7 @@ const DateSeparator = styled.div`
   margin: 16px 0;
   color: ${({ theme }) => theme.colors.secondaryTextColor};
   font-size: 12px;
+  width: 100%;
 `;
 
 const Message = styled.p`
@@ -141,9 +154,10 @@ function ChatRoomPage() {
 
   const [messages, setMessages] = useState<ChatMessage[]>([]); // 실시간 + 과거 메시지
   const [inputValue, setInputValue] = useState("");
-  const [roomTitle, setRoomTitle] = useState("채팅방");
+  const [roomTitle] = useState("채팅방");
   const stompClientRef = useRef<Client | null>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null); // 파일 input ref
   const [isHistoryLoaded, setIsHistoryLoaded] = useState(false); // 중복 로드 방지
 
   // 채팅방 멤버 목록 조회
@@ -225,7 +239,7 @@ function ChatRoomPage() {
     stompClientRef.current = client;
   }, [chatId, user, isHistoryLoaded]); // user와 chatId가 변경될 때마다 재연결
 
-  // 메시지 전송 핸들러
+  // 텍스트 메시지 전송 핸들러
   const handleSend = () => {
     if (inputValue.trim() && stompClientRef.current?.active && user) {
       const chatMessage: ChatMessage = {
@@ -242,6 +256,23 @@ function ChatRoomPage() {
       });
 
       setInputValue("");
+    }
+  };
+
+  // 이미지 파일 선택 핸들러
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0] && user && chatId) {
+      const file = e.target.files[0];
+      try {
+        // 이미지 전송 API 호출
+        await sendImageMessage(Number(chatId), user.id, user.name, file);
+      } catch (err) {
+        console.error("이미지 전송 실패", err);
+        alert("이미지 전송에 실패했습니다.");
+      } finally {
+        // input 초기화 (동일 파일 재선택 가능하게)
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
     }
   };
 
@@ -281,11 +312,8 @@ function ChatRoomPage() {
     >
       <MessageListContainer ref={messageListRef}>
         {isHistoryLoading && <Message>대화 내역을 불러오는 중...</Message>}
-        {historyError && (
-          <Message>대화 내역 로딩 실패: {historyError.message}</Message>
-        )}
+        {historyError && <Message>대화 내역 로딩 실패</Message>}
 
-        {/* 메시지 렌더링 (isHistoryLoaded가 true인 경우) */}
         {isHistoryLoaded &&
           messages.map((msg, index) => {
             const isMe = msg.userName === user?.name;
@@ -305,17 +333,32 @@ function ChatRoomPage() {
                 key={msg.timestamp ? msg.timestamp + index : index}
                 $isMe={isMe}
               >
+                {/* 상대방일 경우 이름과 아바타 표시 */}
                 {!isMe && (
                   <SenderInfo>
                     <Avatar $imageUrl={getProfileImage(msg.membershipId)} />
                     <UserName>{msg.userName}</UserName>
                   </SenderInfo>
                 )}
+
                 <BubbleContainer $isMe={isMe}>
+                  {/* 내가 보낸 메시지: 타임스탬프가 왼쪽 */}
                   {isMe && (
                     <Timestamp>{formatTimestamp(msg.timestamp)}</Timestamp>
                   )}
-                  <MessageBubble $isMe={isMe}>{msg.message}</MessageBubble>
+
+                  {/* 메시지 내용 (이미지 or 텍스트) */}
+                  {msg.messageType === "IMAGE" ? (
+                    <ImageBubble
+                      src={msg.imageUrl}
+                      alt="전송된 이미지"
+                      onClick={() => window.open(msg.imageUrl, "_blank")}
+                    />
+                  ) : (
+                    <MessageBubble $isMe={isMe}>{msg.message}</MessageBubble>
+                  )}
+
+                  {/* 상대방이 보낸 메시지: 타임스탬프가 오른쪽 */}
                   {!isMe && (
                     <Timestamp>{formatTimestamp(msg.timestamp)}</Timestamp>
                   )}
@@ -326,20 +369,30 @@ function ChatRoomPage() {
       </MessageListContainer>
 
       <InputContainer>
-        <HeaderButton style={{ marginLeft: "-4px" }}>
-          <IoAdd />
+        <HeaderButton
+          style={{ marginLeft: "-4px" }}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <IoImage />
         </HeaderButton>
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: "none" }}
+          accept="image/*"
+          onChange={handleImageSelect}
+        />
         <MessageInput
           placeholder="메세지 입력"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && handleSend()}
-          disabled={!isHistoryLoaded} // 내역 로딩 전까지 비활성화
+          disabled={!isHistoryLoaded}
         />
         <SendButton
           onClick={handleSend}
           style={{ marginRight: "-4px" }}
-          disabled={!isHistoryLoaded || !stompClientRef.current?.active} // 연결 전 비활성화
+          disabled={!isHistoryLoaded || !stompClientRef.current?.active}
         >
           <IoSend />
         </SendButton>

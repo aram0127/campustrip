@@ -1,4 +1,4 @@
-export type MessageType = "JOIN" | "CHAT" | "LEAVE";
+export type MessageType = "JOIN" | "CHAT" | "LEAVE" | "IMAGE";
 
 export const MessageTypeValue = {
   JOIN: "JOIN",
@@ -23,6 +23,7 @@ export interface ChatMessage {
   userName: string;
   membershipId: number;
   message: string;
+  imageUrl?: string;
   timestamp?: string;
 }
 

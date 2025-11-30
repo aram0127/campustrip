@@ -28,3 +28,25 @@ export const getChatMembers = async (chatId: string): Promise<ChatMember[]> => {
   );
   return response.data;
 };
+
+/* 이미지 메시지 전송 */
+export const sendImageMessage = async (
+  roomId: number,
+  userId: number,
+  userName: string,
+  file: File
+): Promise<void> => {
+  const formData = new FormData();
+  formData.append("roomId", roomId.toString());
+  formData.append("membershipId", userId.toString());
+  formData.append("userName", userName);
+  formData.append("messageType", "IMAGE");
+  formData.append("message", "");
+  formData.append("image", file);
+
+  await apiClient.post("/api/chats/chat/message/image", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
