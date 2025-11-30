@@ -32,11 +32,23 @@ public class ChatController {
     // 채팅방 목록 조회
     @GetMapping("/chat/{id}")
     public List<ChatDTO> getMyChatRoom(@PathVariable Integer id) {
-        return chatService.getMyChatRoom(id).stream().map(chat -> new ChatDTO(
-                chat.getId(),
-                chat.getTitle(),
-                chat.getCreatedAt()
-        )).toList();
+        return chatService.getMyChatRoom(id).stream().map(chat -> {
+            ChatDTO chatDTO = new ChatDTO();
+            chatDTO.setId(chat.getId());
+            chatDTO.setTitle(chat.getTitle());
+            chatDTO.setCreatedAt(chat.getCreatedAt());
+
+            // 마지막 메시지와 시간 설정
+            ChatMessageDTO lastMessage = chatMessageService.getLastMessage(chat.getId());
+            if (lastMessage != null) {
+                chatDTO.setLastMessageType(lastMessage.getMessageType());
+                chatDTO.setSenderName(lastMessage.getUserName());
+                chatDTO.setLastMessage(lastMessage.getMessage());
+                chatDTO.setLastMessageTime(lastMessage.getTimestamp());
+            }
+
+            return chatDTO;
+        }).toList();
     }
 
     // 채팅방 메시지 조회

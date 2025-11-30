@@ -113,6 +113,22 @@ public class ChatMessageService {
         );
     }
 
+    public ChatMessageDTO getLastMessage(Integer chatId) {
+        ChatMessage chatMessage = chatMessageRepository.findTopByChatIdOrderByTimestampDesc(chatId);
+        if (chatMessage == null) {
+            return null;
+        }
+        if (chatMessage.getMessageType() == MessageType.IMAGE) {
+            chatMessage.setContent("[이미지]");
+        }
+        return new ChatMessageDTO(
+                chatMessage.getMessageType(),
+                chatMessage.getSenderName(),
+                chatMessage.getContent(),
+                chatMessage.getTimestamp()
+        );
+    }
+
     public List<ChatMessageDTO> getChatHistory(Integer id) {
         return chatMessageRepository.findByChatIdOrderByTimestampAsc(id).stream().map(msg -> new ChatMessageDTO(
                 msg.getMessageType(),
