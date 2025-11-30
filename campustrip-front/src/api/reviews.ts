@@ -125,3 +125,36 @@ export const deleteReviewComment = async (
 export const deleteReview = async (reviewId: number): Promise<void> => {
   await apiClient.delete(`/api/reviews/${reviewId}`);
 };
+
+// 리뷰 수정용 데이터 타입
+export interface UpdateReviewData {
+  reviewId: number;
+  userId: number;
+  postId: number;
+  title: string;
+  body: string;
+  images: File[];
+}
+
+// 리뷰 수정 API
+export const updateReview = async (data: UpdateReviewData): Promise<Review> => {
+  const formData = new FormData();
+
+  // 백엔드 CreateReview DTO 구조에 맞춰 데이터 전송
+  formData.append("userId", data.userId.toString());
+  formData.append("postId", data.postId.toString());
+  formData.append("title", data.title);
+  formData.append("body", data.body);
+
+  // 이미지 파일들 추가
+  data.images.forEach((file) => {
+    formData.append("images", file);
+  });
+
+  // PUT 요청 (ReviewController에 정의된 경로)
+  const response = await apiClient.put<Review>(
+    `/api/reviews/${data.reviewId}`,
+    formData
+  );
+  return response.data;
+};
