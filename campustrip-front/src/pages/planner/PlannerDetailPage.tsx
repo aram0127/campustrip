@@ -8,6 +8,7 @@ import {
     Polyline,
 } from "@react-google-maps/api";
 import { IoArrowBack, IoCreateOutline, IoTrashOutline } from "react-icons/io5";
+// PlannerDetailResponse와 PlannerDetailDTO가 백엔드 필드명(details)을 포함하도록 정의되어 있어야 합니다.
 import type { 
     PlannerDetailResponse, 
     PlannerDetailDTO, 
@@ -269,19 +270,23 @@ function PlannerDetailPage() {
         return "기타";
     };
 
-    //  Google Place ID를 이용해 장소 상세 정보를 가져와 schedulePlaces 상태를 업데이트하는 로직 재반영
+    // 💡 Google Place ID를 이용해 장소 상세 정보를 가져와 schedulePlaces 상태를 업데이트하는 로직
     useEffect(() => {
         if (!id || !isLoaded) return;
         
         const fetchDetails = async (plannerId: number) => {
             try {
                 // 1. 백엔드 API 호출 (PlannerDetailDTO 리스트 포함)
-                const plannerData: PlannerDetailResponse = await getPlannerDetail(plannerId); // ✅ getPlannerDetail 사용
+                const plannerData: PlannerDetailResponse = await getPlannerDetail(plannerId);
                 setPlanner(plannerData);
                 
-                console.log("[Detail Load] 백엔드 응답 (ID만 포함):", plannerData.schedules); // 디버깅 로그
+                // 🚨 [핵심 수정] 백엔드 필드명 'details' 사용
+                // 타입 정의에서 plannerData.schedules 대신 plannerData.details를 사용한다고 가정합니다.
+                const detailList = plannerData.details; 
+                
+                console.log("[Detail Load] 백엔드 응답 (ID만 포함):", detailList); 
 
-                if (!plannerData.schedules || plannerData.schedules.length === 0) {
+                if (!detailList || detailList.length === 0) {
                     setSchedulePlaces([]);
                     return;
                 }
@@ -292,7 +297,7 @@ function PlannerDetailPage() {
                 );
 
                 // 2. Google Place ID를 이용해 상세 정보를 비동기적으로 가져옴
-                const placeDetailPromises = plannerData.schedules.map(
+                const placeDetailPromises = detailList.map(
                     (scheduleItem: PlannerDetailDTO) =>
                         new Promise<({ day: number } & PlannerPlace) | null>((resolve) => {
                             service.getDetails(
@@ -313,7 +318,7 @@ function PlannerDetailPage() {
                                         };
                                         resolve({ ...placeInfo, day: scheduleItem.day });
                                     } else {
-                                        //Google API 오류 상태 파악 
+                                        // Google API 오류 상태 파악 
                                         console.error(`[Error] Place ID: ${scheduleItem.googlePlaceId}, Status: ${status}`);
                                         resolve(null);
                                     }
@@ -325,18 +330,21 @@ function PlannerDetailPage() {
                 const resolvedPlaces = await Promise.all(placeDetailPromises);
 
                 // 3. 일차별로 그룹화하고 정렬하여 맵/리스트 렌더링용 데이터 생성
-                const groupedPlaces = resolvedPlaces
+                const finalSchedules = resolvedPlaces
                     .filter((p): p is ({ day: number } & PlannerPlace) => p !== null)
                     .reduce((acc, current) => {
                         const day = current.day;
-                        if (!acc[day]) {
-                            acc[day] = { day, places: [] };
+                        // 현재 schedulePlaces가 아닌, finalSchedules를 구성하는 acc에서 찾기
+                        let schedule = acc.find(s => s.day === day);
+                        if (!schedule) {
+                            schedule = { day, places: [] };
+                            acc.push(schedule);
                         }
-                        acc[day].places.push(current);
+                        schedule.places.push(current);
                         return acc;
-                    }, {} as { [key: number]: PlannerSchedule });
-
-                const finalSchedules = Object.values(groupedPlaces).sort((a, b) => a.day - b.day);
+                    }, [] as PlannerSchedule[])
+                    .sort((a, b) => a.day - b.day);
+                
                 finalSchedules.forEach(schedule => {
                     schedule.places.sort((a, b) => a.order - b.order);
                 });
@@ -381,8 +389,9 @@ function PlannerDetailPage() {
         return DAY_COLORS[(day - 1) % DAY_COLORS.length];
     };
 
-    // 로딩 처리: Google Map 로딩 및 planner(기본 정보) 로딩 대기
-    // schedulePlaces가 로드되지 않으면, 잠시 로딩 상태를 유지함   
+    // 🚨 [필수 수정] 로딩 조건 추가: planner가 null이면 렌더링을 막습니다.
+    if (!isLoaded || !planner) return <div>Loading...</div>; 
+    
 
     return (
         <PageContainer>
@@ -437,7 +446,8 @@ function PlannerDetailPage() {
                 <HandleBar />
                 <Header>
                     <TitleRow>
-                        <Title>{planner.title}</Title>
+                        {/* planner가 null이 아니므로 안전하게 접근 가능 */}
+                        <Title>{planner.title}</Title> 
                         <ButtonGroup>
                             <IconButton onClick={handleEdit} title="수정">
                                 <IoCreateOutline />
