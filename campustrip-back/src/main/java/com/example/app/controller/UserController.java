@@ -62,8 +62,8 @@ public class UserController {
     // PUT: 사용자 정보 수정 // id가 뭘 의미하는지 다시 보자
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
-    public UserResponse updateUser(@PathVariable Integer id, @RequestBody EditUserRequest editUserRequest) {
-        return userService.updateUserFromRequest(id, editUserRequest);
+    public void updateUser(@PathVariable Integer id, @RequestBody EditUserRequest editUserRequest) {
+        userService.updateUserFromRequest(id, editUserRequest);
     }
 
     // DELETE: 사용자 삭제
