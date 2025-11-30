@@ -80,12 +80,12 @@ const ProfileInfoContainer = styled.div`
   padding: 16px;
 `;
 
-const Avatar = styled.div<{ imageUrl?: string }>`
+const Avatar = styled.div<{ $imageUrl?: string }>`
   width: 70px;
   height: 70px;
   border-radius: 50%;
-  background-image: url(${({ imageUrl }) =>
-    imageUrl || "/default-profile.png"});
+  background-image: url(${({ $imageUrl }) =>
+    $imageUrl || "/default-profile.png"});
   background-size: cover;
   background-color: ${({ theme }) => theme.colors.secondaryTextColor};
   margin-bottom: 12px;
@@ -437,7 +437,7 @@ function ProfilePage() {
     >
       <ScrollingContent onScroll={handleScroll}>
         <ProfileInfoContainer>
-          <Avatar imageUrl={profileUser.profilePhotoUrl} />
+          <Avatar $imageUrl={profileUser.profilePhotoUrl} />
           <UserName>{profileUser.name}</UserName>
 
           <UserDescription>

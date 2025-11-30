@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { getMyApplications } from "../../api/applications";
 import { getMyTripHistory } from "../../api/posts";
-import { createReview } from "../../api/reviews";
+import { createReview, getReviewById, updateReview } from "../../api/reviews";
 import { type Post } from "../../types/post";
 import Button from "../../components/common/Button";
 import PageLayout, {
@@ -55,6 +54,11 @@ const FormSelect = styled.select`
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
   }
+
+  &:disabled {
+    color: ${({ theme }) => theme.colors.secondaryTextColor};
+    cursor: not-allowed;
+  }
 `;
 
 const FormTextarea = styled.textarea`
@@ -82,7 +86,6 @@ const ImageUploadContainer = styled.div`
   overflow-x: auto;
   padding-bottom: 8px;
 
-  /* 스크롤바 스타일 */
   &::-webkit-scrollbar {
     height: 6px;
   }
@@ -157,10 +160,25 @@ const SubmitButton = styled(Button)`
   font-size: 16px;
 `;
 
-const ReviewCreatePage: React.FC = () => {
+// URL -> File 변환 헬퍼 함수
+const urltoFile = async (url: string, filename: string, mimeType: string) => {
+  try {
+    const res = await fetch(url);
+    const buf = await res.arrayBuffer();
+    return new File([buf], filename, { type: mimeType });
+  } catch (e) {
+    console.error("이미지 변환 실패:", e);
+    return null;
+  }
+};
+
+const ReviewFormPage: React.FC = () => {
   const navigate = useNavigate();
+  const { reviewId } = useParams<{ reviewId?: string }>(); // URL 파라미터 확인
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isEditMode = !!reviewId; // reviewId가 있으면 수정 모드
 
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -168,8 +186,9 @@ const ReviewCreatePage: React.FC = () => {
   const [images, setImages] = useState<File[]>([]);
   const [myTrips, setMyTrips] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(isEditMode); // 수정 모드일 때 초기 로딩 true
 
-  // 참여했던 여행 목록 불러오기
+  // 내 여행 목록 불러오기
   useEffect(() => {
     if (user) {
       fetchMyTrips();
@@ -179,18 +198,53 @@ const ReviewCreatePage: React.FC = () => {
   const fetchMyTrips = async () => {
     try {
       if (!user) return;
-
       const response = await getMyTripHistory(user.id);
-
-      const trips = response.content;
-
-      setMyTrips(trips);
+      setMyTrips(response.content);
     } catch (error) {
       console.error("여행 목록 로드 실패", error);
     }
   };
 
-  // 이미지 업로드 핸들러 (최대 20장)
+  // 수정 모드일 경우, 기존 데이터 불러오기
+  useEffect(() => {
+    if (isEditMode && reviewId && user) {
+      const fetchReviewData = async () => {
+        try {
+          const data = await getReviewById(Number(reviewId));
+
+          // 권한 체크
+          if (data.user.id !== user.id) {
+            alert("수정 권한이 없습니다.");
+            navigate("/reviews");
+            return;
+          }
+
+          setTitle(data.title);
+          setBody(data.body);
+          setSelectedPostId(data.postId);
+
+          // 이미지 변환 (URL -> File)
+          if (data.imageUrls && data.imageUrls.length > 0) {
+            const filePromises = data.imageUrls.map((url, index) => {
+              const ext = url.split(".").pop() || "jpg";
+              return urltoFile(url, `image_${index}.${ext}`, `image/${ext}`);
+            });
+            const files = await Promise.all(filePromises);
+            setImages(files.filter((f): f is File => f !== null));
+          }
+        } catch (error) {
+          console.error("리뷰 상세 조회 실패", error);
+          alert("리뷰 정보를 불러오지 못했습니다.");
+          navigate("/reviews");
+        } finally {
+          setInitialLoading(false);
+        }
+      };
+      fetchReviewData();
+    }
+  }, [isEditMode, reviewId, user, navigate]);
+
+  // 이미지 핸들러
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
@@ -201,59 +255,70 @@ const ReviewCreatePage: React.FC = () => {
         alert(`사진은 최대 ${MAX_IMAGES}장까지 업로드할 수 있습니다.`);
         return;
       }
-
       setImages((prev) => [...prev, ...newFiles]);
     }
-    // 같은 파일 다시 선택 가능하도록 초기화
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleRemoveImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // 제출 핸들러
+  // 제출 핸들러 (생성/수정 공통)
   const handleSubmit = async () => {
-    if (!user) {
-      alert("로그인이 필요합니다.");
-      return;
-    }
-    if (!selectedPostId) {
-      alert("후기를 작성할 여행을 선택해주세요.");
-      return;
-    }
-    if (!title.trim() || !body.trim()) {
-      alert("제목과 내용을 모두 입력해주세요.");
-      return;
-    }
+    if (!user) return alert("로그인이 필요합니다.");
+    if (!selectedPostId) return alert("후기를 작성할 여행을 선택해주세요.");
+    if (!title.trim() || !body.trim())
+      return alert("제목과 내용을 모두 입력해주세요.");
 
     try {
       setLoading(true);
-      await createReview({
+
+      const payload = {
         userId: user.id,
         postId: Number(selectedPostId),
         title,
         body,
         images,
-      });
-      alert("후기가 성공적으로 등록되었습니다!");
-      navigate("/reviews"); // 목록 페이지로 이동
+      };
+
+      if (isEditMode) {
+        // 수정 API 호출
+        await updateReview({ ...payload, reviewId: Number(reviewId) });
+        alert("후기가 수정되었습니다!");
+        navigate(`/reviews/${reviewId}`, { replace: true });
+      } else {
+        // 생성 API 호출
+        await createReview(payload);
+        alert("후기가 성공적으로 등록되었습니다!");
+        navigate("/reviews");
+      }
     } catch (error) {
-      console.error("후기 생성 실패", error);
-      alert("후기 등록 중 오류가 발생했습니다.");
+      console.error(isEditMode ? "후기 수정 실패" : "후기 생성 실패", error);
+      alert("오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
   };
 
-  // 유효성 검사 (버튼 활성화용)
   const isValid =
     title.trim() !== "" && body.trim() !== "" && selectedPostId !== "";
 
+  if (initialLoading) {
+    return (
+      <PageLayout title={isEditMode ? "후기 수정" : "후기 작성"}>
+        <div style={{ padding: 40, textAlign: "center", color: "#888" }}>
+          데이터를 불러오는 중...
+        </div>
+      </PageLayout>
+    );
+  }
+
   return (
-    <PageLayout title="후기 작성" showBackButton={true}>
+    <PageLayout
+      title={isEditMode ? "후기 수정" : "후기 작성"}
+      showBackButton={true}
+    >
       <FormContainer>
         {/* 여행 선택 */}
         <FormGroup>
@@ -261,7 +326,7 @@ const ReviewCreatePage: React.FC = () => {
           <FormSelect
             value={selectedPostId}
             onChange={(e) => setSelectedPostId(Number(e.target.value))}
-            disabled={myTrips.length === 0}
+            disabled={myTrips.length === 0 || isEditMode} // 수정 모드면 비활성화
           >
             <option value="" disabled>
               {myTrips.length === 0
@@ -270,7 +335,6 @@ const ReviewCreatePage: React.FC = () => {
             </option>
             {myTrips.map((post) => (
               <option key={post.postId} value={post.postId}>
-                {/* 제목과 날짜 표시 */}
                 {post.title} (
                 {post.startAt
                   ? post.startAt.toString().split("T")[0]
@@ -337,11 +401,11 @@ const ReviewCreatePage: React.FC = () => {
       {/* 하단 버튼 */}
       <SubmitButtonContainer>
         <SubmitButton onClick={handleSubmit} disabled={!isValid || loading}>
-          {loading ? "등록 중..." : "등록하기"}
+          {loading ? "처리 중..." : isEditMode ? "수정하기" : "등록하기"}
         </SubmitButton>
       </SubmitButtonContainer>
     </PageLayout>
   );
 };
 
-export default ReviewCreatePage;
+export default ReviewFormPage;

@@ -193,6 +193,10 @@ function App() {
               {/* Review */}
               <Route path="/reviews/new" element={<ReviewCreatePage />} />
               <Route path="/reviews/:reviewId" element={<ReviewDetailPage />} />
+              <Route
+                path="/reviews/edit/:reviewId"
+                element={<ReviewCreatePage />}
+              />
 
               {/* Planner */}
               <Route path="/planner/create" element={<PlannerCreatePage />} />
