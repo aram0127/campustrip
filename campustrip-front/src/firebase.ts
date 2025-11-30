@@ -36,9 +36,17 @@ export const requestFcmToken = async () => {
   }
 };
 
+<<<<<<< HEAD
 export const onMessageListener = () =>
   new Promise((resolve) => {
     onMessage(messaging, (payload) => {
       resolve(payload);
     });
   });
+=======
+export const onMessageListener = (callback: (payload: any) => void) => {
+  return onMessage(messaging, (payload) => {
+    callback(payload);
+  });
+};
+>>>>>>> cc3b7522c7370674d36262d21d56ba63ae156ea3

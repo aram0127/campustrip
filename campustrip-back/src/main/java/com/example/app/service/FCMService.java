@@ -2,6 +2,7 @@ package com.example.app.service;
 
 import com.example.app.dto.PushNotificationRequest;
 import com.example.app.enumtype.PushNotificationType;
+import com.example.app.repository.PushNotificationRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -11,8 +12,6 @@ import com.google.firebase.messaging.Notification;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
 import java.io.IOException;
 import java.util.List;
 
@@ -29,12 +28,10 @@ public class FCMService {
     private String projectId;
 
     private final FCMTokenService tokenService;
-    private final ObjectMapper objectMapper;
-    private final RestTemplate restTemplate;
+    private final PushNotificationRepository pushNotificationRepository;
 
-    public FCMService(ObjectMapper objectMapper, FCMTokenService tokenService) {
-        this.objectMapper = objectMapper;
-        this.restTemplate = new RestTemplate();
+    public FCMService(ObjectMapper objectMapper, FCMTokenService tokenService, PushNotificationRepository pushNotificationRepository) {
+        this.pushNotificationRepository = pushNotificationRepository;
         this.tokenService = tokenService;
     }
 
@@ -51,6 +48,7 @@ public class FCMService {
                 tokenService.deleteToken(token);
             }
         }
+        pushNotificationRepository.save(request.toEntity());
     }
 
 //    // 사용자에게 알림 전송 (모든 디바이스) - 기존 메서드 호환성 유지

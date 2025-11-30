@@ -2,7 +2,9 @@ package com.example.app.controller;
 
 import com.example.app.domain.Universities;
 import com.example.app.dto.*;
+import com.example.app.enumtype.PushNotificationType;
 import com.example.app.repository.UniversitiesRepository;
+import com.example.app.service.FCMService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,11 +24,13 @@ public class UserController {
 
     private final UserService userService;
     private final UniversitiesRepository universitiesRepository;
+    private final FCMService fcmService;
 
     @Autowired
-    public UserController(UserService userService, UniversitiesRepository universitiesRepository) {
+    public UserController(UserService userService, UniversitiesRepository universitiesRepository, FCMService fCMService) {
         this.userService = userService;
         this.universitiesRepository = universitiesRepository;
+        this.fcmService = fCMService;
     }
 
     // GET: 전체 사용자 조회
@@ -93,6 +97,16 @@ public class UserController {
     @PutMapping("/{id}/rate")
     public void rateUser(@PathVariable Integer id, @AuthenticationPrincipal String userId, @RequestBody CreateUserRate rate) {
         userService.rateUser(userId, rate);
+        fcmService.sendNotificationToUser(
+                new com.example.app.dto.PushNotificationRequest(
+                        rate.getTargetId(),
+                        id,
+                        PushNotificationType.USER_RATED,
+                        id,
+                        "새로운 평가가 등록되었습니다.",
+                        userService.getUserByUserId(userId).getName() + "님이 회원님을 평가했습니다."
+                )
+        );
     }
 
     // 내가 평가한 사람 조회

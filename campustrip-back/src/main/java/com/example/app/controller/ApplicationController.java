@@ -2,9 +2,8 @@ package com.example.app.controller;
 
 import com.example.app.domain.Post;
 import com.example.app.domain.User;
-import com.example.app.dto.AcceptApplication;
-import com.example.app.dto.CustomUserDetails;
-import com.example.app.dto.SearchApplication;
+import com.example.app.dto.*;
+import com.example.app.enumtype.PushNotificationType;
 import com.example.app.service.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,8 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.app.domain.Application;
-import com.example.app.dto.CreateChatMember;
-import com.example.app.dto.CreateApplicationRequest;
+
 import java.util.List;
 
 @RestController
@@ -85,9 +83,31 @@ public class ApplicationController {
         app.setUser(user);
         app.setApplicationStatus(status);
         applicationService.saveApplication(app);
+
+        // 동행신청 수락/거절 알림 전송 로직 추가
+        PushNotificationRequest notificationRequest;
         if(status) {
             chatService.saveChatMember(new CreateChatMember(app.getPost(), app.getUser()));
+            notificationRequest = new PushNotificationRequest(
+                    post.getUser().getId(),
+                    user.getId(),
+                    PushNotificationType.APPLICATION_ACCEPT,
+                    post.getPostId(),
+                    "동행 신청이 수락되었습니다.",
+                    post.getTitle() + "에 대한 동행 신청이 수락되었습니다."
+            );
+        }else {
+            notificationRequest = new PushNotificationRequest(
+                    post.getUser().getId(),
+                    user.getId(),
+                    PushNotificationType.APPLICATION_ACCEPT,
+                    post.getPostId(),
+                    "동행 신청이 거절되었습니다.",
+                    post.getTitle() + "에 대한 동행 신청이 거절되었습니다."
+            );
         }
+        fcmService.sendNotificationToUser(notificationRequest);
+
         return app;
     }
 

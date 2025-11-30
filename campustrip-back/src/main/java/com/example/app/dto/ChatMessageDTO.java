@@ -36,4 +36,11 @@ public class ChatMessageDTO {
         this.imageUrl = imageUrl;
         this.timestamp = timestamp;
     }
+
+    public ChatMessageDTO(MessageType messageType, String senderName, String content, LocalDateTime timestamp) {
+        this.messageType = messageType;
+        this.userName = senderName;
+        this.message = content;
+        this.timestamp = timestamp;
+    }
 }
