@@ -12,6 +12,13 @@ export interface Planner {
 export interface PlannerPlace {
   placeId?: number;
   placeName: string;
+<<<<<<< HEAD
+  latitude: number;   // 위도 
+  longitude: number;  // 경도 
+  order: number;      // 방문 순서 
+  memo?: string;      // 메모
+  category?: string;
+=======
   latitude: number; // 위도
   longitude: number; // 경도
   order: number; // 방문 순서

@@ -41,3 +41,4 @@ export const onMessageListener = (callback: (payload: any) => void) => {
     callback(payload);
   });
 };
+
