@@ -30,7 +30,7 @@ public class User {
     private String userId;
     @Column(name="phone_number", length=50)
     private String phoneNumber;
-    @Column(name="email", nullable=false, length=50)
+    @Column(name="email", length=50)
     private String email;
     @Column(name="school_email", nullable=false, length=50)
     private String schoolEmail;

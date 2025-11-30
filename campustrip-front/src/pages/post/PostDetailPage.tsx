@@ -64,8 +64,8 @@ const AuthorAvatar = styled.div<{ $imageUrl?: string }>`
   height: 40px;
   border-radius: 50%;
   background-color: ${({ theme }) => theme.colors.secondaryTextColor};
-  background-image: ${({ $imageUrl }) =>
-    $imageUrl ? `url(${$imageUrl})` : "none"};
+  background-image: url(${({ $imageUrl }) =>
+    $imageUrl || "/default-profile.png"});
   background-size: cover;
   background-position: center;
 `;

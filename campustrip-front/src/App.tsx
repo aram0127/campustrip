@@ -44,6 +44,7 @@ import ReviewCreatePage from "./pages/review/ReviewCreatePage";
 import ReviewDetailPage from "./pages/review/ReviewDetailPage";
 import FCMTestPage from "./test/FCMTestPage.tsx";
 import PersonalInfoPage from "./pages/profile/PersonalInfoPage";
+import ProfileEditPage from "./pages/profile/ProfileEditPage";
 
 const RootRedirect: React.FC = () => {
   const { isLoggedIn } = useAuth();
@@ -171,6 +172,7 @@ function App() {
                 element={<PersonalInfoPage />}
               />
               <Route path="/test/travel" element={<TravelTestPage />} />
+              <Route path="/profile/edit" element={<ProfileEditPage />} />
 
               {/* Posts */}
               <Route path="/posts/:postId" element={<PostDetailPage />} />
