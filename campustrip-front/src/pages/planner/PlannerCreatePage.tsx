@@ -144,7 +144,7 @@ const DaySelector = styled.div`
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding-bottom: 12px;
+  padding: 4px 4px 12px 4px;
   margin-bottom: 12px;
 `;
 
@@ -330,7 +330,9 @@ function PlannerCreatePage() {
   };
 
   const handleSave = async () => {
-    if (!title.trim()) return alert("여행 제목을 입력하세요.");
+    if (!title.trim()) return alert("여행 제목을 입력하세요."); // 제목 검사
+    if (!startDate || !endDate) return alert("여행 기간을 선택해주세요."); // 날짜 검사
+    
     const newPlannerData: Partial<PlannerDetail> = {
       title,
       startDate,
@@ -338,7 +340,9 @@ function PlannerCreatePage() {
       schedules,
       memberCount: 1,
     };
+
     try {
+      console.log("전송 데이터 확인:", newPlannerData);
       await savePlanner(newPlannerData);
       alert("플래너가 저장되었습니다");
       navigate("/planner");

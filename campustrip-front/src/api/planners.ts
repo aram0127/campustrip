@@ -23,12 +23,18 @@ export const getPlannerDetail = async (
 export const savePlanner = async (
   data: Partial<PlannerDetail>
 ): Promise<void> => {
+  const config = {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+
   if (data.plannerId) {
     // ID가 있으면 수정
-    await apiClient.put(`/api/planners/${data.plannerId}`, data);
+    await apiClient.put(`/api/planners/${data.plannerId}`, data, config);
   } else {
     // ID가 없으면 생성
-    await apiClient.post(`/api/planners`, data);
+    await apiClient.post(`/api/planners`, data, config);
   }
 };
 
