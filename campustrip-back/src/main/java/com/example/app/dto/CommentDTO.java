@@ -12,6 +12,7 @@ public class CommentDTO {
     private Integer id;
     private Integer userId;
     private String userName;
+    private String profilePhotoUrl;
     private Integer reviewId;
     private String body;
     private LocalDateTime createdAt;
@@ -20,6 +21,7 @@ public class CommentDTO {
         this.id = comment.getId();
         this.userId = comment.getUser().getId();
         this.userName = comment.getUser().getName();
+        this.profilePhotoUrl = comment.getUser().getProfilePhotoUrl();
         this.reviewId = comment.getReview().getId();
         this.body = comment.getBody();
         this.createdAt = comment.getCreatedAt();
