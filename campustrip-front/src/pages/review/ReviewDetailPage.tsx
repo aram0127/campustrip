@@ -524,7 +524,10 @@ const ReviewDetailPage: React.FC = () => {
           <CommentList>
             {comments.map((comment) => (
               <CommentItem key={comment.id}>
-                <Avatar style={{ width: 32, height: 32 }} />
+                <Avatar
+                  style={{ width: 32, height: 32 }}
+                  $imageUrl={comment.profilePhotoUrl}
+                />
                 <CommentContent>
                   <CommentAuthor>{comment.userName}</CommentAuthor>
                   <CommentBody>{comment.body}</CommentBody>

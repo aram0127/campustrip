@@ -3,6 +3,7 @@ import styled from "styled-components";
 import TopBar from "../common/TopBar";
 import BottomNav from "../common/BottomNav";
 import SideMenu from "../common/SideMenu";
+import { useAuth } from "../../context/AuthContext";
 
 const AppContainer = styled.div`
   max-width: 480px;
@@ -30,10 +31,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   toggleTheme,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   return (
     <AppContainer>
-      <TopBar onProfileClick={() => setIsMenuOpen(true)} />
+      <TopBar
+        onProfileClick={() => setIsMenuOpen(true)}
+        profileImageUrl={user?.profilePhotoUrl}
+      />
       <MainContent>{children}</MainContent>
       <BottomNav />
       <SideMenu

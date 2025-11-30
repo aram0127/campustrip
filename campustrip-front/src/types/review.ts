@@ -17,6 +17,7 @@ export interface Comment {
   id: number;
   userId: number;
   userName: string;
+  profilePhotoUrl?: string;
   reviewId: number;
   body: string;
   createdAt: string;
