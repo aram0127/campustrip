@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import styled from "styled-components";
 import { IoEllipsisHorizontal } from "react-icons/io5";
 import { useParams, useNavigate } from "react-router-dom";
@@ -25,6 +25,12 @@ import { useAuth } from "../../context/AuthContext";
 import Button from "../../components/common/Button";
 import ReviewListItem from "../../components/domain/ReviewListItem";
 
+const MenuContainer = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
 const IconButton = styled.button`
   background: none;
   border: none;
@@ -40,6 +46,36 @@ const IconButton = styled.button`
   margin-right: -12px;
 `;
 
+const DropdownMenu = styled.div`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 20;
+  overflow: hidden;
+  width: 140px;
+  margin-top: 4px;
+`;
+
+const DropdownItem = styled.button`
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  color: ${({ theme }) => theme.colors.text};
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.inputBackground};
+  }
+`;
+
 const ProfileInfoContainer = styled.div`
   padding: 16px;
 `;
@@ -48,8 +84,8 @@ const Avatar = styled.div<{ imageUrl?: string }>`
   width: 70px;
   height: 70px;
   border-radius: 50%;
-  background-image: ${({ imageUrl }) =>
-    imageUrl ? `url(${imageUrl})` : "none"};
+  background-image: url(${({ imageUrl }) =>
+    imageUrl || "/default-profile.png"});
   background-size: cover;
   background-color: ${({ theme }) => theme.colors.secondaryTextColor};
   margin-bottom: 12px;
@@ -57,8 +93,16 @@ const Avatar = styled.div<{ imageUrl?: string }>`
 
 const UserName = styled.h1`
   font-size: 20px;
-  margin: 0;
+  margin: 0 0 4px 0;
   color: ${({ theme }) => theme.colors.text};
+`;
+
+const UserDescription = styled.p`
+  font-size: 14px;
+  color: ${({ theme }) => theme.colors.text};
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+  white-space: pre-wrap;
 `;
 
 const FollowInfo = styled.div`
@@ -124,7 +168,6 @@ const TempBarContainer = styled.div`
 const TempBar = styled.div<{ $percentage: number }>`
   width: ${({ $percentage }) => $percentage}%;
   height: 100%;
-  /* 0~100도를 0~100%로 매핑. 예시: 36.5도 -> 36.5% */
   background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
 `;
 
@@ -202,6 +245,8 @@ function ProfilePage() {
   const { user: currentUser } = useAuth();
 
   const [activeTab, setActiveTab] = useState("여행 기록");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // 사용자 프로필 데이터 가져오기
   const {
@@ -240,6 +285,19 @@ function ProfilePage() {
   const isFollowing = currentUserFollowings?.some(
     (user) => user.id === profileUser?.id
   );
+
+  // 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // 팔로우
   const followMutation = useMutation({
@@ -284,6 +342,18 @@ function ProfilePage() {
     }
   };
 
+  // 프로필 수정 페이지로 이동
+  const handleEditProfile = () => {
+    setIsMenuOpen(false);
+    navigate("/profile/edit");
+  };
+
+  // 설정(개인정보) 페이지로 이동
+  const handleSettings = () => {
+    setIsMenuOpen(false);
+    navigate("/settings/personal-info");
+  };
+
   // 사용자가 작성한 후기(리뷰) 가져오기
   const {
     data: reviewData,
@@ -308,13 +378,11 @@ function ProfilePage() {
   // 무한 스크롤
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    // 스크롤이 바닥에 가까워지면 다음 페이지 로드
     if (scrollHeight - scrollTop <= clientHeight + 100 && hasNextPage) {
       fetchNextPage();
     }
   };
 
-  // 로딩 및 에러 상태 처리
   if (isLoading) {
     return (
       <PageLayout title="로딩 중...">
@@ -339,13 +407,9 @@ function ProfilePage() {
     );
   }
 
-  // API 데이터로 여행 성향 태그 파싱
   const travelTags = parsePreferences(profileUser.preference);
-
-  // 사용자 온도를 0-100% 사이 값으로 변환 (100도 기준)
   const tempPercentage = Math.max(0, Math.min(100, profileUser.userScore || 0));
 
-  // 여행 성향 검사 페이지로 이동
   const handleStartTest = () => {
     navigate(`/test/travel-test-page`);
   };
@@ -354,15 +418,32 @@ function ProfilePage() {
     <PageLayout
       title={profileUser.name}
       headerRight={
-        <IconButton>
-          <IoEllipsisHorizontal />
-        </IconButton>
+        isMyProfile ? (
+          <MenuContainer ref={menuRef}>
+            <IconButton onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              <IoEllipsisHorizontal />
+            </IconButton>
+            {isMenuOpen && (
+              <DropdownMenu>
+                <DropdownItem onClick={handleEditProfile}>
+                  프로필 수정
+                </DropdownItem>
+                <DropdownItem onClick={handleSettings}>개인정보</DropdownItem>
+              </DropdownMenu>
+            )}
+          </MenuContainer>
+        ) : null
       }
     >
       <ScrollingContent onScroll={handleScroll}>
         <ProfileInfoContainer>
           <Avatar imageUrl={profileUser.profilePhotoUrl} />
           <UserName>{profileUser.name}</UserName>
+
+          <UserDescription>
+            {profileUser.description || "자기소개가 없습니다."}
+          </UserDescription>
+
           <FollowInfo>
             <FollowStat onClick={handleGoToFollowPage}>
               <b>{followingCount ?? 0}</b> 팔로잉
@@ -387,6 +468,7 @@ function ProfilePage() {
             </Button>
           )}
         </ProfileInfoContainer>
+
         <Section>
           <SectionTitle>여행 온도</SectionTitle>
           <TempBarContainer>
@@ -394,6 +476,7 @@ function ProfilePage() {
           </TempBarContainer>
           <TempValue>{profileUser.userScore.toFixed(1)}°C</TempValue>
         </Section>
+
         <Section>
           <SectionTitle>여행 성향</SectionTitle>
           <TagContainer>
@@ -407,6 +490,8 @@ function ProfilePage() {
             </ActionButton>
           )}
         </Section>
+
+        {/* 탭 메뉴 및 컨텐츠 */}
         <TabMenu>
           <TabButton
             $active={activeTab === "여행 기록"}

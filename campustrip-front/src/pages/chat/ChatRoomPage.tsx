@@ -61,8 +61,8 @@ const Avatar = styled.div<{ $imageUrl?: string }>`
   height: 30px;
   border-radius: 50%;
   background-color: ${({ theme }) => theme.colors.inputBackground};
-  background-image: ${({ $imageUrl }) =>
-    $imageUrl ? `url(${$imageUrl})` : "none"};
+  background-image: url(${({ $imageUrl }) =>
+    $imageUrl || "/default-profile.png"});
   background-size: cover;
   background-position: center;
   flex-shrink: 0;

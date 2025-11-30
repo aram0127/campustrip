@@ -175,7 +175,7 @@ const PersonalInfoPage: React.FC = () => {
           <ActionItem
             onClick={() => alert("개인 프로필 정보 수정 페이지로 이동")}
           >
-            개인 프로필 정보 수정
+            개인정보 수정
             <IconWrapper>
               <IoChevronForward />
             </IconWrapper>

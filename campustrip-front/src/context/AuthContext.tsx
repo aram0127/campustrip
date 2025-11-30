@@ -37,6 +37,7 @@ interface AuthContextType {
   isLoggedIn: boolean;
   login: (newToken: string) => void;
   logout: () => void;
+  refreshProfile: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -45,6 +46,7 @@ export const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
   login: () => {},
   logout: () => {},
+  refreshProfile: async () => {},
 });
 
 interface AuthProviderProps {
@@ -143,6 +145,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // 외부에서 호출 가능한 프로필 갱신 함수
+  const refreshProfile = async () => {
+    const storedToken = localStorage.getItem("authToken");
+    if (storedToken && user) {
+      // 현재 토큰을 이용해 사용자 정보를 다시 받아와 상태(user)를 갱신함
+      await fetchUserInfo(storedToken);
+    }
+  };
+
   const isLoggedIn = !!token && !!user;
 
   // 인증 정보 로딩 중에는 아무것도 렌더링하지 않음
@@ -151,7 +162,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ token, user, isLoggedIn, login, logout }}>
+    <AuthContext.Provider
+      value={{ token, user, isLoggedIn, login, logout, refreshProfile }}
+    >
       {children}
     </AuthContext.Provider>
   );

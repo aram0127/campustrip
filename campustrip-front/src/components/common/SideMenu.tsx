@@ -43,8 +43,8 @@ const ProfileAvatar = styled.div<{ $imageUrl?: string }>`
   border-radius: ${({ theme }) => theme.borderRadius.circle};
   background-color: ${({ theme }) => theme.colors.secondaryTextColor};
   margin-bottom: ${({ theme }) => theme.spacings.small};
-  background-image: ${({ $imageUrl }) =>
-    $imageUrl ? `url(${$imageUrl})` : "none"};
+  background-image: url(${({ $imageUrl }) =>
+    $imageUrl || "/default-profile.png"});
   background-size: cover;
   background-position: center;
 `;
