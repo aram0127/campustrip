@@ -65,6 +65,34 @@ public class ChatController {
         });
     }
 
+    @PostMapping("/chat/message/image")
+    public void sendImageMessage(ChatMessageDTO message) {
+        chatMessageService.sendMessage(message);
+        User user = userService.getUserByName(message.getUserName());
+        if (user == null) {
+            log.error("사용자 정보를 찾을 수 없습니다: {}", message.getUserName());
+            return;
+        }
+        Integer userId = user.getId();
+        // 상대방에게 푸시 알림 전송
+        chatService.getMembersByRoomId(message.getRoomId()).stream().forEach(m -> {
+            try{
+                if (m.getUserId().equals(userId)) return; // 본인 제외
+                log.info("푸시 알림 전송 대상자 ID: {}", m.getUserId());
+                fcmService.sendNotificationToUser(new PushNotificationRequest(
+                        m.getUserId(),
+                        message.getMembershipId(),
+                        PushNotificationType.CHAT_MESSAGE,
+                        m.getChatId(),
+                        m.getChatTitle(),
+                        message.getUserName() + "님이 사진을 보냈습니다."
+                ));
+            } catch (Exception e){
+                log.error("푸시 알림 전송 실패: {}", e.getMessage());
+            }
+        });
+    }
+
     // 채팅방 목록 조회
     @GetMapping("/chat/{id}")
     public List<ChatDTO> getMyChatRoom(@PathVariable Integer id) {
