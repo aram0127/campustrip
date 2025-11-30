@@ -44,12 +44,16 @@ const UserItem = styled.div`
   padding: 12px 16px;
 `;
 
-const Avatar = styled.div`
+const Avatar = styled.div<{ $imageUrl?: string }>`
   width: 44px;
   height: 44px;
   border-radius: 50%;
   background-color: ${({ theme }) => theme.colors.inputBackground};
   flex-shrink: 0;
+  background-image: ${({ $imageUrl }) =>
+    $imageUrl ? `url(${$imageUrl})` : "none"};
+  background-size: cover;
+  background-position: center;
 `;
 
 const UserInfo = styled.div`
@@ -210,7 +214,10 @@ function FollowListPage() {
       if (user.id === currentUser?.id) {
         return (
           <UserItem key={user.id}>
-            <Avatar onClick={() => handleProfileClick(user.id)} />
+            <Avatar
+              $imageUrl={user.profilePhotoUrl}
+              onClick={() => handleProfileClick(user.id)}
+            />
             <UserInfo onClick={() => handleProfileClick(user.id)}>
               <UserName>{user.name} (나)</UserName>
             </UserInfo>
@@ -220,7 +227,10 @@ function FollowListPage() {
 
       return (
         <UserItem key={user.id}>
-          <Avatar onClick={() => handleProfileClick(user.id)} />
+          <Avatar
+            $imageUrl={user.profilePhotoUrl}
+            onClick={() => handleProfileClick(user.id)}
+          />
           <UserInfo onClick={() => handleProfileClick(user.id)}>
             <UserName>{user.name}</UserName>
           </UserInfo>
