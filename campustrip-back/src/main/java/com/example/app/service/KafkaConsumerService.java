@@ -4,6 +4,7 @@ import com.example.app.dto.ChatMessageDTO;
 import com.example.app.dto.LocationMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,7 @@ public class KafkaConsumerService {
     // Kafka에서 메시지를 수신하여 WebSocket 구독자들에게 전송
     @KafkaListener(
             topicPattern = "chat-room-.*",  // 모든 채팅방 토픽 구독
-            groupId = "${CHAT_GROUP_ID:chat-group}",
+            groupId = "${spring.kafka.consumer.group-id}",
             containerFactory = "kafkaListenerContainerFactory",
             autoStartup = "true"
     )
