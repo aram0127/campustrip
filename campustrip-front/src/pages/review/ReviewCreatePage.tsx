@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getMyApplications } from "../../api/applications";
-import { getPostsByUserId } from "../../api/posts";
+import { getMyTripHistory } from "../../api/posts";
 import { createReview } from "../../api/reviews";
 import { type Post } from "../../types/post";
 import Button from "../../components/common/Button";
@@ -180,27 +180,11 @@ const ReviewCreatePage: React.FC = () => {
     try {
       if (!user) return;
 
-      const [applications, myHostedPosts] = await Promise.all([
-        getMyApplications(user.id),
-        getPostsByUserId(user.id),
-      ]);
+      const response = await getMyTripHistory(user.id);
 
-      const acceptedTrips = applications
-        .filter((app) => app.applicationStatus === true)
-        .map((app) => app.post);
+      const trips = response.content;
 
-      const allTrips = [...myHostedPosts, ...acceptedTrips];
-
-      const uniqueTrips = Array.from(
-        new Map(allTrips.map((trip) => [trip.postId, trip])).values()
-      );
-
-      uniqueTrips.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-
-      setMyTrips(uniqueTrips);
+      setMyTrips(trips);
     } catch (error) {
       console.error("여행 목록 로드 실패", error);
     }
