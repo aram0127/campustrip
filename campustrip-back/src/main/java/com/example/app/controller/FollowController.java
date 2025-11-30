@@ -36,8 +36,8 @@ public class FollowController {
         // 팔로우 알림 전송
         fcmService.sendNotificationToUser(
                 new PushNotificationRequest(
-                        followerId,
                         followeeId,
+                        followerId,
                         PushNotificationType.FOLLOW,
                         followerId,
                         "새로운 팔로워 알림",
