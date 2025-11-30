@@ -136,6 +136,7 @@ public class ChatMessageService {
                 msg.getSenderId(),
                 msg.getSenderName(),
                 msg.getContent(),
+                msg.getImageUrl(),
                 msg.getTimestamp()
         )).toList();
     }
