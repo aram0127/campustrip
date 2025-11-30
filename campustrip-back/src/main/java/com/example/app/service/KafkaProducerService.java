@@ -65,7 +65,7 @@ public class KafkaProducerService {
             Set<String> topicNames = topics.names().get(30, TimeUnit.SECONDS);
 
             if (!topicNames.contains(topicName)) {
-                NewTopic newTopic = new NewTopic(topicName, 1, (short) 1);
+                NewTopic newTopic = new NewTopic(topicName, 3, (short) 1);
                 adminClient.createTopics(Collections.singleton(newTopic)).all().get(30, TimeUnit.SECONDS);
                 log.info("✅ 토픽 생성 완료: {}", topicName);
 

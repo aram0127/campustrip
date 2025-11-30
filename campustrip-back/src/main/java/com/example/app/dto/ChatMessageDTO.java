@@ -1,5 +1,6 @@
 package com.example.app.dto;
 
+import com.example.app.enumtype.MessageType;
 import lombok.*;
 import org.springframework.web.multipart.MultipartFile;
 

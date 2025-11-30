@@ -93,9 +93,11 @@ public class KafkaConfig {
         config.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 100);
 
         // 메타데이터 갱신 설정
-        config.put(ConsumerConfig.METADATA_MAX_AGE_CONFIG, "30000");  // 30초로 증가
-        config.put(ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG, true);
+        config.put(ConsumerConfig.METADATA_MAX_AGE_CONFIG, "5000");  // 5초
+        config.put(ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG, false); // 토픽 자동 생성 비활성화
 
+        // 클라이언트 ID 설정 (고유하게)
+        config.put(ConsumerConfig.CLIENT_ID_CONFIG, "chat-consumer-${random.uuid}");
         return new DefaultKafkaConsumerFactory<>(config);
     }
     // Consumer 설정 (위치 정보용)
@@ -111,7 +113,7 @@ public class KafkaConfig {
         config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, LocationMessage.class);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");  // latest
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
-        config.put(ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG, true);  // 토픽 자동 생성 허용
+        config.put(ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG, false);  // 토픽 자동 생성 비활성화
 
         // 동적 토픽 감지를 위한 설정
         config.put(ConsumerConfig.METADATA_MAX_AGE_CONFIG, "5000");

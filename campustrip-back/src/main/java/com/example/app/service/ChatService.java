@@ -2,7 +2,9 @@ package com.example.app.service;
 
 import com.example.app.domain.ChatMember;
 import com.example.app.domain.Post;
+import com.example.app.dto.ChatMemberDTO;
 import com.example.app.repository.PostRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.example.app.repository.ChatRepository;
@@ -12,10 +14,12 @@ import com.example.app.domain.Chat;
 import com.example.app.domain.User;
 import com.example.app.dto.CreateChat;
 import com.example.app.dto.CreateChatMember;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Slf4j
 public class ChatService {
     private final ChatRepository chatRepository;
     private final ChatMemberRepository chatMemberRepository;
@@ -81,5 +85,11 @@ public class ChatService {
         Post post = postRepository.findById(postId).orElseThrow(() -> new IllegalArgumentException("Post not found"));
         Chat chat = post.getChat();
         chatMemberRepository.deleteByChatAndUser(chat, user);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ChatMemberDTO> getMembersByRoomId(Integer roomId) {
+        Chat chat = chatRepository.findById(roomId).orElseThrow();
+        return chatMemberRepository.findAllByChat(chat).stream().map(m -> new ChatMemberDTO(m.getChat().getTitle(), m.getChat().getId(), m.getUser().getId())).toList();
     }
 }

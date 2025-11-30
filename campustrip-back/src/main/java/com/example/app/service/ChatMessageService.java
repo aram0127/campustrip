@@ -5,7 +5,7 @@ import com.example.app.domain.ChatMessage;
 import com.example.app.domain.Post;
 import com.example.app.domain.User;
 import com.example.app.dto.ChatMessageDTO;
-import com.example.app.dto.MessageType;
+import com.example.app.enumtype.MessageType;
 import com.example.app.repository.ChatMessageRepository;
 import com.example.app.repository.PostRepository;
 import com.example.app.repository.UserRepository;

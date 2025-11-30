@@ -1,7 +1,7 @@
 package com.example.app.domain;
 
 
-import com.example.app.dto.MessageType;
+import com.example.app.enumtype.MessageType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
