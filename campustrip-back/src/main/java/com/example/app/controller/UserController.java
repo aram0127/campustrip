@@ -113,6 +113,12 @@ public class UserController {
         return userService.getUserRatesByRaterId(id);
     }
 
+    // 나의 평가한 사람들 조회
+    @GetMapping("/{id}/my-rates")
+    public List<UserRateDTO> getMyRates(@PathVariable Integer id) {
+        return userService.getUserRatesByTargetId(id);
+    }
+
     @PutMapping("/{id}/profile-image")
     public void updateUserProfileImage(@PathVariable Integer id, @AuthenticationPrincipal UserDetails userDeatils, @RequestBody UpdateProfileImageRequest request) {
         User user = userService.getUserByUserId(userDeatils.getUsername());

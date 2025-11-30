@@ -11,6 +11,7 @@ import GlobalStyle from "./styles/GlobalStyle";
 import Toast from "./components/common/Toast";
 import MainLayout from "./components/layout/MainLayout";
 import { onMessageListener } from "./firebase";
+import { useQueryClient } from "@tanstack/react-query";
 
 import LoginPage from "./pages/auth/LoginPage";
 import SignupPage from "./pages/auth/SignupPage";
@@ -83,6 +84,8 @@ function App() {
     visible: false,
   });
 
+  const queryClient = useQueryClient();
+
   // 포그라운드 메시지 수신 리스너
   useEffect(() => {
     const unsubscribe = onMessageListener((payload: any) => {
@@ -90,11 +93,16 @@ function App() {
 
       const { notification, data } = payload;
 
-      const currentPath = window.location.pathname;
+      // 채팅 메시지가 오면 쿼리를 무효화하여 목록 갱신
+      if (data?.type === "CHAT_MESSAGE") {
+        queryClient.invalidateQueries({ queryKey: ["myChats"] });
+      }
 
+      const currentPath = window.location.pathname;
       const match = currentPath.match(/^\/chat\/(\d+)$/);
       const currentChatId = match ? match[1] : null;
 
+      // 현재 보고 있는 채팅방의 알림이면 무시
       if (
         data?.type === "CHAT_MESSAGE" &&
         String(data?.referenceId) === currentChatId
@@ -115,7 +123,7 @@ function App() {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, []);
+  }, [queryClient]);
 
   // Toast 닫기 핸들러
   const closeToast = () => {
