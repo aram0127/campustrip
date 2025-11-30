@@ -66,10 +66,9 @@ public class ChatService {
 
     public List<Chat> getMyChatRoom(Integer userId) {
         User user = userRepository.findById(userId).orElseThrow();
-        List<ChatMember> chatMembers = chatMemberRepository.findAllByUser(user);
-        return chatMembers.stream()
-                          .map(ChatMember::getChat)
-                          .toList();
+        return chatMemberRepository.findAllByUser(user).stream()
+                .map(ChatMember::getChat)
+                .toList();
     }
 
     public Integer getPostIdByChatId(Integer chatId) {

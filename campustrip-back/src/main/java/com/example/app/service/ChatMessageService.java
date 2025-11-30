@@ -139,4 +139,24 @@ public class ChatMessageService {
                 msg.getTimestamp()
         )).toList();
     }
+
+    public List<ChatMessageDTO> getLatestMessagesByChatIds(List<Integer> chatIds) {
+        return chatMessageRepository.findLatestMessagesByChatIds(chatIds).stream().map(msg -> {
+            if (msg == null) {
+                return null;
+            }
+            String content = msg.getContent();
+            if (msg.getMessageType() == MessageType.IMAGE) {
+                content = "[이미지]";
+            }
+            return new ChatMessageDTO(
+                    msg.getMessageType(),
+                    msg.getChatId(),
+                    msg.getSenderId(),
+                    msg.getSenderName(),
+                    content,
+                    msg.getTimestamp()
+            );
+        }).toList();
+    }
 }

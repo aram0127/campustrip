@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -67,23 +68,29 @@ public class ChatController {
     // 채팅방 목록 조회
     @GetMapping("/chat/{id}")
     public List<ChatDTO> getMyChatRoom(@PathVariable Integer id) {
-        return chatService.getMyChatRoom(id).stream().map(chat -> {
+        List<Integer> memberIds = new ArrayList<>();
+        List<ChatDTO> list =  chatService.getMyChatRoom(id).stream().map(chat -> {
             ChatDTO chatDTO = new ChatDTO();
             chatDTO.setId(chat.getId());
             chatDTO.setTitle(chat.getTitle());
             chatDTO.setCreatedAt(chat.getCreatedAt());
-
-            // 마지막 메시지와 시간 설정
-            ChatMessageDTO lastMessage = chatMessageService.getLastMessage(chat.getId());
-            if (lastMessage != null) {
-                chatDTO.setLastMessageType(lastMessage.getMessageType());
-                chatDTO.setSenderName(lastMessage.getUserName());
-                chatDTO.setLastMessage(lastMessage.getMessage());
-                chatDTO.setLastMessageTime(lastMessage.getTimestamp());
-            }
-
             return chatDTO;
         }).toList();
+        // 마지막 메시지와 시간 설정
+        memberIds.addAll(list.stream().map(ChatDTO::getId).toList());
+        chatMessageService.getLatestMessagesByChatIds(memberIds).stream().forEach(lastMessage -> {
+            for (ChatDTO chatDTO : list) {
+                if (chatDTO.getId().equals(lastMessage.getRoomId())) {
+                    chatDTO.setLastMessageType(lastMessage.getMessageType());
+                    chatDTO.setSenderName(lastMessage.getUserName());
+                    chatDTO.setLastMessage(lastMessage.getMessage());
+                    chatDTO.setLastMessageTime(lastMessage.getTimestamp());
+                    break;
+                }
+            }
+        });
+
+        return list;
     }
 
     // 채팅방 메시지 조회
@@ -92,6 +99,7 @@ public class ChatController {
         return chatMessageService.getChatHistory(chatId);
     }
 
+    // 채팅방 멤버 조회
     @GetMapping("/chat/{chatId}/members")
     public List<ChatMemberDTO> getChatMembers(@PathVariable Integer chatId) {
         return chatService.getMembersByRoomId(chatId);
