@@ -302,4 +302,12 @@ public class ReviewService {
         commentRepository.delete(existingComment);
         return true;
     }
+
+    public Integer getReviewAuthorId(Integer reviewId) {
+        Review review = reviewRepository.findById(reviewId).orElse(null);
+        if (review == null) {
+            return null; // 또는 예외 처리
+        }
+        return review.getUser().getId();
+    }
 }
