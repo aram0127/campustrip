@@ -1,9 +1,11 @@
 package com.example.app.controller;
 
+import com.example.app.domain.User;
 import com.example.app.dto.*;
 import com.example.app.enumtype.PushNotificationType;
 import com.example.app.service.FCMService;
 import com.example.app.service.ReviewService;
+import com.example.app.service.UserService;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -19,10 +21,12 @@ import java.util.List;
 public class ReviewController {
     private final ReviewService reviewService;
     private final FCMService fcmService;
+    private final UserService userService;
 
-    public ReviewController(ReviewService reviewService, FCMService fcmService) {
+    public ReviewController(ReviewService reviewService, FCMService fcmService, UserService userService) {
         this.reviewService = reviewService;
         this.fcmService = fcmService;
+        this.userService = userService;
     }
 
     // 리뷰를 ID로 조회
@@ -90,9 +94,13 @@ public class ReviewController {
     // 리뷰에 댓글 추가
     @PostMapping("/{id}/comment")
     public void addComment(@PathVariable Integer id, @AuthenticationPrincipal CustomUserDetails userDetails, @RequestParam String comment) {
+        User author = userService.getUserByUserId(userDetails.getUsername());
         System.out.println("Adding comment to review ID: " + id + " by user: " + userDetails.getUsername() + " Comment: " + comment);
         reviewService.addComment(id, userDetails.getUsername(), comment);
+
         // 댓글 달렸다는 알림 작성자에게 전송
+        if ( reviewService.getReviewAuthorId(id) == author.getId())
+            return; //자기 자신에게는 알림 보내지 않음
         fcmService.sendNotificationToUser(
             new PushNotificationRequest(
                     reviewService.getReviewAuthorId(id),//알림받는 상대방
@@ -100,7 +108,7 @@ public class ReviewController {
                     PushNotificationType.REVIEW_COMMENT,
                     id,
                     "새로운 댓글이 등록되었습니다.",
-                    userDetails.getUsername() + "님이 회원님의 리뷰에 댓글을 남겼습니다."
+                    author.getName() + "님이 회원님의 리뷰에 댓글을 남겼습니다."
             )
         );
     }
