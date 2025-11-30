@@ -52,15 +52,8 @@ public class FCMService {
             pushNotificationRepository.save(request.toEntity());
     }
 
-//    // 사용자에게 알림 전송 (모든 디바이스) - 기존 메서드 호환성 유지
-//    public void sendNotificationToUser(Integer receiverID, String title, String body, PushNotificationType type) {
-//        PushNotificationRequest request = new PushNotificationRequest(receiverID, null, type, title, body);
-//        sendNotificationToUser(request);
-//    }
-
     // 단일 토큰으로 알림 전송
     public void sendMessageTo(String targetToken, String title, String body, PushNotificationType type, Integer referenceId) throws IOException, FirebaseMessagingException {
-        //String message = makeMessage(targetToken, title, body);
         String message = FirebaseMessaging.getInstance().send(Message.builder()
                 .setNotification(Notification.builder()
                         .setTitle(title)

@@ -115,4 +115,10 @@ public class UserController {
     public List<UserRateDTO> getRatedUsers(@PathVariable Integer id) {
         return userService.getUserRatesByRaterId(id);
     }
+
+    // 나의 평가한 사람들 조회
+    @GetMapping("/{id}/my-rates")
+    public List<UserRateDTO> getMyRates(@PathVariable Integer id) {
+        return userService.getUserRatesByTargetId(id);
+    }
 }

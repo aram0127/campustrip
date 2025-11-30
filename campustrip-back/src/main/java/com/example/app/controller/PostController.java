@@ -82,6 +82,15 @@ public class PostController {
         return postSlice.map(post -> postService.convertPostToDTO(post, chatService, regionService));
     }
 
+    // 사용자 id를 통해 작성한 게시글 또는 참여한 게시글 (Post + Application)조회
+    @GetMapping("/membership/{membershipId}")
+    public Slice<PostDTO> getPostsByMembershipId(
+            @PathVariable Integer membershipId,
+            @PageableDefault(size = 3, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Slice<Post> slice = postService.getPostsByMembershipIdSlice(membershipId, pageable);
+        return slice.map(post -> postService.convertPostToDTO(post, chatService, regionService));
+    }
+
     // POST: 새 게시물 생성
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public PostDTO createPost(@ModelAttribute CreatePost createPost) throws Exception {

@@ -86,8 +86,24 @@ public class UserService implements UserDetailsService {
     public List<UserRateDTO> getUserRatesByRaterId(Integer raterId) {
         return userRateRepository.findByRaterId(raterId).stream().map(rate -> {
             UserRateDTO dto = new UserRateDTO();
+            dto.setRaterId(rate.getRater().getId());
+            dto.setRaterName(rate.getRater().getName());
             dto.setTargetId(rate.getTarget().getId());
             dto.setTargetName(rate.getTarget().getName());
+            dto.setRate(rate.getRate());
+            dto.setComment(rate.getComment());
+            return dto;
+        }).toList();
+    }
+
+    // 내가 받은 평가 가져오기
+    public List<UserRateDTO> getUserRatesByTargetId(Integer targetId) {
+        return userRateRepository.findByTargetId(targetId).stream().map(rate -> {
+            UserRateDTO dto = new UserRateDTO();
+            dto.setRaterId(rate.getRater().getId());
+            dto.setRaterName(rate.getRater().getName());
+            dto.setTargetId(rate.getRater().getId());
+            dto.setTargetName(rate.getRater().getName());
             dto.setRate(rate.getRate());
             dto.setComment(rate.getComment());
             return dto;
