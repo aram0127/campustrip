@@ -1,5 +1,6 @@
 package com.example.app.controller;
 
+import com.example.app.domain.Universities;
 import com.example.app.dto.*;
 import com.example.app.enumtype.PushNotificationType;
 import com.example.app.repository.UniversitiesRepository;
@@ -61,9 +62,8 @@ public class UserController {
     // PUT: 사용자 정보 수정 // id가 뭘 의미하는지 다시 보자
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
-    public void updateUser(@PathVariable String id, @RequestBody User user) {
-        user.setUserId(id);
-        userService.saveUser(user);
+    public void updateUser(@PathVariable Integer id, @RequestBody EditUserRequest editUserRequest) {
+        userService.updateUserFromRequest(id, editUserRequest);
     }
 
     // DELETE: 사용자 삭제
