@@ -37,12 +37,16 @@ const MenuProfile = styled.div`
   border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
 `;
 
-const ProfileAvatar = styled.div`
+const ProfileAvatar = styled.div<{ $imageUrl?: string }>`
   width: ${({ theme }) => theme.spacings.xxlarge}; /* 48px */
   height: ${({ theme }) => theme.spacings.xxlarge}; /* 48px */
   border-radius: ${({ theme }) => theme.borderRadius.circle};
   background-color: ${({ theme }) => theme.colors.secondaryTextColor};
   margin-bottom: ${({ theme }) => theme.spacings.small};
+  background-image: ${({ $imageUrl }) =>
+    $imageUrl ? `url(${$imageUrl})` : "none"};
+  background-size: cover;
+  background-position: center;
 `;
 
 const ProfileName = styled.div`
@@ -166,7 +170,7 @@ const SideMenu: React.FC<SideMenuProps> = ({
       >
         {user ? (
           <MenuProfile>
-            <ProfileAvatar />
+            <ProfileAvatar $imageUrl={user.profilePhotoUrl} />{" "}
             <ProfileName>{user.name}</ProfileName>
             <ProfileId>@{user.userId}</ProfileId>
             <FollowInfo>

@@ -4,4 +4,5 @@ export interface Applicant {
   name: string;
   userScore: number;
   applicationStatus: boolean | null;
+  profilePhotoUrl?: string;
 }

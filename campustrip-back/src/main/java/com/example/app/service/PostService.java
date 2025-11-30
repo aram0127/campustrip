@@ -13,6 +13,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.SliceImpl;
+import java.util.LinkedHashMap;
+import java.util.Comparator;
 
 @Service
 public class PostService {
@@ -22,16 +25,19 @@ public class PostService {
     private final PlannerRepository plannerRepository;
     private final PostAssetRepository postAssetRepository;
     private final S3Service s3Service;
+    private final ApplicationRepository applicationRepository;
 
     @Autowired
     public PostService(PostRepository postRepository,
-                       UserRepository userRepository, RegionRepository regionRepository, PlannerRepository plannerRepository, PostAssetRepository postAssetrepository, S3Service s3Service) {
+                       UserRepository userRepository, RegionRepository regionRepository, PlannerRepository plannerRepository, PostAssetRepository postAssetrepository, S3Service s3Service,
+                       ApplicationRepository applicationRepository) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.regionRepository = regionRepository;
         this.plannerRepository = plannerRepository;
         this.postAssetRepository = postAssetrepository;
         this.s3Service = s3Service;
+        this.applicationRepository = applicationRepository;
     }
 
     public List<Post> getAllPosts() {
@@ -53,6 +59,42 @@ public class PostService {
         // n+1 문제 해결 위해 수정
          return postRepository.findAllByUserWithDetails(user);
         //return postRepository.findAllByUser(user);
+    }
+
+    // 추가: 사용자 작성 + state=1 신청 게시글을 중복 없이 합쳐 Slice로 반환
+    public Slice<Post> getPostsByMembershipIdSlice(Integer membershipId, Pageable pageable) {
+        User user = userRepository.findById(membershipId)
+                .orElseThrow(() -> new NoSuchElementException("User not found with id: " + membershipId));
+
+        // 작성한 게시글
+        List<Post> authored = postRepository.findAllByUserWithDetails(user);
+        // 신청한 게시글 중 state=1
+        List<Post> appliedAccepted = applicationRepository.findAllByUser(user).stream()
+                .filter(app -> Boolean.TRUE.equals(app.getApplicationStatus()))
+                .map(Application::getPost)
+                .collect(Collectors.toList());
+
+        // 중복 제거: postId 기준으로 유지하면서 최신 정렬
+        LinkedHashMap<Integer, Post> dedupMap = new LinkedHashMap<>();
+        // 합치기
+        for (Post p : authored) {
+            dedupMap.put(p.getPostId(), p);
+        }
+        for (Post p : appliedAccepted) {
+            dedupMap.putIfAbsent(p.getPostId(), p);
+        }
+        List<Post> merged = new ArrayList<>(dedupMap.values());
+        // 정렬: createdAt DESC 기본
+        merged.sort(Comparator.comparing(Post::getCreatedAt, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())).reversed());
+
+        // 페이징 구성: SliceImpl
+        int page = pageable.getPageNumber();
+        int size = pageable.getPageSize();
+        int fromIndex = Math.min(page * size, merged.size());
+        int toIndex = Math.min(fromIndex + size, merged.size());
+        List<Post> content = merged.subList(fromIndex, toIndex);
+        boolean hasNext = toIndex < merged.size();
+        return new SliceImpl<>(content, pageable, hasNext);
     }
 
     public List<Post> getPostsByRegionIds(List<Integer> regionIds) {

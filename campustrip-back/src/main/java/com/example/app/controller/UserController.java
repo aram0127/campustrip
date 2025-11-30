@@ -62,10 +62,8 @@ public class UserController {
     // PUT: 사용자 정보 수정 // id가 뭘 의미하는지 다시 보자
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
-    public User updateUser(@PathVariable String id, @RequestBody User user) {
-        user.setUserId(id);
-        userService.saveUser(user);
-        return user;
+    public void updateUser(@PathVariable Integer id, @RequestBody EditUserRequest editUserRequest) {
+        userService.updateUserFromRequest(id, editUserRequest);
     }
 
     // DELETE: 사용자 삭제
@@ -87,11 +85,10 @@ public class UserController {
     // 사용자 선호도 수정
     @PutMapping("/preference/{id}")
     @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
-    public User updateUserPreference(@PathVariable Integer id, @RequestBody UserPreference user) {
+    public void updateUserPreference(@PathVariable Integer id, @RequestBody UserPreference user) {
         User existingUser = userService.getUserById(id);
         existingUser.setPreference(user.getPreference());
         userService.saveUser(existingUser);
-        return existingUser;
     }
 
     // 사용자 평가 남기기
@@ -114,5 +111,20 @@ public class UserController {
     @GetMapping("/{id}/rated-users")
     public List<UserRateDTO> getRatedUsers(@PathVariable Integer id) {
         return userService.getUserRatesByRaterId(id);
+    }
+
+    // 나의 평가한 사람들 조회
+    @GetMapping("/{id}/my-rates")
+    public List<UserRateDTO> getMyRates(@PathVariable Integer id) {
+        return userService.getUserRatesByTargetId(id);
+    }
+
+    @PutMapping("/{id}/profile-image")
+    public void updateUserProfileImage(@PathVariable Integer id, @AuthenticationPrincipal UserDetails userDeatils, @RequestBody UpdateProfileImageRequest request) {
+        User user = userService.getUserByUserId(userDeatils.getUsername());
+        if (!user.getId().equals(id)) {
+            throw new SecurityException("권한이 없습니다.");
+        }
+        userService.updateUserProfilePhoto(user, request.getProfileImage());
     }
 }

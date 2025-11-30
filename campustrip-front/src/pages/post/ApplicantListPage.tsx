@@ -31,12 +31,16 @@ const ApplicantInfo = styled.div`
   cursor: pointer;
 `;
 
-const Avatar = styled.div`
+const Avatar = styled.div<{ $imageUrl?: string }>`
   width: 44px;
   height: 44px;
   border-radius: 50%;
   background-color: ${({ theme }) => theme.colors.inputBackground};
   flex-shrink: 0;
+  background-image: ${({ $imageUrl }) =>
+    $imageUrl ? `url(${$imageUrl})` : "none"};
+  background-size: cover;
+  background-position: center;
 `;
 
 const NameContainer = styled.div`
@@ -201,7 +205,7 @@ const ApplicantListPage: React.FC = () => {
         {applicants.map((applicant) => (
           <ApplicantItem key={applicant.id}>
             <ApplicantInfo onClick={() => handleProfileClick(applicant.id)}>
-              <Avatar />
+              <Avatar $imageUrl={applicant.profilePhotoUrl} />
               <NameContainer>
                 <ApplicantName>{applicant.name}</ApplicantName>
                 <UserScore>

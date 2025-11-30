@@ -5,12 +5,16 @@ import { IoMenu, IoAdd, IoSend, IoLocationSharp } from "react-icons/io5";
 import { Client, type IMessage } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { useAuth } from "../../context/AuthContext";
-import { type ChatMessage, MessageTypeValue } from "../../types/chat";
+import {
+  type ChatMessage,
+  type ChatMember,
+  MessageTypeValue,
+} from "../../types/chat";
 import PageLayout, {
   ScrollingContent,
 } from "../../components/layout/PageLayout";
 import { useQuery } from "@tanstack/react-query";
-import { getChatHistory } from "../../api/chats";
+import { getChatHistory, getChatMembers } from "../../api/chats";
 
 const MessageListContainer = styled(ScrollingContent)`
   padding: 16px;
@@ -52,11 +56,16 @@ const SenderInfo = styled.div`
   margin-bottom: 4px;
 `;
 
-const Avatar = styled.div`
+const Avatar = styled.div<{ $imageUrl?: string }>`
   width: 30px;
   height: 30px;
   border-radius: 50%;
   background-color: ${({ theme }) => theme.colors.inputBackground};
+  background-image: ${({ $imageUrl }) =>
+    $imageUrl ? `url(${$imageUrl})` : "none"};
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
 `;
 
 const UserName = styled.span`
@@ -137,6 +146,20 @@ function ChatRoomPage() {
   const messageListRef = useRef<HTMLDivElement>(null);
   const [isHistoryLoaded, setIsHistoryLoaded] = useState(false); // 중복 로드 방지
 
+  // 채팅방 멤버 목록 조회
+  const { data: members = [] } = useQuery({
+    queryKey: ["chatMembers", chatId],
+    queryFn: () => getChatMembers(chatId!),
+    enabled: !!chatId,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // 멤버 ID로 프로필 사진 URL을 빠르게 찾기 위한 헬퍼 함수
+  const getProfileImage = (userId: number) => {
+    const member = members.find((m) => m.userId === userId);
+    return member?.profilePhotoUrl;
+  };
+
   // 채팅 내역 불러오기
   const {
     data: historyData,
@@ -209,6 +232,7 @@ function ChatRoomPage() {
         messageType: MessageTypeValue.CHAT,
         roomId: chatId!,
         userName: user.name,
+        membershipId: user.id,
         message: inputValue,
       };
 
@@ -283,7 +307,7 @@ function ChatRoomPage() {
               >
                 {!isMe && (
                   <SenderInfo>
-                    <Avatar />
+                    <Avatar $imageUrl={getProfileImage(msg.membershipId)} />
                     <UserName>{msg.userName}</UserName>
                   </SenderInfo>
                 )}

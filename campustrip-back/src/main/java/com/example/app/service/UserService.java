@@ -1,8 +1,6 @@
 package com.example.app.service;
 
-import com.example.app.dto.CreateUserRate;
-import com.example.app.dto.CustomUserDetails;
-import com.example.app.dto.UserRateDTO;
+import com.example.app.dto.*;
 import com.example.app.repository.UserRateRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -12,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;  // 의존성 주
 import com.example.app.domain.User;
 import com.example.app.domain.UserRate;
 import com.example.app.repository.UserRepository;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -20,11 +19,13 @@ import java.util.NoSuchElementException;
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final UserRateRepository userRateRepository;
+    private final S3Service s3Service;
 
     @Autowired
-    public UserService(UserRepository userRepository, UserRateRepository userRateRepository) {
+    public UserService(UserRepository userRepository, UserRateRepository userRateRepository, S3Service s3Service) {
         this.userRepository = userRepository;
         this.userRateRepository = userRateRepository;
+        this.s3Service = s3Service;
     }
 
     public List<User> getAllUsers() {
@@ -50,6 +51,21 @@ public class UserService implements UserDetailsService {
 
     public void saveUser(User user) {
         userRepository.save(user);
+    }
+
+    public UserResponse updateUserFromRequest(Integer id, EditUserRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("User not found with id: " + id));
+        if (user == null) {
+            throw new NoSuchElementException("User not found with id: " + id);
+        }
+        user.setName(request.getName());
+        user.setGender(request.getGender());
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setEmail(request.getEmail());
+        user.setSchoolEmail(request.getSchoolEmail());
+        userRepository.save(user);
+        return new UserResponse(user);
     }
 
     public void deleteUser(Integer id) {
@@ -86,11 +102,40 @@ public class UserService implements UserDetailsService {
     public List<UserRateDTO> getUserRatesByRaterId(Integer raterId) {
         return userRateRepository.findByRaterId(raterId).stream().map(rate -> {
             UserRateDTO dto = new UserRateDTO();
+            dto.setRaterId(rate.getRater().getId());
+            dto.setRaterName(rate.getRater().getName());
             dto.setTargetId(rate.getTarget().getId());
             dto.setTargetName(rate.getTarget().getName());
             dto.setRate(rate.getRate());
             dto.setComment(rate.getComment());
             return dto;
         }).toList();
+    }
+
+    // 내가 받은 평가 가져오기
+    public List<UserRateDTO> getUserRatesByTargetId(Integer targetId) {
+        return userRateRepository.findByTargetId(targetId).stream().map(rate -> {
+            UserRateDTO dto = new UserRateDTO();
+            dto.setRaterId(rate.getRater().getId());
+            dto.setRaterName(rate.getRater().getName());
+            dto.setTargetId(rate.getRater().getId());
+            dto.setTargetName(rate.getRater().getName());
+            dto.setRate(rate.getRate());
+            dto.setComment(rate.getComment());
+            return dto;
+        }).toList();
+    }
+
+    public void updateUserProfilePhoto(User user, MultipartFile file) {
+        if (user.getProfilePhotoUrl() != null) {
+            s3Service.deleteFile(user.getProfilePhotoUrl());
+        }
+        try {
+            String imageUrl = s3Service.uploadFile(file);
+            user.setProfilePhotoUrl(imageUrl);
+            userRepository.save(user);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to upload profile image: " + e.getMessage());
+        }
     }
 }

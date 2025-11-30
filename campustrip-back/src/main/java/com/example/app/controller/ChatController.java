@@ -1,13 +1,16 @@
 package com.example.app.controller;
 
 
+import com.example.app.domain.User;
 import com.example.app.dto.ChatDTO;
+import com.example.app.dto.ChatMemberDTO;
 import com.example.app.dto.ChatMessageDTO;
 import com.example.app.dto.PushNotificationRequest;
 import com.example.app.enumtype.PushNotificationType;
 import com.example.app.service.ChatMessageService;
 import com.example.app.service.ChatService;
 import com.example.app.service.FCMService;
+import com.example.app.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -22,21 +25,30 @@ public class ChatController {
     private final ChatService chatService;
     private final ChatMessageService chatMessageService;
     private final FCMService fcmService;
+    private final UserService userService;
 
     @Autowired
-    public ChatController(ChatService chatService, ChatMessageService chatMessageService, FCMService fcmService) {
+    public ChatController(ChatService chatService, ChatMessageService chatMessageService, FCMService fcmService, UserService userService) {
         this.chatService = chatService;
         this.chatMessageService = chatMessageService;
         this.fcmService = fcmService;
+        this.userService = userService;
     }
 
     // 채팅 메시지 전송
     @MessageMapping("/chat/message")  // 클라이언트가 /pub/chat/message로 전송
     public void sendMessage(ChatMessageDTO message) {
         chatMessageService.sendMessage(message);
+        User user = userService.getUserByName(message.getUserName());
+        if (user == null) {
+            log.error("사용자 정보를 찾을 수 없습니다: {}", message.getUserName());
+            return;
+        }
+        Integer userId = user.getId();
         // 상대방에게 푸시 알림 전송
         chatService.getMembersByRoomId(message.getRoomId()).stream().forEach(m -> {
             try{
+                if (m.getUserId().equals(userId)) return; // 본인 제외
                 log.info("푸시 알림 전송 대상자 ID: {}", m.getUserId());
                 fcmService.sendNotificationToUser(new PushNotificationRequest(
                         m.getUserId(),
@@ -78,5 +90,10 @@ public class ChatController {
     @GetMapping("/chat/{chatId}/messages")
     public List<ChatMessageDTO> getChatMessages(@PathVariable Integer chatId) {
         return chatMessageService.getChatHistory(chatId);
+    }
+
+    @GetMapping("/chat/{chatId}/members")
+    public List<ChatMemberDTO> getChatMembers(@PathVariable Integer chatId) {
+        return chatService.getMembersByRoomId(chatId);
     }
 }

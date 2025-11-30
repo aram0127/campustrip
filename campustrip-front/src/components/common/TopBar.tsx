@@ -30,11 +30,15 @@ const RightSection = styled.div`
   justify-content: flex-end;
 `;
 
-const ProfileBtn = styled.button`
+const ProfileBtn = styled.button<{ $imageUrl?: string }>`
   width: 44px;
   height: 44px;
   border-radius: ${({ theme }) => theme.borderRadius.circle};
   background-color: ${({ theme }) => theme.colors.secondaryTextColor};
+  background-image: ${({ $imageUrl }) =>
+    $imageUrl ? `url(${$imageUrl})` : "none"};
+  background-size: cover;
+  background-position: center;
   border: none;
   cursor: pointer;
   display: flex;
@@ -65,15 +69,16 @@ const NotificationBtn = styled.button`
 
 interface TopBarProps {
   onProfileClick: () => void;
+  profileImageUrl?: string;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ onProfileClick }) => {
+const TopBar: React.FC<TopBarProps> = ({ onProfileClick, profileImageUrl }) => {
   const navigate = useNavigate();
 
   return (
     <TopBarContainer>
       <LeftSection>
-        <ProfileBtn onClick={onProfileClick} />
+        <ProfileBtn onClick={onProfileClick} $imageUrl={profileImageUrl} />
       </LeftSection>
       <CenterSection>
         <Logo to="/">Campus Trip</Logo>

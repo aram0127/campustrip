@@ -1,5 +1,6 @@
 import { requestFcmToken } from "../firebase";
 import { deleteFcmToken } from "../api/fcm";
+import { getUserProfile } from "../api/users";
 
 import React, {
   createContext,
@@ -27,6 +28,7 @@ export interface UserInfo {
   userId: string;
   name: string;
   role: string;
+  profilePhotoUrl?: string;
 }
 
 interface AuthContextType {
@@ -54,61 +56,68 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
+  // 유저 정보를 가져오는 공통 함수
+  const fetchUserInfo = async (token: string) => {
+    try {
+      const decoded = jwtDecode<DecodedToken>(token);
+
+      // 백엔드 API를 호출하여 최신 유저 정보(사진 포함)를 가져옴
+      const userProfile = await getUserProfile(decoded.membershipId);
+
+      // 토큰의 권한 정보 + API의 최신 프로필 정보를 합쳐서 상태 업데이트
+      setUser({
+        id: userProfile.id,
+        userId: userProfile.userId,
+        name: userProfile.name,
+        role: decoded.role,
+        profilePhotoUrl: userProfile.profilePhotoUrl,
+      });
+
+      // 헤더 및 토큰 상태 설정
+      axios.defaults.headers.common["Authorization"] = token;
+      setToken(token);
+    } catch (error) {
+      console.error("유저 정보 로드 실패:", error);
+      logout();
+    }
+  };
+
   useEffect(() => {
-    const initializeAuth = () => {
+    const initializeAuth = async () => {
       const storedToken = localStorage.getItem("authToken");
+
       if (storedToken) {
         try {
           const decoded = jwtDecode<DecodedToken>(storedToken);
-          if (decoded.exp * 1000 > Date.now()) {
-            axios.defaults.headers.common["Authorization"] = storedToken;
 
-            // 토큰에서 직접 사용자 정보를 가져와 상태 설정
-            setToken(storedToken);
-            setUser({
-              id: decoded.membershipId,
-              userId: decoded.username,
-              name: decoded.name,
-              role: decoded.role,
-            });
+          // 토큰 만료 시간 체크
+          if (decoded.exp * 1000 > Date.now()) {
+            // 토큰이 유효하면 API를 통해 최신 정보 로드
+            await fetchUserInfo(storedToken);
           } else {
-            // 토큰이 만료된 경우
-            console.error("Token expired on load. Logging out.");
-            localStorage.removeItem("authToken");
-            delete axios.defaults.headers.common["Authorization"];
-            window.location.href = "/login";
+            // 토큰 만료 시 로그아웃 처리
+            console.error("Token expired on load.");
+            logout();
             alert("세션이 만료되었습니다. 다시 로그인해주세요.");
           }
         } catch (error) {
-          console.error("Failed to decode stored token:", error);
-          localStorage.removeItem("authToken");
-          delete axios.defaults.headers.common["Authorization"];
+          console.error("Token decode failed:", error);
+          logout();
         }
       }
+
       setAuthLoading(false);
     };
 
     initializeAuth();
   }, []);
 
-  const login = (newToken: string) => {
-    try {
-      const decoded = jwtDecode<DecodedToken>(newToken);
-      localStorage.setItem("authToken", newToken);
-      axios.defaults.headers.common["Authorization"] = newToken;
+  const login = async (newToken: string) => {
+    // 토큰 저장
+    localStorage.setItem("authToken", newToken);
 
-      // 토큰에서 직접 사용자 정보를 가져와 상태 설정
-      setToken(newToken);
-      setUser({
-        id: decoded.membershipId,
-        userId: decoded.username,
-        name: decoded.name,
-        role: decoded.role,
-      });
-    } catch (error) {
-      console.error("Failed to decode new token:", error);
-      logout();
-    }
+    // 공통 함수를 호출하여 API 정보 로드 및 상태 설정
+    await fetchUserInfo(newToken);
   };
 
   const logout = async () => {

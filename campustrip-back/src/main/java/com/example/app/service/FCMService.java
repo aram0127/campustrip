@@ -42,30 +42,25 @@ public class FCMService {
 
         for (String token : tokens) {
             try {
-                sendMessageTo(token, request.getTitle(), request.getBody(), request.getType());
+                sendMessageTo(token, request.getTitle(), request.getBody(), request.getType(), request.getReferenceId());
             } catch (Exception e) {
                 // 실패한 토큰 삭제
                 tokenService.deleteToken(token);
             }
         }
-        pushNotificationRepository.save(request.toEntity());
+        if (request.getType() != PushNotificationType.CHAT_MESSAGE)
+            pushNotificationRepository.save(request.toEntity());
     }
 
-//    // 사용자에게 알림 전송 (모든 디바이스) - 기존 메서드 호환성 유지
-//    public void sendNotificationToUser(Integer receiverID, String title, String body, PushNotificationType type) {
-//        PushNotificationRequest request = new PushNotificationRequest(receiverID, null, type, title, body);
-//        sendNotificationToUser(request);
-//    }
-
     // 단일 토큰으로 알림 전송
-    public void sendMessageTo(String targetToken, String title, String body, PushNotificationType type) throws IOException, FirebaseMessagingException {
-        //String message = makeMessage(targetToken, title, body);
+    public void sendMessageTo(String targetToken, String title, String body, PushNotificationType type, Integer referenceId) throws IOException, FirebaseMessagingException {
         String message = FirebaseMessaging.getInstance().send(Message.builder()
                 .setNotification(Notification.builder()
                         .setTitle(title)
                         .setBody(body)
                         .build())
                 .putData("type", String.valueOf(type))
+                .putData("referenceId", String.valueOf(referenceId))
                 .setToken(targetToken).build());
     }
 

@@ -129,6 +129,45 @@ public class ReviewService {
         });
     }
 
+    public Slice<ReviewDTO> getReviewsByUserId(Integer userId, Pageable pageable) {
+        Slice<Review> reviewSlice;
+
+        boolean sortByLikes = pageable.getSort().stream()
+                .anyMatch(order -> order.getProperty().equals("likes"));
+
+        if (sortByLikes) {
+            Pageable likePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+            reviewSlice = reviewRepository.findSliceByUserIdOrderByLikes(userId, likePageable);
+        } else {
+            reviewSlice = reviewRepository.findSliceByUserId(userId, pageable);
+        }
+
+        List<Integer> reviewIds = reviewSlice.stream()
+                .map(Review::getId)
+                .toList();
+
+        var likeCountMap = reviewLikeRepository.countLikesByReviewIds(reviewIds)
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        ReviewLikeRepository.ReviewLikeCount::getReviewId,
+                        ReviewLikeRepository.ReviewLikeCount::getLikeCount
+                ));
+
+        return reviewSlice.map(review -> {
+            ReviewDTO dto = new ReviewDTO(review);
+            dto.setLikeCount(likeCountMap.getOrDefault(review.getId(), 0));
+
+            List<String> assetList = new ArrayList<>();
+            reviewAssetRepository.findAllByReviewId(review.getId()).forEach(asset -> {
+                assetList.add(asset.getStorageUrl());
+            });
+            dto.setImageUrls(assetList);
+
+            return dto;
+        });
+    }
+
+
     public ReviewDTO createReview(CreateReview reviewDTO) {
         // 1. Review 엔티티 생성 및 저장
         Review review = reviewDTO.toEntity();
