@@ -18,11 +18,13 @@ public class SmsService {
     private final DefaultMessageService messageService;
     // 전화번호 -> 인증정보(코드, 만료시간) 매핑
     private final Map<String, VerificationInfo> verificationCodes = new ConcurrentHashMap<>();
+    private final String from;
 
     public SmsService(@Value("${solapi.api.key}") String apiKey,
             @Value("${solapi.api.secret}") String apiSecret,
             @Value("${solapi.api.number}") String from) {
         this.messageService = SolapiClient.INSTANCE.createInstance(apiKey, apiSecret);
+        this.from = from;
     }
 
     public void sendVerificationCode(String phoneNumber) {
