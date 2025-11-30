@@ -20,8 +20,8 @@ public class ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
-
     private final FCMService fcmService;
+
     @Autowired
     public ApplicationService(ApplicationRepository applicationRepository,
                               UserRepository userRepository,

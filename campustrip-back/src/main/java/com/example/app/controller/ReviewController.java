@@ -1,9 +1,8 @@
 package com.example.app.controller;
 
-import com.example.app.dto.CommentDTO;
-import com.example.app.dto.CreateReview;
-import com.example.app.dto.CustomUserDetails;
-import com.example.app.dto.ReviewDTO;
+import com.example.app.dto.*;
+import com.example.app.enumtype.PushNotificationType;
+import com.example.app.service.FCMService;
 import com.example.app.service.ReviewService;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,9 +18,11 @@ import java.util.List;
 @RequestMapping("/api/reviews")
 public class ReviewController {
     private final ReviewService reviewService;
+    private final FCMService fcmService;
 
-    public ReviewController(ReviewService reviewService) {
+    public ReviewController(ReviewService reviewService, FCMService fcmService) {
         this.reviewService = reviewService;
+        this.fcmService = fcmService;
     }
 
     // 리뷰를 ID로 조회
@@ -83,6 +84,17 @@ public class ReviewController {
     public void addComment(@PathVariable Integer id, @AuthenticationPrincipal CustomUserDetails userDetails, @RequestParam String comment) {
         System.out.println("Adding comment to review ID: " + id + " by user: " + userDetails.getUsername() + " Comment: " + comment);
         reviewService.addComment(id, userDetails.getUsername(), comment);
+        // 댓글 달렸다는 알림 작성자에게 전송
+        fcmService.sendNotificationToUser(
+            new PushNotificationRequest(
+                    userDetails.getMembershipId(),
+                    reviewService.getReviewAuthorId(id),
+                    PushNotificationType.REVIEW_COMMENT,
+                    id,
+                    "새로운 댓글이 등록되었습니다.",
+                    userDetails.getUsername() + "님이 회원님의 리뷰에 댓글을 남겼습니다."
+            )
+        );
     }
 
     // 리뷰 댓글 수정

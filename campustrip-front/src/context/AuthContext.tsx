@@ -1,3 +1,6 @@
+import { requestFcmToken } from "../firebase";
+import { deleteFcmToken } from "../api/fcm";
+
 import React, {
   createContext,
   useState,
@@ -108,11 +111,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("authToken");
-    setToken(null);
-    setUser(null);
-    delete axios.defaults.headers.common["Authorization"];
+  const logout = async () => {
+    try {
+      // 현재 기기의 FCM 토큰 가져오기
+      const currentFcmToken = await requestFcmToken();
+
+      // 서버에 토큰 삭제 요청
+      if (currentFcmToken && token) {
+        await deleteFcmToken(currentFcmToken);
+        console.log("서버에서 FCM 토큰 삭제 완료");
+      }
+    } catch (error) {
+      console.error("로그아웃 중 토큰 삭제 실패:", error);
+    } finally {
+      // 클라이언트 로그아웃 처리
+      localStorage.removeItem("authToken");
+      setToken(null);
+      setUser(null);
+      delete axios.defaults.headers.common["Authorization"];
+
+      window.location.href = "/login";
+    }
   };
 
   const isLoggedIn = !!token && !!user;

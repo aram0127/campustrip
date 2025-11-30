@@ -5,6 +5,7 @@ export const MessageTypeValue = {
   JOIN: "JOIN",
   CHAT: "CHAT",
   LEAVE: "LEAVE",
+  IMAGE: "IMAGE",
 } as const;
 
 // 백엔드의 app/dto/ChatDTO.java
@@ -12,6 +13,10 @@ export interface Chat {
   id: number;
   createdAt: string;
   title: string;
+  lastMessageType: MessageType;
+  senderName: string;
+  lastMessage: string;
+  lastMessageTime: string;
 }
 
 // 백엔드의 app/dto/ChatMessage.java

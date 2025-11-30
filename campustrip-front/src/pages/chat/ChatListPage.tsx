@@ -3,8 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import FloatingActionButton from "../../components/common/FloatingActionButton";
 import { useQuery } from "@tanstack/react-query";
 import { getMyChats } from "../../api/chats";
-import { type Chat } from "../../types/chat";
+import {type Chat, MessageTypeValue} from "../../types/chat";
 import { useAuth } from "../../context/AuthContext";
+import { useMemo } from "react";
 
 const PageContainer = styled.div`
   width: 100%;
@@ -88,6 +89,23 @@ function ChatListPage() {
     enabled: !!user, // user가 있을 때만 실행
   });
 
+  // 최근 메시지 시간이 없으면 createdAt을 기준으로 내림차순 정렬
+  const sortedChats = useMemo(() => {
+    return [...chats].sort((a, b) => {
+      const aTime = a.lastMessageTime
+        ? new Date(a.lastMessageTime).getTime()
+        : a.createdAt
+        ? new Date(a.createdAt).getTime()
+        : 0;
+      const bTime = b.lastMessageTime
+        ? new Date(b.lastMessageTime).getTime()
+        : b.createdAt
+        ? new Date(b.createdAt).getTime()
+        : 0;
+      return bTime - aTime; // 최근 순서(내림차순)
+    });
+  }, [chats]);
+
   const handleNewChat = () => {
     navigate("/chat/new");
   };
@@ -113,20 +131,25 @@ function ChatListPage() {
   return (
     <PageContainer>
       <ChatList>
-        {chats.length === 0 && <Message>참여중인 채팅방이 없습니다.</Message>}
-        {chats.map((chat) => (
+        {sortedChats.length === 0 && <Message>참여중인 채팅방이 없습니다.</Message>}
+        {sortedChats.map((chat) => (
           <ChatItem to={`/chat/${chat.id}`} key={chat.id}>
             <Avatar />
             <ChatInfo>
               <UserName>{chat.title}</UserName>
               <LastMessage>
-                {/* TODO: 마지막 메시지는 Kafka/Socket으로 실시간 수신 필요 */}
-                마지막 메시지...
+                {chat.lastMessage
+                  ? (chat.lastMessageType === MessageTypeValue.JOIN || chat.lastMessageType === MessageTypeValue.LEAVE
+                    ? chat.lastMessage
+                    : chat.senderName + ": " + chat.lastMessage)
+                  : "아직 메시지가 없습니다."}
               </LastMessage>
             </ChatInfo>
             <Timestamp>
-              {/* TODO: 마지막 메시지 시간 */}
-              {new Date(chat.createdAt).toLocaleDateString("ko-KR")}
+              {(() => {
+                const timeStr = chat.lastMessageTime || chat.createdAt;
+                return timeStr ? new Date(timeStr).toLocaleDateString("ko-KR") : "";
+              })()}
             </Timestamp>
           </ChatItem>
         ))}
