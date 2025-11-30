@@ -24,6 +24,8 @@ public class UserResponse {
         this.userScore = user.getUserScore();
         this.role = user.getRole();
         this.profilePhotoUrl = user.getProfilePhotoUrl();
+        this.university = user.getUniversity().getName();
+        this.universityId = user.getUniversity().getId();
     }
     private Integer id;
     private String name;
@@ -37,4 +39,6 @@ public class UserResponse {
     private Float userScore;
     private Integer role;
     private String profilePhotoUrl;
+    private String university;
+    private Integer universityId;
 }

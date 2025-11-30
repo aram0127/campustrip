@@ -11,4 +11,6 @@ export interface User {
   userScore: number;
   role: number;
   profilePhotoUrl: string;
+  university: string;
+  universityId: number;
 }

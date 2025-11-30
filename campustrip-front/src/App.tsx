@@ -45,6 +45,7 @@ import ReviewDetailPage from "./pages/review/ReviewDetailPage";
 import FCMTestPage from "./test/FCMTestPage.tsx";
 import PersonalInfoPage from "./pages/profile/PersonalInfoPage";
 import ProfileEditPage from "./pages/profile/ProfileEditPage";
+import DeleteAccountPage from "./pages/profile/DeleteAccountPage";
 
 const RootRedirect: React.FC = () => {
   const { isLoggedIn } = useAuth();
@@ -165,14 +166,18 @@ function App() {
                 path="/profile/:userId/follows"
                 element={<FollowListPage />}
               />
-              <Route path="/settings/blocked" element={<BlockedListPage />} />
+              <Route path="/profile/blocked" element={<BlockedListPage />} />
               <Route path="/notifications" element={<NotificationListPage />} />
               <Route
-                path="/settings/personal-info"
+                path="/profile/personal-info"
                 element={<PersonalInfoPage />}
               />
               <Route path="/test/travel" element={<TravelTestPage />} />
               <Route path="/profile/edit" element={<ProfileEditPage />} />
+              <Route
+                path="/profile/delete-account"
+                element={<DeleteAccountPage />}
+              />
 
               {/* Posts */}
               <Route path="/posts/:postId" element={<PostDetailPage />} />
