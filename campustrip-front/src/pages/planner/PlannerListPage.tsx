@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import FloatingActionButton from "../../components/common/FloatingActionButton";
 import { useQuery } from "@tanstack/react-query";
 import { getMyPlanners } from "../../api/planners";
@@ -51,6 +51,7 @@ const Message = styled.p`
 
 function PlannerListPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // useQuery로 플래너 목록 가져오기
   const {
@@ -64,7 +65,7 @@ function PlannerListPage() {
   });
 
   const handleCreatePlanner = () => {
-    alert("새 플래너 생성 페이지로 이동합니다.");
+    navigate("/planner/create");
   };
 
   if (isLoading) {
