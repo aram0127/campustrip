@@ -181,3 +181,19 @@ export const getInfinitePosts = async ({
   const response = await apiClient.get<PostSlice<Post>>(url);
   return response.data;
 };
+
+/* 내가 작성하거나 참여한 모든 여행 게시글 조회 */
+export const getMyTripHistory = async (
+  userId: number,
+  page = 0,
+  size = 100
+): Promise<PostSlice<Post>> => {
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("size", size.toString());
+
+  const response = await apiClient.get<PostSlice<Post>>(
+    `/api/posts/membership/${userId}?${params.toString()}`
+  );
+  return response.data;
+};
