@@ -30,11 +30,11 @@ import LocationSharePage from "./pages/location/LocationSharePage";
 import NotificationListPage from "./pages/notification/NotificationListPage";
 import PostEditLoader from "./pages/post/edit/PostEditLoader";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import TravelTestPage from "./test/TravelTestPage";
+import TravelTestPage from "./pages/profile/TravelTestPage.tsx";
 import { PostCreateProvider } from "./context/PostCreateContext";
 import ReviewCreatePage from "./pages/review/ReviewCreatePage";
 import ReviewDetailPage from "./pages/review/ReviewDetailPage";
-import FCMTestPage from "./pages/test/FCMTestPage";
+import FCMTestPage from "./test/FCMTestPage.tsx";
 import { requestFcmToken, onMessageListener } from "./firebase";
 import PersonalInfoPage from "./pages/profile/PersonalInfoPage";
 // import { apiClient } from "./api/client"; // 나중에 주석 해제

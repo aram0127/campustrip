@@ -1,12 +1,22 @@
-import React, { useState, useRef } from "react";
-import styled, { useTheme } from "styled-components";
+import { useState, useRef } from "react";
+import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { GoogleMap, useJsApiLoader, Marker, Autocomplete, Polyline } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  useJsApiLoader,
+  Marker,
+  Autocomplete,
+  Polyline,
+} from "@react-google-maps/api";
 import { IoSearch } from "react-icons/io5";
-import type { PlannerPlace, PlannerSchedule, PlannerDetail } from "../../types/planner";
+import type {
+  PlannerPlace,
+  PlannerSchedule,
+  PlannerDetail,
+} from "../../types/planner";
 import { savePlanner } from "../../api/planners";
 
-// 일차별 색상 
+// 일차별 색상
 const DAY_COLORS = [
   "#FF5722", // 1일차: 주황
   "#2196F3", // 2일차: 파랑
@@ -60,7 +70,7 @@ const TitleInput = styled.input`
 const DateRow = styled.div`
   display: flex;
   gap: 8px;
-  width: 100%; 
+  width: 100%;
   max-width: 600px;
   align-items: center;
 `;
@@ -81,7 +91,7 @@ const DateInput = styled.input`
 const SearchWrapper = styled.div`
   position: relative;
   width: 100%;
-  display: flex; 
+  display: flex;
   align-items: center;
 `;
 
@@ -93,7 +103,7 @@ const SearchInput = styled.input`
   background-color: white;
   color: black;
   font-size: 14px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   outline: none;
 `;
 
@@ -110,7 +120,7 @@ const SearchIcon = styled(IoSearch)`
 const MapContainer = styled.div`
   height: 35%;
   width: 100%;
-  position: relative; 
+  position: relative;
 `;
 
 const SearchBoxWrapper = styled.div`
@@ -142,10 +152,9 @@ const DayButton = styled.button<{ $active: boolean; $color: string }>`
   padding: 8px 16px;
   border-radius: 20px;
   border: none;
-  background-color: ${({ theme, $active, $color }) => 
+  background-color: ${({ theme, $active, $color }) =>
     $active ? $color : theme.colors.inputBackground};
-  color: ${({ theme, $active }) => 
-    $active ? "white" : theme.colors.text};
+  color: ${({ theme, $active }) => ($active ? "white" : theme.colors.text)};
   white-space: nowrap;
   cursor: pointer;
   font-weight: 600;
@@ -213,58 +222,70 @@ const SaveButton = styled.button`
   cursor: pointer;
 `;
 
-const libraries: ("places")[] = ["places"];
+const libraries: "places"[] = ["places"];
 
 function PlannerCreatePage() {
   const navigate = useNavigate();
-  const theme = useTheme();
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    libraries, 
+    libraries,
   });
 
   const [title, setTitle] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [schedules, setSchedules] = useState<PlannerSchedule[]>([
-    { day: 1, places: [] }
+    { day: 1, places: [] },
   ]);
   const [currentDay, setCurrentDay] = useState(1);
-  const [mapCenter, setMapCenter] = useState({ lat: 37.5665, lng: 126.9780 }); // 초기 좌표: 서울 시청
+  const [mapCenter, setMapCenter] = useState({ lat: 37.5665, lng: 126.978 }); // 초기 좌표: 서울 시청
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   const getCurrentDayColor = (day: number) => {
     if (day <= DAY_COLORS.length) {
       return DAY_COLORS[day - 1];
     }
-    const hue = (day * 137.508) % 360; 
+    const hue = (day * 137.508) % 360;
     return `hsl(${hue}, 65%, 50%)`;
   };
 
   const currentColor = getCurrentDayColor(currentDay);
 
-  const pathCoordinates = schedules[currentDay - 1]?.places.map(place => ({
-    lat: place.latitude,
-    lng: place.longitude
-  })) || [];
+  const pathCoordinates =
+    schedules[currentDay - 1]?.places.map((place) => ({
+      lat: place.latitude,
+      lng: place.longitude,
+    })) || [];
 
   // 점선 스타일 정의
   const lineSymbol = {
     path: "M 0,-1 0,1",
     strokeOpacity: 1,
     scale: 3,
-    strokeColor: currentColor
+    strokeColor: currentColor,
   };
 
   const getCategoryFromTypes = (types: string[] | undefined): string => {
     if (!types) return "기타";
     if (types.includes("lodging")) return "숙소";
-    if (types.includes("restaurant") || types.includes("food") || types.includes("cafe")) return "맛집/카페";
-    if (types.includes("tourist_attraction") || types.includes("museum") || types.includes("park")) return "명소";
-    if (types.includes("transit_station") || types.includes("airport")) return "교통";
-    if (types.includes("shopping_mall") || types.includes("store")) return "쇼핑";
+    if (
+      types.includes("restaurant") ||
+      types.includes("food") ||
+      types.includes("cafe")
+    )
+      return "맛집/카페";
+    if (
+      types.includes("tourist_attraction") ||
+      types.includes("museum") ||
+      types.includes("park")
+    )
+      return "명소";
+    if (types.includes("transit_station") || types.includes("airport"))
+      return "교통";
+    if (types.includes("shopping_mall") || types.includes("store"))
+      return "쇼핑";
     return "기타";
   };
 
@@ -272,8 +293,10 @@ function PlannerCreatePage() {
     const place = autocompleteRef.current?.getPlace();
     if (!place) return;
     if (!place.geometry || !place.geometry.location) {
-        alert(`"${place.name}"에 대한 세부 정보를 찾을 수 없습니다.\n자동완성 목록에서 장소를 클릭해주세요!`);
-        return;
+      alert(
+        `"${place.name}"에 대한 세부 정보를 찾을 수 없습니다.\n자동완성 목록에서 장소를 클릭해주세요!`
+      );
+      return;
     }
     const newPlace: PlannerPlace = {
       placeName: place.name || "알 수 없는 장소",
@@ -281,9 +304,9 @@ function PlannerCreatePage() {
       longitude: place.geometry.location.lng(),
       order: schedules[currentDay - 1].places.length + 1,
       category: getCategoryFromTypes(place.types),
-      memo: ""
+      memo: "",
     };
-    
+
     setMapCenter({ lat: newPlace.latitude, lng: newPlace.longitude });
 
     // 불변성 유지하며 업데이트
@@ -318,7 +341,7 @@ function PlannerCreatePage() {
     try {
       await savePlanner(newPlannerData);
       alert("플래너가 저장되었습니다");
-      navigate("/planner"); 
+      navigate("/planner");
     } catch (error) {
       console.error(error);
       alert("저장 중 오류가 발생했습니다.");
@@ -330,21 +353,31 @@ function PlannerCreatePage() {
   return (
     <Container>
       <TopBar>
-        <span onClick={() => navigate(-1)} style={{cursor: "pointer"}}>취소</span>
+        <span onClick={() => navigate(-1)} style={{ cursor: "pointer" }}>
+          취소
+        </span>
         <h3>새 플래너</h3>
         <SaveButton onClick={handleSave}>완료</SaveButton>
       </TopBar>
-      
+
       <InputGroup>
-        <TitleInput 
-          placeholder="어떤 여행을 떠나시나요?" 
-          value={title} 
-          onChange={(e) => setTitle(e.target.value)} 
+        <TitleInput
+          placeholder="어떤 여행을 떠나시나요?"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
         />
         <DateRow>
-          <DateInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-          <span style={{alignSelf: "center", color: "#888"}}>~</span>
-          <DateInput type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          <DateInput
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+          <span style={{ alignSelf: "center", color: "#888" }}>~</span>
+          <DateInput
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
         </DateRow>
       </InputGroup>
 
@@ -353,7 +386,15 @@ function PlannerCreatePage() {
           <Autocomplete
             onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
             onPlaceChanged={onPlaceSelected}
-            options={{ fields: ["name", "geometry", "types", "formatted_address", "place_id"] }}
+            options={{
+              fields: [
+                "name",
+                "geometry",
+                "types",
+                "formatted_address",
+                "place_id",
+              ],
+            }}
           >
             <SearchWrapper>
               <SearchInput placeholder="장소를 검색해서 추가하세요" />
@@ -374,42 +415,48 @@ function PlannerCreatePage() {
               path={pathCoordinates}
               options={{
                 strokeOpacity: 0, // 실선 숨김
-                icons: [{
-                  icon: lineSymbol,
-                  offset: "0",
-                  repeat: "20px", // 점선 간격
-                }],
+                icons: [
+                  {
+                    icon: lineSymbol,
+                    offset: "0",
+                    repeat: "20px", // 점선 간격
+                  },
+                ],
                 zIndex: 1, // 마커 뒤에 위치
               }}
             />
           )}
 
           {schedules[currentDay - 1]?.places.map((place, idx) => (
-              <Marker
-                key={`${currentDay}-${idx}`} // key를 고유하게 변경하여 리렌더링 이슈 방지
-                position={{ lat: place.latitude, lng: place.longitude }}
-                label={{ text: String(idx + 1), color: "white", fontWeight: "bold" }}
-                zIndex={2}
-                icon={{
-                  path: "M 12 2 C 8.13 2 5 5.13 5 9 c 0 5.25 7 13 7 13 s 7 -7.75 7 -13 c 0 -3.87 -3.13 -7 -7 -7 z",
-                  fillColor: currentColor,
-                  fillOpacity: 1,
-                  strokeColor: "white",
-                  strokeWeight: 2,
-                  scale: 1.5,
-                  labelOrigin: new google.maps.Point(12, 9),
-                  anchor: new google.maps.Point(12, 22),
-                }}
-              />
-            ))}
+            <Marker
+              key={`${currentDay}-${idx}`} // key를 고유하게 변경하여 리렌더링 이슈 방지
+              position={{ lat: place.latitude, lng: place.longitude }}
+              label={{
+                text: String(idx + 1),
+                color: "white",
+                fontWeight: "bold",
+              }}
+              zIndex={2}
+              icon={{
+                path: "M 12 2 C 8.13 2 5 5.13 5 9 c 0 5.25 7 13 7 13 s 7 -7.75 7 -13 c 0 -3.87 -3.13 -7 -7 -7 z",
+                fillColor: currentColor,
+                fillOpacity: 1,
+                strokeColor: "white",
+                strokeWeight: 2,
+                scale: 1.5,
+                labelOrigin: new google.maps.Point(12, 9),
+                anchor: new google.maps.Point(12, 22),
+              }}
+            />
+          ))}
         </GoogleMap>
       </MapContainer>
 
       <ScheduleContainer>
         <DaySelector>
           {schedules.map((s) => (
-            <DayButton 
-              key={s.day} 
+            <DayButton
+              key={s.day}
               $active={currentDay === s.day}
               $color={getCurrentDayColor(s.day)}
               onClick={() => setCurrentDay(s.day)}
@@ -417,25 +464,31 @@ function PlannerCreatePage() {
               {s.day}일차
             </DayButton>
           ))}
-          <DayButton $active={false} $color="gray" onClick={addDay}>+ 추가</DayButton>
+          <DayButton $active={false} $color="gray" onClick={addDay}>
+            + 추가
+          </DayButton>
         </DaySelector>
 
         <div style={{ paddingBottom: "20px" }}>
           {schedules[currentDay - 1]?.places.length === 0 ? (
-            <p style={{textAlign: "center", color: "#999", marginTop: "20px"}}>
-              검색창을 이용해<br/>일정을 추가하세요
+            <p
+              style={{ textAlign: "center", color: "#999", marginTop: "20px" }}
+            >
+              검색창을 이용해
+              <br />
+              일정을 추가하세요
             </p>
           ) : (
             schedules[currentDay - 1]?.places.map((place, idx) => (
               <PlaceItem key={idx}>
-                <NumberBadge $color={currentColor}>
-                  {idx + 1}
-                </NumberBadge>
+                <NumberBadge $color={currentColor}>{idx + 1}</NumberBadge>
                 <PlaceInfo>
                   <PlaceName>{place.placeName}</PlaceName>
                   <PlaceCategory>{place.category || "기타"}</PlaceCategory>
                 </PlaceInfo>
-                <DeleteButton onClick={() => removePlace(currentDay - 1, idx)}>삭제</DeleteButton>
+                <DeleteButton onClick={() => removePlace(currentDay - 1, idx)}>
+                  삭제
+                </DeleteButton>
               </PlaceItem>
             ))
           )}

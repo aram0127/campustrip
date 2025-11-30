@@ -1,9 +1,3 @@
-export interface User {
-  id: number;
-  name: string;
-  profileImage?: string;
-}
-
 // 리스트 목록 조회
 export interface Planner {
   plannerId: number;
@@ -31,14 +25,9 @@ export interface PlannerSchedule {
   places: PlannerPlace[];
 }
 
-// 상세 조회용
-export interface PlannerDetail {
-  plannerId: number;
-  title: string;
-  startDate: string;
-  endDate: string;
-  description?: string; // 플래너 설명
-  memberCount?: number; // 여행 인원
-  user: User; // 작성자
-  schedules: PlannerSchedule[]; // 일정 데이터
+// 상세/수정 정보
+export interface PlannerDetail extends Planner {
+  description?: string;
+  memberCount?: number;
+  schedules: PlannerSchedule[];
 }
