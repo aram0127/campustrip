@@ -130,7 +130,7 @@ const SearchBoxWrapper = styled.div`
   transform: translateX(-50%);
   width: 90%;
   max-width: 400px;
-  z-index: 20;
+  z-index: 50;
 `;
 
 const ScheduleContainer = styled.div`
@@ -231,6 +231,7 @@ function PlannerCreatePage() {
     id: "google-map-script",
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries,
+    language: "ko",
   });
 
   const [title, setTitle] = useState("");
@@ -294,12 +295,22 @@ function PlannerCreatePage() {
     if (!place) return;
     if (!place.geometry || !place.geometry.location) {
       alert(
-        `"${place.name}"에 대한 세부 정보를 찾을 수 없습니다.\n자동완성 목록에서 장소를 클릭해주세요!`
+        `"${place.name}"에 대한 세부 정보를 찾을 수 없습니다.\n자동완성 목록에서 장소를 클릭하세요.`
       );
       return;
     }
+    
+    // 위도 경로 확인용
+    console.log("================ 확인 시작 ================");
+    console.log("장소 이름:", place.name);
+    console.log("Place ID:", place.place_id);
+    console.log("위도(lat):", place.geometry.location.lat());
+    console.log("경도(lng):", place.geometry.location.lng());
+    console.log("================ 확인 끝 ================");
+
     const newPlace: PlannerPlace = {
       placeName: place.name || "알 수 없는 장소",
+      placeId: place.place_id || "",
       latitude: place.geometry.location.lat(),
       longitude: place.geometry.location.lng(),
       order: schedules[currentDay - 1].places.length + 1,
@@ -398,6 +409,8 @@ function PlannerCreatePage() {
                 "formatted_address",
                 "place_id",
               ],
+              componentRestrictions: { country: "kr" },
+              language: "ko",
             }}
           >
             <SearchWrapper>

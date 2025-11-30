@@ -10,20 +10,14 @@ export interface Planner {
 
 // 지도에 찍을 장소
 export interface PlannerPlace {
-  placeId?: number;
+  plannerPlaceId?: number; // DB의 Primary Key
+  placeId: string; // 장소 고유 ID 
   placeName: string;
-<<<<<<< HEAD
-  latitude: number;   // 위도 
-  longitude: number;  // 경도 
-  order: number;      // 방문 순서 
-  memo?: string;      // 메모
-  category?: string;
-=======
   latitude: number; // 위도
   longitude: number; // 경도
   order: number; // 방문 순서
   memo?: string; // 메모
-  category?: string;
+  category?: string; // 카테고리
 }
 
 // 하루 일정

@@ -23,6 +23,8 @@ const DAY_COLORS = [
   "#795548", // 8일차: 갈색
 ];
 
+const libraries: "places"[] = ["places"];
+
 const PageContainer = styled.div`
   width: 100%;
   height: 100vh;
@@ -206,6 +208,8 @@ function PlannerDetailPage() {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries: libraries,
+    language: "ko",
   });
 
   const [planner, setPlanner] = useState<PlannerDetail | null>(null);
