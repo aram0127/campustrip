@@ -20,6 +20,7 @@ import org.springframework.kafka.core.KafkaAdmin;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Configuration
 @EnableKafka
@@ -97,7 +98,8 @@ public class KafkaConfig {
         config.put(ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG, false); // 토픽 자동 생성 비활성화
 
         // 클라이언트 ID 설정 (고유하게)
-        config.put(ConsumerConfig.CLIENT_ID_CONFIG, "chat-consumer-${random.uuid}");
+        String clientId = "chat-consumer-" + UUID.randomUUID().toString();
+        config.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
         return new DefaultKafkaConsumerFactory<>(config);
     }
     // Consumer 설정 (위치 정보용)
@@ -117,6 +119,10 @@ public class KafkaConfig {
 
         // 동적 토픽 감지를 위한 설정
         config.put(ConsumerConfig.METADATA_MAX_AGE_CONFIG, "5000");
+
+        // 클라이언트 ID 설정 (고유하게)
+        String clientId = "location-consumer-" + UUID.randomUUID().toString();
+        config.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
 
         return new DefaultKafkaConsumerFactory<>(config);
     }
