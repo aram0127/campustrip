@@ -97,7 +97,7 @@ public class ApplicationService {
                 PushNotificationType.APLLICATION_REQUEST,
                 post.getPostId(),
                 "동행 신청이 완료되었습니다.",
-                 user.getName() + "님 이 "+ post.getTitle() + "에 동행을 신청했습니다."
+                 user.getName() + "님이 "+ post.getTitle() + "에 동행을 신청했습니다."
         );
 
         fcmService.sendNotificationToUser(notificationRequest);
