@@ -1,6 +1,5 @@
 package com.example.app.dto;
 
-import com.example.app.domain.PushNotification;
 import lombok.*;
 
 import java.time.LocalDateTime;
