@@ -8,8 +8,10 @@ import {
 import { ThemeProvider } from "styled-components";
 import { lightTheme, darkTheme } from "./styles/theme";
 import GlobalStyle from "./styles/GlobalStyle";
-
+import Toast from "./components/common/Toast";
 import MainLayout from "./components/layout/MainLayout";
+import { onMessageListener } from "./firebase";
+
 import LoginPage from "./pages/auth/LoginPage";
 import SignupPage from "./pages/auth/SignupPage";
 import FindIdPage from "./pages/auth/FindIdPage";
@@ -40,9 +42,7 @@ import { PostCreateProvider } from "./context/PostCreateContext";
 import ReviewCreatePage from "./pages/review/ReviewCreatePage";
 import ReviewDetailPage from "./pages/review/ReviewDetailPage";
 import FCMTestPage from "./test/FCMTestPage.tsx";
-import { requestFcmToken, onMessageListener } from "./firebase";
 import PersonalInfoPage from "./pages/profile/PersonalInfoPage";
-// import { apiClient } from "./api/client"; // 나중에 주석 해제
 
 const RootRedirect: React.FC = () => {
   const { isLoggedIn } = useAuth();
@@ -72,16 +72,44 @@ function App() {
 
   const currentTheme = theme === "light" ? lightTheme : darkTheme;
 
+  // Toast 상태 관리
+  const [toast, setToast] = useState<{
+    title: string;
+    body: string;
+    visible: boolean;
+  }>({
+    title: "",
+    body: "",
+    visible: false,
+  });
+
   // 포그라운드 메시지 수신 리스너
   useEffect(() => {
-    onMessageListener().then((payload) => {
+    const unsubscribe = onMessageListener((payload) => {
       console.log("포그라운드 알림 수신:", payload);
+
       const notif = payload as {
         notification?: { title?: string; body?: string };
       };
-      alert(`${notif.notification?.title}: ${notif.notification?.body}`);
+
+      if (notif.notification) {
+        setToast({
+          title: notif.notification.title || "알림",
+          body: notif.notification.body || "새로운 메시지가 도착했습니다.",
+          visible: true,
+        });
+      }
     });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
+
+  // Toast 닫기 핸들러
+  const closeToast = () => {
+    setToast((prev) => ({ ...prev, visible: false }));
+  };
 
   return (
     <ThemeProvider theme={currentTheme}>
@@ -89,6 +117,13 @@ function App() {
       <AuthProvider>
         <Router>
           <PostCreateProvider>
+            <Toast
+              title={toast.title}
+              body={toast.body}
+              isVisible={toast.visible}
+              onClose={closeToast}
+            />
+
             <Routes>
               {/* Root */}
               <Route path="/" element={<RootRedirect />} />
