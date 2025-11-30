@@ -108,7 +108,7 @@ const PersonalInfoPage: React.FC = () => {
 
   const handleDeleteAccount = () => {
     // 회원탈퇴 페이지로 이동
-    alert("회원탈퇴 페이지로 이동");
+    navigate("/profile/delete-account");
   };
 
   const handlePasswordChange = () => {
@@ -145,8 +145,7 @@ const PersonalInfoPage: React.FC = () => {
             </InfoRow>
             <InfoRow>
               <Label>학교</Label>
-              {/* 백엔드 User DTO에 추가 필요 */}
-              <Value>금오공과대학교</Value>
+              <Value>{user.university}</Value>
             </InfoRow>
           </InfoGroup>
         </Section>
