@@ -89,7 +89,7 @@ public class ApplicationController {
         if(status) {
             chatService.saveChatMember(new CreateChatMember(app.getPost(), app.getUser()));
             notificationRequest = new PushNotificationRequest(
-                    post.getUser().getId(),
+                    post.getUser().getId(),//알림받는 상대방
                     user.getId(),
                     PushNotificationType.APPLICATION_ACCEPT,
                     post.getPostId(),

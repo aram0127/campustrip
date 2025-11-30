@@ -87,8 +87,8 @@ public class ReviewController {
         // 댓글 달렸다는 알림 작성자에게 전송
         fcmService.sendNotificationToUser(
             new PushNotificationRequest(
+                    reviewService.getReviewAuthorId(id),//알림받는 상대방
                     userDetails.getMembershipId(),
-                    reviewService.getReviewAuthorId(id),
                     PushNotificationType.REVIEW_COMMENT,
                     id,
                     "새로운 댓글이 등록되었습니다.",
