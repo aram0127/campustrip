@@ -1,10 +1,14 @@
 package com.example.app.dto;
 
+import com.example.app.domain.PushNotification;
 import com.example.app.enumtype.PushNotificationType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Getter
 @Setter
@@ -17,4 +21,27 @@ public class PushNotificationRequest {
     private int referenceId; //참고 아이디 (예: 동행글 아이디 등)
     private String title;
     private String body;
+    private LocalDateTime createdAt = LocalDateTime.now().atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+
+    public PushNotificationRequest(Integer receiverId, Integer senderId, PushNotificationType pushNotificationType, Integer referenceId, String title, String body) {
+        this.receiverId = receiverId;
+        this.senderId = senderId;
+        this.type = pushNotificationType;
+        this.referenceId = referenceId;
+        this.title = title;
+        this.body = body;
+        this.createdAt = LocalDateTime.now().atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+    }
+
+    public PushNotification toEntity() {
+        return new PushNotification(
+                null,
+                this.receiverId,
+                this.senderId,
+                this.type.name(),
+                this.referenceId,
+                this.title,
+                this.body,
+                this.createdAt);
+    }
 }

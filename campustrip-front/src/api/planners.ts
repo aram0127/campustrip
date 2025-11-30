@@ -1,7 +1,7 @@
 import { apiClient } from "./client";
-import { type Planner } from "../types/planner";
+import { type Planner, type PlannerDetail } from "../types/planner";
 
-// 플래너 리스트 
+// 플래너 리스트
 export const getMyPlanners = async (userId: number): Promise<Planner[]> => {
   const response = await apiClient.get<Planner[]>(
     `/api/planners/user/${userId}`
@@ -10,7 +10,9 @@ export const getMyPlanners = async (userId: number): Promise<Planner[]> => {
 };
 
 // 플래너 상세 조회
-export const getPlannerDetail = async (plannerId: number): Promise<PlannerDetail> => {
+export const getPlannerDetail = async (
+  plannerId: number
+): Promise<PlannerDetail> => {
   const response = await apiClient.get<PlannerDetail>(
     `/api/planners/${plannerId}`
   );
@@ -18,12 +20,14 @@ export const getPlannerDetail = async (plannerId: number): Promise<PlannerDetail
 };
 
 // 플래너 생성 및 수정
-export const savePlanner = async (data: Partial<PlannerDetail>): Promise<void> => {
+export const savePlanner = async (
+  data: Partial<PlannerDetail>
+): Promise<void> => {
   if (data.plannerId) {
-    // ID가 있으면 수정 
+    // ID가 있으면 수정
     await apiClient.put(`/api/planners/${data.plannerId}`, data);
   } else {
-    // ID가 없으면 생성 
+    // ID가 없으면 생성
     await apiClient.post(`/api/planners`, data);
   }
 };

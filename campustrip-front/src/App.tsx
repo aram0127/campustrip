@@ -4,7 +4,6 @@ import { ThemeProvider } from "styled-components";
 import { lightTheme, darkTheme } from "./styles/theme";
 import GlobalStyle from "./styles/GlobalStyle";
 
-
 import MainLayout from "./components/layout/MainLayout";
 import LoginPage from "./pages/auth/LoginPage";
 import SignupPage from "./pages/auth/SignupPage";
@@ -31,14 +30,11 @@ import LocationSharePage from "./pages/location/LocationSharePage";
 import NotificationListPage from "./pages/notification/NotificationListPage";
 import PostEditLoader from "./pages/post/edit/PostEditLoader";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-<<<<<<< HEAD
-import TravelTestPage from "./test/TravelTestPage";
-=======
->>>>>>> d56d7f4bb82081862dbf8805a21f095f464437fc
+import TravelTestPage from "./pages/profile/TravelTestPage.tsx";
 import { PostCreateProvider } from "./context/PostCreateContext";
 import ReviewCreatePage from "./pages/review/ReviewCreatePage";
 import ReviewDetailPage from "./pages/review/ReviewDetailPage";
-import FCMTestPage from "./pages/test/FCMTestPage";
+import FCMTestPage from "./test/FCMTestPage.tsx";
 import { requestFcmToken, onMessageListener } from "./firebase";
 import PersonalInfoPage from "./pages/profile/PersonalInfoPage";
 // import { apiClient } from "./api/client"; // 나중에 주석 해제
@@ -124,10 +120,11 @@ function App() {
               <Route path="/profile/:userId/follows" element={<FollowListPage />} />
               <Route path="/settings/blocked" element={<BlockedListPage />} />
               <Route path="/notifications" element={<NotificationListPage />} />
-
-              {/* Chat */}
-              <Route path="/chat/new" element={<NewChatPage />} />
-              <Route path="/chat/:chatId" element={<ChatRoomPage />} />
+              <Route
+                  path="/settings/personal-info"
+                  element={<PersonalInfoPage />}
+              />
+              <Route path="/test/travel" element={<TravelTestPage />} />
 
               {/* Posts */}
               <Route path="/posts/:postId" element={<PostDetailPage />} />
@@ -144,21 +141,22 @@ function App() {
                 path="/location/:chatRoomId"
                 element={<LocationSharePage />}
               />
+
+              {/* Review */}
               <Route path="/reviews/new" element={<ReviewCreatePage />} />
               <Route path="/reviews/:reviewId" element={<ReviewDetailPage />} />
-              <Route
-                path="/settings/personal-info"
-                element={<PersonalInfoPage />}
-              />
-              <Route path="/test/fcm" element={<FCMTestPage />} />
-
-              {/* Test */}
-              <Route path="/test/travel" element={<TravelTestPage />} />
 
               {/* Planner */}
               <Route path="/planner/create" element={<PlannerCreatePage />} />
               <Route path="/planner/edit/:id" element={<PlannerEditPage />} />
               <Route path="/planner/:id" element={<PlannerDetailPage />} />
+
+              {/* Chat */}
+              <Route path="/chat/:chatId" element={<ChatRoomPage />} />
+              <Route path="/chat/new" element={<NewChatPage />} />
+
+              {/* Test */}
+              <Route path="/test/fcm" element={<FCMTestPage />} />
 
               {/* Main Layout */}
               <Route
@@ -168,8 +166,8 @@ function App() {
                     <Routes>
                       <Route path="/posts" element={<PostListPage />} />
                       <Route path="/reviews" element={<ReviewListPage />} />
-                      <Route path="/chat" element={<ChatListPage />} />
                       <Route path="/planner" element={<PlannerListPage />} />
+                      <Route path="/chat" element={<ChatListPage />} />
                     </Routes>
                   </MainLayout>
                 }
