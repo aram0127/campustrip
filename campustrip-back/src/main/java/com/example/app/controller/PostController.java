@@ -34,18 +34,7 @@ public class PostController {
     public Slice<PostDTO> getAllPostsInfinite(
             @RequestParam(required = false) String keyword,
             @PageableDefault(size = 3, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable){
-        System.out.println("=== getAllPostsInfinite 호출 ===");
-        System.out.println("요청된 페이지 크기(Size): " + pageable.getPageSize());
-        System.out.println("요청된 페이지 번호(Page): " + pageable.getPageNumber());
-        System.out.println("정렬 정보: " + pageable.getSort());
-
         Slice<Post> postSlice = postService.getAllPostsSlice(keyword, pageable);
-
-        System.out.println("조회된 게시글 수: " + postSlice.getNumberOfElements());
-        System.out.println("첫 페이지 여부: " + postSlice.isFirst());
-        System.out.println("마지막 페이지 여부: " + postSlice.isLast());
-        System.out.println("현재 페이지 번호: " + postSlice.getNumber());
-
         // 엔티티 슬라이스를 DTO 슬라이스로 변환
         return postSlice.map(post -> postService.convertPostToDTO(post, chatService, regionService));
     }

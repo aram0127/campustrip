@@ -5,6 +5,7 @@ import com.example.app.dto.*;
 import com.example.app.enumtype.PushNotificationType;
 import com.example.app.repository.UniversitiesRepository;
 import com.example.app.service.FCMService;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -119,8 +120,9 @@ public class UserController {
         return userService.getUserRatesByTargetId(id);
     }
 
-    @PutMapping("/{id}/profile-image")
-    public void updateUserProfileImage(@PathVariable Integer id, @AuthenticationPrincipal UserDetails userDeatils, @RequestBody UpdateProfileImageRequest request) {
+    // 프로필 이미지 수정
+    @PutMapping(value = "/{id}/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public void updateUserProfileImage(@PathVariable Integer id, @AuthenticationPrincipal UserDetails userDeatils, @ModelAttribute UpdateProfileImageRequest request) {
         User user = userService.getUserByUserId(userDeatils.getUsername());
         if (!user.getId().equals(id)) {
             throw new SecurityException("권한이 없습니다.");
