@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-query";
 import { getUserProfile } from "../../api/users";
 import { getReviewsByUserId } from "../../api/reviews";
+import { getMyTripHistory } from "../../api/posts";
 import { type User } from "../../types/user";
 import PageLayout, {
   ScrollingContent,
@@ -24,6 +25,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import Button from "../../components/common/Button";
 import ReviewListItem from "../../components/domain/ReviewListItem";
+import PostListItem from "../../components/domain/PostListItem";
 
 const MenuContainer = styled.div`
   position: relative;
@@ -335,31 +337,49 @@ function ProfilePage() {
     }
   };
 
-  // 팔로우 목록 페이지로 이동
   const handleGoToFollowPage = () => {
     if (profileUser) {
       navigate(`/profile/${profileUser.id}/follows`);
     }
   };
 
-  // 프로필 수정 페이지로 이동
   const handleEditProfile = () => {
     setIsMenuOpen(false);
     navigate("/profile/edit");
   };
 
-  // 설정(개인정보) 페이지로 이동
   const handleSettings = () => {
     setIsMenuOpen(false);
     navigate("/profile/personal-info");
   };
 
-  // 사용자가 작성한 후기(리뷰) 가져오기
+  // 여행 기록 가져오기
+  const {
+    data: tripHistoryData,
+    isLoading: isTripHistoryLoading,
+    fetchNextPage: fetchNextTripHistoryPage,
+    hasNextPage: hasNextTripHistoryPage,
+  } = useInfiniteQuery({
+    queryKey: ["tripHistory", profileUser?.id],
+    queryFn: ({ pageParam = 0 }) =>
+      getMyTripHistory(profileUser!.id, pageParam, 10),
+    enabled: !!profileUser?.id && activeTab === "여행 기록",
+    getNextPageParam: (lastPage) => {
+      return lastPage.last ? undefined : lastPage.number + 1;
+    },
+    initialPageParam: 0,
+  });
+
+  const tripHistory = useMemo(() => {
+    return tripHistoryData?.pages.flatMap((page) => page.content) ?? [];
+  }, [tripHistoryData]);
+
+  // 사용자가 작성한 후기 가져오기
   const {
     data: reviewData,
     isLoading: isReviewsLoading,
-    fetchNextPage,
-    hasNextPage,
+    fetchNextPage: fetchNextReviewPage,
+    hasNextPage: hasNextReviewPage,
   } = useInfiniteQuery({
     queryKey: ["userReviews", profileUser?.id],
     queryFn: ({ pageParam = 0 }) =>
@@ -375,11 +395,16 @@ function ProfilePage() {
     return reviewData?.pages.flatMap((page) => page.content) ?? [];
   }, [reviewData]);
 
-  // 무한 스크롤
+  // 무한 스크롤 핸들러
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    if (scrollHeight - scrollTop <= clientHeight + 100 && hasNextPage) {
-      fetchNextPage();
+    if (scrollHeight - scrollTop <= clientHeight + 100) {
+      if (activeTab === "여행 기록" && hasNextTripHistoryPage) {
+        fetchNextTripHistoryPage();
+      }
+      if (activeTab === "작성한 게시글" && hasNextReviewPage) {
+        fetchNextReviewPage();
+      }
     }
   };
 
@@ -411,7 +436,7 @@ function ProfilePage() {
   const tempPercentage = Math.max(0, Math.min(100, profileUser.userScore || 0));
 
   const handleStartTest = () => {
-    navigate(`/test/travel-test-page`);
+    navigate(`/test/travel`);
   };
 
   return (
@@ -513,9 +538,21 @@ function ProfilePage() {
           </TabButton>
         </TabMenu>
         <ContentFeed>
+          {/* 여행 기록 컨텐츠 */}
           {activeTab === "여행 기록" && (
-            <Message>여행 기록이 없습니다.</Message>
+            <>
+              {isTripHistoryLoading && <Message>로딩 중...</Message>}
+              {!isTripHistoryLoading && tripHistory.length === 0 && (
+                <Message>참여한 여행 기록이 없습니다.</Message>
+              )}
+              {tripHistory.map((post) => (
+                <PostListItem key={post.postId} post={post} />
+              ))}
+              {hasNextTripHistoryPage && <LoadMoreTrigger />}
+            </>
           )}
+
+          {/* 작성한 후기 컨텐츠 */}
           {activeTab === "작성한 게시글" && (
             <>
               {isReviewsLoading && <Message>로딩 중...</Message>}
@@ -525,9 +562,11 @@ function ProfilePage() {
               {userReviews.map((review) => (
                 <ReviewListItem key={review.reviewId} review={review} />
               ))}
-              {hasNextPage && <LoadMoreTrigger />}
+              {hasNextReviewPage && <LoadMoreTrigger />}
             </>
           )}
+
+          {/* 받은 후기 */}
           {activeTab === "받은 후기" && (
             <Message>받은 후기가 없습니다.</Message>
           )}
