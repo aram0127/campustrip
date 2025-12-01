@@ -10,3 +10,10 @@ export const getUserNotifications = async (
   );
   return response.data;
 };
+
+/* 알림 삭제 */
+export const deleteNotification = async (
+  notificationId: string
+): Promise<void> => {
+  await apiClient.delete(`/api/notifications/${notificationId}`);
+};

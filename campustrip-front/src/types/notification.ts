@@ -8,6 +8,7 @@ export type NotificationType =
   | "CHAT_MESSAGE";
 
 export interface PushNotification {
+  id: string;
   receiverId: number;
   senderId: number;
   type: NotificationType;
