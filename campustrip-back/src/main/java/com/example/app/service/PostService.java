@@ -108,27 +108,30 @@ public class PostService {
         Chat chat = chatService.saveChat(new CreateChat(newPost));
         chatMessageService.sendJoinMessage(chat, newPost.getUser().getId());
         newPost.setChat(chat);
+        User user = userRepository.findById(createPost.getUser().getId())
+                .orElseThrow(() -> new NoSuchElementException("User not found with id: " + createPost.getUser().getId()));
+        newPost.setUser(user);
         List<Integer> regions = createPost.getRegions();
         newPost.setRegions(new HashSet<>(regionRepository.findByRegionIdIn(regions)));
         Planner planner = plannerRepository.findById(createPost.getPlannerId())
                 .orElseThrow(() -> new NoSuchElementException("Planner not found with id: " + createPost.getPlannerId()));
         newPost.setPlanner(planner);
-        newPost = postRepository.save(newPost);
+        Post savedPost = postRepository.save(newPost);
 
         // 이미지 없을 때 처리
         if (createPost.getImages() == null || createPost.getImages().isEmpty()) {
-            return newPost;
+            return savedPost;
         }
         // 이미지 업로드 처리
         try{
             for(var image : createPost.getImages()){
                 String imageUrl = s3Service.uploadFile(image);
-                postAssetRepository.save(new PostAsset(newPost, imageUrl));
+                postAssetRepository.save(new PostAsset(savedPost, imageUrl));
             }
         } catch(Exception e){
             throw new Exception("Image upload failed: " + e.getMessage());
         }
-        return newPost;
+        return savedPost;
     }
 
     public Post updatePost(CreatePost updateData, S3Service s3Service) throws Exception {
