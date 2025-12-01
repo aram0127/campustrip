@@ -225,6 +225,7 @@ public class PostService {
         postDTO.setTeamSize(post.getTeamSize());
         postDTO.setMemberSize(chatService.getNumberOfChatMembers(post.getChat()));
         postDTO.setChatId(post.getChat().getId());
+        postDTO.setPlannerId(post.getPlanner().getPlannerId());
 
         // 지역 이름 조합 로직
         List<RegionDTO> fullRegionNamesDTOs = post.getRegions().stream()
