@@ -6,7 +6,7 @@ import { getPostById, deletePost } from "../../api/posts";
 import { createApplication, cancelApplication } from "../../api/applications";
 import { type Post } from "../../types/post";
 import { type Application } from "../../types/application";
-import { IoEllipsisHorizontal } from "react-icons/io5";
+import { IoEllipsisHorizontal, IoChatbubbles, IoPeople } from "react-icons/io5";
 import { useAuth } from "../../context/AuthContext";
 import PageLayout from "../../components/layout/PageLayout";
 import Button from "../../components/common/Button";
@@ -163,7 +163,6 @@ const DropdownItem = styled.button<{ $isDelete?: boolean }>`
   }
 `;
 
-// [추가] 이미지 슬라이더 스타일
 const ImageSliderContainer = styled.div`
   display: flex;
   gap: 10px;
@@ -190,6 +189,12 @@ const PostImage = styled.img`
   cursor: pointer;
 `;
 
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+`;
+
 interface ApplicationData {
   postId: number;
   userId: string;
@@ -201,12 +206,6 @@ interface CancelApplicationData {
 }
 
 type ApplicationStatus = "NOT_APPLIED" | "PENDING" | "ACCEPTED" | "REJECTED";
-
-type ButtonProps = {
-  text: string;
-  variant: "primary" | "danger";
-  disabled: boolean;
-};
 
 const PostDetailPage: React.FC = () => {
   const { postId } = useParams<{ postId: string }>();
@@ -354,19 +353,20 @@ const PostDetailPage: React.FC = () => {
     };
   }, [menuRef, dropdownRef]);
 
-  // 버튼 클릭 핸들러: 현재 상태에 따라 다른 뮤테이션 호출
+  // 버튼 클릭 핸들러
   const handleButtonClick = () => {
     if (!user || !post) return;
 
+    // 작성자인 경우
     if (isMyPost) {
       navigate(`/posts/${post.postId}/applicants`);
       return;
     }
 
+    // 일반 유저 상태별 처리
     switch (applicationStatus) {
       case "NOT_APPLIED":
         applyForTrip({
-          // [수정] 구조 단순화: 객체 래핑 제거
           postId: post.postId,
           userId: user.userId,
         });
@@ -378,6 +378,7 @@ const PostDetailPage: React.FC = () => {
         });
         break;
       case "ACCEPTED":
+        break;
       case "REJECTED":
         break;
     }
@@ -453,53 +454,104 @@ const PostDetailPage: React.FC = () => {
   const isMyPost = user?.id === post.user.id;
   const isMutationLoading = isApplying || isCanceling || isDeleting;
 
-  // 버튼 텍스트와 스타일 상태 결정
-  const getButtonProps = (): ButtonProps => {
+  const renderBottomButtons = () => {
+    // 작성자인 경우
     if (isMyPost) {
-      return {
-        text: "동행 신청자 목록",
-        variant: "primary",
-        disabled: false,
-      };
-    }
-    if (isMutationLoading) {
-      return {
-        text: "처리 중...",
-        variant: "primary",
-        disabled: true,
-      };
+      return (
+        <ButtonGroup>
+          <Button
+            onClick={handleButtonClick}
+            $variant="secondary"
+            $size="large"
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+            }}
+          >
+            <IoPeople /> 신청자 목록
+          </Button>
+          <Button
+            onClick={() => navigate(`/chat/${post.chatId}`)}
+            $variant="primary"
+            $size="large"
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+            }}
+          >
+            <IoChatbubbles /> 채팅방 입장
+          </Button>
+        </ButtonGroup>
+      );
     }
 
-    switch (applicationStatus) {
-      case "ACCEPTED":
-        return {
-          text: "신청 됨",
-          variant: "primary",
-          disabled: true,
-        };
-      case "REJECTED":
-        return {
-          text: "거절됨",
-          variant: "primary",
-          disabled: true,
-        };
-      case "PENDING":
-        return {
-          text: "신청 취소",
-          variant: "danger",
-          disabled: false,
-        };
-      case "NOT_APPLIED":
-      default:
-        return {
-          text: "동행 신청하기",
-          variant: "primary",
-          disabled: false,
-        };
+    // 수락된 참여자인 경우
+    if (applicationStatus === "ACCEPTED") {
+      return (
+        <ButtonGroup>
+          <Button
+            onClick={() => navigate(`/posts/${post.postId}/applicants`)}
+            $variant="secondary"
+            $size="large"
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+            }}
+          >
+            <IoPeople /> 참여자 목록
+          </Button>
+          <Button
+            onClick={() => navigate(`/chat/${post.chatId}`)}
+            $variant="primary"
+            $size="large"
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+            }}
+          >
+            <IoChatbubbles /> 채팅방 입장
+          </Button>
+        </ButtonGroup>
+      );
     }
+
+    // 그 외 (미신청, 대기, 거절)
+    let text = "동행 신청하기";
+    let variant: "primary" | "danger" | "outline" = "primary";
+    let disabled = isMutationLoading;
+
+    if (applicationStatus === "PENDING") {
+      text = "신청 취소";
+      variant = "danger";
+    } else if (applicationStatus === "REJECTED") {
+      text = "거절됨";
+      disabled = true;
+    }
+
+    return (
+      <Button
+        onClick={handleButtonClick}
+        $variant={variant}
+        disabled={disabled}
+        $size="large"
+        style={{ width: "100%" }}
+      >
+        {isDeleting ? "삭제 중..." : text}
+      </Button>
+    );
   };
-
-  const buttonProps = getButtonProps();
 
   return (
     <PageLayout
@@ -591,15 +643,7 @@ const PostDetailPage: React.FC = () => {
               <ErrorMessage>신청 처리 중 오류가 발생했습니다.</ErrorMessage>
             )}
 
-            <Button
-              onClick={handleButtonClick}
-              $variant={buttonProps.variant}
-              disabled={buttonProps.disabled || isDeleting}
-              $size="large"
-              style={{ width: "100%" }}
-            >
-              {isDeleting ? "삭제 중..." : buttonProps.text}
-            </Button>
+            {renderBottomButtons()}
           </ContentContainer>
         )}
 

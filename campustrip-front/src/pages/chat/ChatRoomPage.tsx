@@ -311,7 +311,7 @@ function ChatRoomPage() {
           </HeaderButton>
         </>
       }
-      onBackClick={() => navigate("/chat")}
+      onBackClick={() => navigate(-1)}
     >
       <MessageListContainer ref={messageListRef}>
         {isHistoryLoading && <Message>대화 내역을 불러오는 중...</Message>}
