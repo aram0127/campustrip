@@ -1,9 +1,9 @@
 package com.example.app.repository;
 
 import com.example.app.domain.Chat;
-import com.example.app.domain.Planner;
 import com.example.app.domain.Post;
 import com.example.app.domain.User;
+import com.example.app.domain.Planner;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -102,4 +102,6 @@ public interface PostRepository extends JpaRepository<Post,Integer>
 
     Post findByChat(Chat chat);
     Post findByPlanner(Planner planner);
+
+    boolean existsByPlanner(Planner planner);
 }
