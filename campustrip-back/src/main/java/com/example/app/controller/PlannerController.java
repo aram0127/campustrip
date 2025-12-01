@@ -72,12 +72,14 @@ public class PlannerController {
         // 작성자라면 바로 편집 가능
         // createPlanner에 기존 작성자 id가 세팅되어있는지 확인
         if (user.getId() != createPlanner.getMembershipId()) {
+            System.out.println("작성자 아님, 동행신청자 확인 필요");
             // 작성자 아니라면 planner에 연결된 post로 가서 자신의 apllication의 state가 1(수락)인지 검사
             try {
                 boolean isAccepted = applicationService.checkApplicationByPostIdAndMembershipId(
                         createPlanner.getMembershipId(),
                         postService.getPostByPlanner(plannerId).getPostId());
                 if (!isAccepted) {
+                    System.out.println("동행신청자 아님 또는 수락된 동행신청자 아님");
                     // 수정 권한 없는 경우
                     throw new RuntimeException();
                 }
