@@ -10,6 +10,7 @@ import { IoEllipsisHorizontal, IoChatbubbles, IoPeople } from "react-icons/io5";
 import { useAuth } from "../../context/AuthContext";
 import PageLayout from "../../components/layout/PageLayout";
 import Button from "../../components/common/Button";
+import PlannerViewer from "../../components/domain/PlannerViewer";
 
 const TabMenu = styled.div`
   display: flex;
@@ -648,9 +649,15 @@ const PostDetailPage: React.FC = () => {
         )}
 
         {activeTab === "planner" && (
-          <ContentContainer>
-            <p>플래너 기능은 준비 중</p>
-          </ContentContainer>
+          <>
+            {post.plannerId ? (
+              <PlannerViewer plannerId={post.plannerId} />
+            ) : (
+              <ContentContainer>
+                <Message>연결된 플래너가 없습니다.</Message>
+              </ContentContainer>
+            )}
+          </>
         )}
       </ScrollingBody>
     </PageLayout>

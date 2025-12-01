@@ -13,6 +13,7 @@ export interface Post {
   endAt: string | null;
   userScore: number;
   chatId: number;
+  plannerId?: number | null;
   user: User;
   regions: {
     id: number;

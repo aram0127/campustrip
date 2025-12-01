@@ -26,4 +26,5 @@ public class PostDTO {
     private List<ApplicationSimpleDTO> applications;
     private List<String> postAssets;
     private Integer chatId;
+    private Integer plannerId;
 }
