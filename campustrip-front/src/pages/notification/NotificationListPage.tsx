@@ -6,6 +6,9 @@ import {
   IoSettingsOutline,
   IoCheckmarkCircle,
   IoNotifications,
+  IoCloseCircle,
+  IoStar,
+  IoChatboxEllipses,
 } from "react-icons/io5";
 import PageLayout, {
   ScrollingContent,
@@ -103,6 +106,12 @@ const getIcon = (type: string) => {
       return <IoChatbubble />;
     case "APPLICATION_ACCEPT":
       return <IoCheckmarkCircle />;
+    case "APPLICATION_REJECT":
+      return <IoCloseCircle />;
+    case "USER_RATED":
+      return <IoStar />;
+    case "REVIEW_COMMENT":
+      return <IoChatboxEllipses />;
     default:
       return <IoNotifications />;
   }
@@ -140,18 +149,19 @@ function NotificationListPage() {
     refetchOnWindowFocus: true, // 알림 페이지 돌아올 때 갱신
   });
 
-  // 알림 클릭 핸들러
   const handleNotificationClick = (noti: any) => {
-    // referenceId를 활용해 해당 페이지로 이동
     if (
       noti.type === "APLLICATION_REQUEST" ||
-      noti.type === "APPLICATION_ACCEPT"
+      noti.type === "APPLICATION_ACCEPT" ||
+      noti.type === "APPLICATION_REJECT"
     ) {
-      // 게시글 상세 혹은 신청자 목록으로 이동
       navigate(`/posts/${noti.referenceId}`);
     } else if (noti.type === "FOLLOW") {
-      // 팔로워 프로필로 이동 (senderId가 보낸 사람)
       navigate(`/profile/${noti.senderId}`);
+    } else if (noti.type === "REVIEW_COMMENT") {
+      navigate(`/reviews/${noti.referenceId}`);
+    } else if (noti.type === "USER_RATED") {
+      navigate(`/profile/${user?.id}`);
     }
   };
 
