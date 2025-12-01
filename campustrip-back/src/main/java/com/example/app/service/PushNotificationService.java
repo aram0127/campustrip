@@ -3,6 +3,7 @@ package com.example.app.service;
 import com.example.app.domain.PushNotification;
 import com.example.app.dto.PushResponseDTO;
 import com.example.app.repository.PushNotificationRepository;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

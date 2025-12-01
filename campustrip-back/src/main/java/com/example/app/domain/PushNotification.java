@@ -33,7 +33,7 @@ public class PushNotification {
     // 엔티티 -> DTO 변환 메서드
     public PushResponseDTO toDTO() {
         return PushResponseDTO.builder()
-                .id(id)
+                .id(id.toString())
                 .receiverId(receiverId)
                 .senderId(senderId)
                 .type(type)
