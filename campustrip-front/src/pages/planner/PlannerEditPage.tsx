@@ -354,7 +354,6 @@ const GoogleMapContent: React.FC<GoogleMapContentProps> = ({
 
                     return (
                         <React.Fragment key={schedule.day}>
-                            {/* Polyline: 대쉬 선으로 표시 */}
                             {path.map((point, index) => {
                                 if (index === path.length - 1) return null;
                                 const segmentPath = [path[index], path[index + 1]];
@@ -425,6 +424,7 @@ function PlannerEditPage() {
         id: "google-map-script",
         googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
         libraries,
+        language: "ko",
     });
 
     const [title, setTitle] = useState("");
@@ -460,7 +460,6 @@ function PlannerEditPage() {
 
             if (!service) {
                 console.error("[Fatal Error] Google PlaceService 인스턴스 생성 실패. isLoaded가 true이나 서비스 객체 없음.");
-                // API는 로드되었지만 PlaceService 인스턴스 생성 실패 시 (드문 경우)
                 setIsLoading(false); 
                 return;
             }
@@ -472,9 +471,11 @@ function PlannerEditPage() {
                 setStartDate(plannerData.startDate);
                 setEndDate(plannerData.endDate);
 
-                if (plannerData.membershipId) {
-                    setMemberId(plannerData.membershipId);
-                }
+                if ((plannerData as any).userId) { // 타입 정의에 userId가 있다고 가정
+                    setMemberId((plannerData as any).userId);
+                } else if ((plannerData as any).membershipId) { // membershipId 필드가 있을 경우
+                    setMemberId((plannerData as any).membershipId);
+                }
 
                 const detailList = (plannerData as any).details || [];
 
@@ -612,7 +613,7 @@ function PlannerEditPage() {
         });
     };
     
-    // 일차 추가 (개선: 다음 비어있는 day 번호 찾기)
+    // 일차 추가 핸들러
     const addDay = () => {
         const existingDays = schedules.map(s => s.day);
         let nextDay = 1;

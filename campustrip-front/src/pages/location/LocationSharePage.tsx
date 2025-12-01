@@ -15,6 +15,7 @@ import PageLayout from "../../components/layout/PageLayout";
 import Button from "../../components/common/Button";
 import { AuthContext } from "../../context/AuthContext";
 import { type LocationMessage, type Companion } from "../../types/companion";
+import { getToken } from "../../utils/token";
 
 const ControlsWrapper = styled.div`
   display: flex;
@@ -171,7 +172,7 @@ const LocationSharePage: React.FC = () => {
   useEffect(() => {
     if (!chatRoomId || !user || !isLoaded) return;
 
-    const token = localStorage.getItem("authToken");
+    const token = getToken();
     if (!token) {
       setError("인증 토큰을 찾을 수 없습니다.");
       return;
@@ -372,10 +373,7 @@ const LocationSharePage: React.FC = () => {
   };
 
   return (
-    <PageLayout
-      title="위치 공유"
-      onBackClick={() => navigate(`/chat/${chatRoomId}`)}
-    >
+    <PageLayout title="위치 공유" onBackClick={() => navigate(-1)}>
       <ControlsWrapper>
         <Button
           onClick={handleToggleSharing}

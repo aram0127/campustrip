@@ -13,7 +13,7 @@ interface LoginResponse {
 
 /* 로그인 요청 */
 export const loginUser = async (formData: FormData): Promise<LoginResponse> => {
-  const response = await axios.post(`${API_BASE_URL}/login`, formData, {
+  const response = await axios.post(`${API_BASE_URL}/api/login`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
