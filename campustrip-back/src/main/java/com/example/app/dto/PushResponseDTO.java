@@ -1,6 +1,7 @@
 package com.example.app.dto;
 
 import lombok.*;
+import org.bson.types.ObjectId;
 
 import java.time.LocalDateTime;
 
@@ -10,7 +11,7 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 public class PushResponseDTO {
-    private String id; // mongodb가 생성하는 푸시 알림 고유 ID
+    private ObjectId id; // mongodb가 생성하는 푸시 알림 고유 ID
     private Integer receiverId; // 알림 받는 사람 ID
     private Integer senderId; // 알림 보내는 사람 ID
     private String type; // 알림 타입 (예: FOLLOW, APPLICATION_REQUEST, APPLICATION_ACCEPT

@@ -5,6 +5,7 @@ import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
@@ -15,7 +16,7 @@ import java.time.ZoneId;
 @Getter @Setter
 public class PushNotification {
     @Id
-    private String id; // mongodb가 생성할 푸시 알림 고유 ID
+    private ObjectId id; // mongodb가 생성할 푸시 알림 고유 ID
     private Integer receiverId; // 알림 받는 사람 ID
     private Integer senderId; // 알림 보내는 사람 ID
     private String type; // 알림 타입 (예: FOLLOW, APPLICATION_REQUEST, APPLICATION_ACCEPT
@@ -32,6 +33,7 @@ public class PushNotification {
     // 엔티티 -> DTO 변환 메서드
     public PushResponseDTO toDTO() {
         return PushResponseDTO.builder()
+                .id(id)
                 .receiverId(receiverId)
                 .senderId(senderId)
                 .type(type)
