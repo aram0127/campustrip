@@ -16,6 +16,7 @@ import com.example.app.dto.CreateChat;
 import com.example.app.dto.CreateChatMember;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -89,6 +90,19 @@ public class ChatService {
     @Transactional(readOnly = true)
     public List<ChatMemberDTO> getMembersByRoomId(Integer roomId) {
         Chat chat = chatRepository.findById(roomId).orElseThrow();
-        return chatMemberRepository.findAllByChat(chat).stream().map(m -> new ChatMemberDTO(m.getChat().getTitle(), m.getChat().getId(), m.getUser().getId(), m.getUser().getProfilePhotoUrl())).toList();
+        return chatMemberRepository.findAllByChat(chat).stream().map(m -> new ChatMemberDTO(m.getChat().getTitle(), m.getChat().getId(), m.getUser().getId(), m.getUser().getName(), m.getUser().getProfilePhotoUrl())).toList();
     }
+
+    @Transactional(readOnly = true)
+    public List<ChatMemberDTO> getMembersByRoomIds(List<Integer> roomIds) {
+        List<List> result = new ArrayList<>();
+        for (Integer roomId : roomIds) {
+            Chat chat = chatRepository.findById(roomId).orElseThrow();
+            List<ChatMemberDTO> members = chatMemberRepository.findAllByChat(chat).stream().map(m -> new ChatMemberDTO(m.getChat().getTitle(), m.getChat().getId(), m.getUser().getId(), m.getUser().getName(), m.getUser().getProfilePhotoUrl())).toList();
+            result.add(members);
+        }
+        chatMemberRepository.findAllByChatIdIn(roomIds).stream().forEach(m -> new ChatMemberDTO(m.getChat().getTitle(), m.getChat().getId(), m.getUser().getId(), m.getUser().getName(), m.getUser().getProfilePhotoUrl()));
+        return null;
+    }
+
 }
