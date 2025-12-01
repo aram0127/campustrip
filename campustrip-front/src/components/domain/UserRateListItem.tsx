@@ -13,16 +13,18 @@ const ItemContainer = styled.div`
   align-items: flex-start;
 `;
 
-const Avatar = styled.div`
+const Avatar = styled.div<{ $imageUrl?: string }>`
   width: 40px;
   height: 40px;
   border-radius: 50%;
   background-color: ${({ theme }) => theme.colors.inputBackground};
-  background-image: url("/default-profile.png");
+  background-image: url(${({ $imageUrl }) =>
+    $imageUrl || "/default-profile.png"});
   background-size: cover;
   background-position: center;
   flex-shrink: 0;
   cursor: pointer;
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
 `;
 
 const Content = styled.div`
@@ -72,7 +74,7 @@ const UserRateListItem: React.FC<UserRateListItemProps> = ({ rate }) => {
 
   return (
     <ItemContainer>
-      <Avatar onClick={handleProfileClick} />
+      <Avatar $imageUrl={rate.profileImageUrl} onClick={handleProfileClick} />
       <Content>
         <RaterName onClick={handleProfileClick}>{rate.raterName}</RaterName>
         <Comment>{rate.comment || "남겨진 코멘트가 없습니다."}</Comment>

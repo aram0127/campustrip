@@ -111,12 +111,14 @@ public class UserService implements UserDetailsService {
             dto.setTargetName(rate.getTarget().getName());
             dto.setRate(rate.getRate());
             dto.setComment(rate.getComment());
+            dto.setProfileImageUrl(rate.getTarget().getProfilePhotoUrl());
             return dto;
         }).toList();
     }
 
     // 내가 받은 평가 가져오기
     public List<UserRateDTO> getUserRatesByTargetId(Integer targetId) {
+
         return userRateRepository.findByTargetId(targetId).stream().map(rate -> {
             UserRateDTO dto = new UserRateDTO();
             dto.setRaterId(rate.getRater().getId());
@@ -125,6 +127,7 @@ public class UserService implements UserDetailsService {
             dto.setTargetName(rate.getRater().getName());
             dto.setRate(rate.getRate());
             dto.setComment(rate.getComment());
+            dto.setProfileImageUrl(rate.getTarget().getProfilePhotoUrl());
             return dto;
         }).toList();
     }

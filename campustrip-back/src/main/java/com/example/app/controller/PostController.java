@@ -100,4 +100,9 @@ public class PostController {
     public void deletePost(@PathVariable Integer postId) {
         postService.deletePost(postId);
     }
+
+    @GetMapping("/{postId}/members")
+    public List<PostMember> getPostMembers(@PathVariable Integer postId) {
+        return postService.getPostMembersByPostId(postId);
+    }
 }

@@ -17,6 +17,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @RestController
@@ -96,27 +97,31 @@ public class ChatController {
     // 채팅방 목록 조회
     @GetMapping("/chat/{id}")
     public List<ChatDTO> getMyChatRoom(@PathVariable Integer id) {
-        List<Integer> memberIds = new ArrayList<>();
+        List<Integer> chatIds = new ArrayList<>();
         List<ChatDTO> list =  chatService.getMyChatRoom(id).stream().map(chat -> {
             ChatDTO chatDTO = new ChatDTO();
             chatDTO.setId(chat.getId());
             chatDTO.setTitle(chat.getTitle());
             chatDTO.setCreatedAt(chat.getCreatedAt());
+            chatDTO.setMemberSize(chatService.getNumberOfChatMembers(chat));
             return chatDTO;
-        }).toList();
+        }).sorted(Comparator.comparing(ChatDTO::getId)).toList();
         // 마지막 메시지와 시간 설정
-        memberIds.addAll(list.stream().map(ChatDTO::getId).toList());
+        chatIds.addAll(list.stream().map(ChatDTO::getId).toList());
         // 각 채팅방 방장의 멤버
-        chatService.getMembersByRoomIds(memberIds).stream().forEach(members -> {
+        chatService.getMembersByRoomIds(chatIds).stream().forEach(members -> {
+            // chatIds와 members는 정렬된 상태이므로 인덱스로 매칭 가능
+            int i = 0;
             for (ChatDTO chatDTO : list) {
                 if (chatDTO.getId().equals(members.getChatId())) {
-                    chatDTO.setProfilePhotoUrl(members.getProfilePhotoUrl());
-                    break;
+                    chatDTO.addProfilePhotoUrl(members.getProfilePhotoUrl());
+                    i++;
                 }
+                if (i >= chatIds.size() || i >= 4) break;
             }
         });
         // 각 채팅방의 마지막 메시지 조회
-        chatMessageService.getLatestMessagesByChatIds(memberIds).stream().forEach(lastMessage -> {
+        chatMessageService.getLatestMessagesByChatIds(chatIds).stream().forEach(lastMessage -> {
             for (ChatDTO chatDTO : list) {
                 if (chatDTO.getId().equals(lastMessage.getRoomId())) {
                     chatDTO.setLastMessageType(lastMessage.getMessageType());

@@ -3,6 +3,8 @@ package com.example.app.dto;
 import com.example.app.enumtype.MessageType;
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,5 +17,9 @@ public class ChatDTO {
     private String senderName;
     private String lastMessage;
     private java.time.LocalDateTime lastMessageTime;
-    private String profilePhotoUrl;
+    private Integer memberSize;
+    private List<String> profilePhotoUrl = new java.util.ArrayList<>();
+    public void addProfilePhotoUrl(String url) {
+        this.profilePhotoUrl.add(url);
+    }
 }
