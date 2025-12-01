@@ -13,4 +13,5 @@ public class UserRateDTO {
     private String targetName;
     private Integer rate;
     private String comment;
+    private String profileImageUrl;
 }
