@@ -10,5 +10,6 @@ public class ChatMemberDTO {
     private String chatTitle;
     private Integer chatId;
     private Integer userId;
+    private String userName;
     private String profilePhotoUrl;
 }

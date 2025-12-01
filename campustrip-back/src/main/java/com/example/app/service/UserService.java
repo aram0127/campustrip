@@ -86,8 +86,10 @@ public class UserService implements UserDetailsService {
     public void rateUser(String userId, CreateUserRate request) {
         // 구현 내용 생략
         UserRate userRate = new UserRate();
-        User rater = userRepository.findByUserId(userId).orElse(null);
-        User target = userRepository.findById(request.getTargetId()).orElse(null);
+        User rater = userRepository.findByUserId(userId).orElseThrow();
+        User target = userRepository.findById(request.getTargetId()).orElseThrow();
+        userRate.getId().setRaterId(rater.getId());
+        userRate.getId().setTargetId(target.getId());
         userRate.setRater(rater);
         userRate.setTarget(target);
         Integer rate = request.getRate() >= 1 ? 1 : -1;
