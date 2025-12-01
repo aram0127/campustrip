@@ -56,7 +56,7 @@ public class PlannerController {
         createPlanner.setMembershipId(user.getId());
         Planner planner = plannerService.savePlannerWithDetails(createPlanner);
         return new PlannerResponseDTO(planner);
-    }   
+    }
 
     // 플래너 수정
     @PutMapping("/{plannerId}")
