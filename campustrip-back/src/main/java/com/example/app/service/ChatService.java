@@ -81,6 +81,7 @@ public class ChatService {
         return post.getPostId();
     }
 
+    @Transactional
     public void removeChatMemberByPostAndUser(Integer postId, User user) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new IllegalArgumentException("Post not found"));
         Chat chat = post.getChat();
@@ -95,14 +96,13 @@ public class ChatService {
 
     @Transactional(readOnly = true)
     public List<ChatMemberDTO> getMembersByRoomIds(List<Integer> roomIds) {
-        List<List> result = new ArrayList<>();
-        for (Integer roomId : roomIds) {
-            Chat chat = chatRepository.findById(roomId).orElseThrow();
-            List<ChatMemberDTO> members = chatMemberRepository.findAllByChat(chat).stream().map(m -> new ChatMemberDTO(m.getChat().getTitle(), m.getChat().getId(), m.getUser().getId(), m.getUser().getName(), m.getUser().getProfilePhotoUrl())).toList();
-            result.add(members);
-        }
-        chatMemberRepository.findAllByChatIdIn(roomIds).stream().forEach(m -> new ChatMemberDTO(m.getChat().getTitle(), m.getChat().getId(), m.getUser().getId(), m.getUser().getName(), m.getUser().getProfilePhotoUrl()));
-        return null;
+        return chatMemberRepository.findAllByChatIdIn(roomIds).stream()
+                .map(m -> new ChatMemberDTO(
+                        m.getChat().getTitle(),
+                        m.getChat().getId(),
+                        m.getUser().getId(),
+                        m.getUser().getName(),
+                        m.getUser().getProfilePhotoUrl())).toList();
     }
 
 }

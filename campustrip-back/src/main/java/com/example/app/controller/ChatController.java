@@ -106,6 +106,16 @@ public class ChatController {
         }).toList();
         // 마지막 메시지와 시간 설정
         memberIds.addAll(list.stream().map(ChatDTO::getId).toList());
+        // 각 채팅방 방장의 멤버
+        chatService.getMembersByRoomIds(memberIds).stream().forEach(members -> {
+            for (ChatDTO chatDTO : list) {
+                if (chatDTO.getId().equals(members.getChatId())) {
+                    chatDTO.setProfilePhotoUrl(members.getProfilePhotoUrl());
+                    break;
+                }
+            }
+        });
+        // 각 채팅방의 마지막 메시지 조회
         chatMessageService.getLatestMessagesByChatIds(memberIds).stream().forEach(lastMessage -> {
             for (ChatDTO chatDTO : list) {
                 if (chatDTO.getId().equals(lastMessage.getRoomId())) {
