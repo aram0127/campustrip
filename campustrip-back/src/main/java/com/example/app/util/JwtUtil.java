@@ -7,27 +7,39 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtUtil {
 
     private final SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    private final long expiredMs = 1000 * 60 * 60; // 1시간
+    private final long accessTokenExpiredMs = 1000 * 60 * 60; // 1시간
+    private final long refreshTokenExpiredMs = 1000 * 60 * 60 * 24 * 7; // 7일
 
-    // JWT 토큰 생성
-    public String createToken(String username, Integer membershipId, String name, String role) {
+    // Access Token 생성
+    public String createAccessToken(String username, Integer membershipId, String name, String role) {
         Date now = new Date();
-        Date expiration = new Date(now.getTime() + expiredMs);
+        Date expiration = new Date(now.getTime() + accessTokenExpiredMs);
 
         return Jwts.builder()
                 .claim("username", username)
-                .claim("membershipId", membershipId) // membership_id 추가
-                .claim("name", name) // name 추가
+                .claim("membershipId", membershipId)
+                .claim("name", name)
                 .claim("role", role)
+                .claim("type", "access")
                 .setIssuedAt(now)
                 .setExpiration(expiration)
                 .signWith(secretKey)
                 .compact();
+    }
+
+    // Refresh Token 생성
+    public String createRefreshToken() {
+        return UUID.randomUUID().toString();
+    }
+
+    public long getRefreshTokenExpiredMs() {
+        return refreshTokenExpiredMs;
     }
 
     // 토큰에서 사용자명 추출

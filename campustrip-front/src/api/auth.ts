@@ -1,12 +1,14 @@
 import axios from "axios";
 import { type User } from "../types/user";
+import { apiClient } from "./client";
 
 // API 기본 URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // 로그인 응답 타입 (헤더에서 토큰을 받음)
 interface LoginResponse {
-  token: string;
+  accessToken: string;
+  refreshToken: string;
 }
 
 /* 로그인 요청 */
@@ -17,11 +19,27 @@ export const loginUser = async (formData: FormData): Promise<LoginResponse> => {
     },
   });
 
-  const token = response.headers["authorization"];
-  if (!token) {
+  const { accessToken, refreshToken } = response.data;
+
+  if (!accessToken || !refreshToken) {
     throw new Error("로그인에 실패했습니다: 토큰이 없습니다.");
   }
-  return { token };
+  return { accessToken, refreshToken };
+};
+
+/* 토큰 재발급 요청 */
+export const refreshTokenAPI = async (
+  refreshToken: string
+): Promise<LoginResponse> => {
+  const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
+    refreshToken,
+  });
+  return response.data;
+};
+
+/* 로그아웃 (서버의 Refresh Token 삭제) */
+export const logoutAPI = async (userId: string): Promise<void> => {
+  await apiClient.post("/api/auth/logout", { userId });
 };
 
 // 회원가입 요청 타입

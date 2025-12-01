@@ -1,7 +1,8 @@
 package com.example.app.util;
 
 import com.example.app.dto.CustomUserDetails;
-import com.example.app.util.JwtUtil;
+import com.example.app.service.RefreshTokenService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,7 +17,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
@@ -24,10 +27,13 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
 
-    public LoginFilter(AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
+    public LoginFilter(AuthenticationManager authenticationManager, JwtUtil jwtUtil,
+                       RefreshTokenService refreshTokenService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Override
@@ -38,8 +44,6 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         String password = obtainPassword(request);
 
         logger.debug("로그인 시도 - 사용자명: {}", username);
-        logger.debug("요청 URI: {}", request.getRequestURI());
-        logger.debug("요청 메서드: {}", request.getMethod());
 
         UsernamePasswordAuthenticationToken authToken =
                 new UsernamePasswordAuthenticationToken(username, password, null);
@@ -58,13 +62,12 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     protected void successfulAuthentication(HttpServletRequest request,
                                             HttpServletResponse response,
                                             FilterChain chain,
-                                            Authentication authentication) {
-        // CustomUserDetails 로 캐스팅하여 추가 정보 접근
+                                            Authentication authentication) throws IOException {
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
 
-        String username = customUserDetails.getUsername(); // userId
-        Integer membershipId = customUserDetails.getMembershipId(); // membership_id 추가
-        String name = customUserDetails.getRealName(); // name 추가
+        String username = customUserDetails.getUsername();
+        Integer membershipId = customUserDetails.getMembershipId();
+        String name = customUserDetails.getRealName();
 
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
@@ -73,11 +76,19 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         logger.info("로그인 성공 - 사용자명: {}, ID: {}, 이름: {}, 권한: {}", username, membershipId, name, role);
 
-        String token = jwtUtil.createToken(username, membershipId, name, role);
+        String accessToken = jwtUtil.createAccessToken(username, membershipId, name, role);
+        String refreshToken = refreshTokenService.createRefreshToken(username);
 
-        logger.debug("JWT 토큰 생성 완료");
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.addHeader("Authorization", "Bearer " + accessToken);
 
-        response.addHeader("Authorization", "Bearer " + token);
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("accessToken", accessToken);
+        tokens.put("refreshToken", refreshToken);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.writeValue(response.getWriter(), tokens);
     }
 
     @Override

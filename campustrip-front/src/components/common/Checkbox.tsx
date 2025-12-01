@@ -1,5 +1,5 @@
-import styled from 'styled-components';
-import React from 'react';
+import styled from "styled-components";
+import React from "react";
 
 const CheckboxContainer = styled.div`
   display: inline-flex;
@@ -7,7 +7,7 @@ const CheckboxContainer = styled.div`
   cursor: pointer;
 `;
 
-const StyledCheckbox = styled.input.attrs({ type: 'checkbox' })`
+const StyledCheckbox = styled.input.attrs({ type: "checkbox" })`
   appearance: none;
   border: 1.5px solid ${({ theme }) => theme.colors.grey};
   border-radius: 4px;
@@ -29,14 +29,14 @@ const Label = styled.label`
   cursor: pointer;
 `;
 
-interface CheckboxProps {
+interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
 }
 
-const Checkbox: React.FC<CheckboxProps> = ({ label }) => {
+const Checkbox: React.FC<CheckboxProps> = ({ label, ...rest }) => {
   return (
     <CheckboxContainer>
-      <StyledCheckbox id={label} />
+      <StyledCheckbox id={label} {...rest} />
       <Label htmlFor={label}>{label}</Label>
     </CheckboxContainer>
   );
