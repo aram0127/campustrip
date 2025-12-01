@@ -15,6 +15,7 @@ import {
   getChatMembers,
   sendImageMessage,
 } from "../../api/chats";
+import { getToken } from "../../utils/token";
 
 const MessageListContainer = styled(ScrollingContent)`
   padding: 16px;
@@ -207,7 +208,7 @@ function ChatRoomPage() {
       webSocketFactory: () =>
         new SockJS(`${import.meta.env.VITE_API_BASE_URL}/ws/chat`),
       connectHeaders: {
-        Authorization: localStorage.getItem("authToken") || "",
+        Authorization: getToken() || "",
       },
       debug: (str) => {
         console.log(new Date(), str);

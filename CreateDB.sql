@@ -9,10 +9,17 @@ USE campustrip;
 -- 3. 이어서 테이블 생성 스크립트 실행
 -- (앞서 작성해드린 CREATE TABLE 구문들을 여기에 붙여넣고 실행)
 
+-- 대학 테이블
+CREATE TABLE Universities (
+    university_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    university_name VARCHAR(255) NOT NULL,
+    domain VARCHAR(255) NOT NULL,
+) ENGINE=INNODB;
+
 -- 회원 테이블
 CREATE TABLE User (
     membership_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    user_id VARCHAR(255) NOT NULL,
+    user_id VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
     phone_number VARCHAR(255) NOT NULL,
@@ -22,7 +29,16 @@ CREATE TABLE User (
     preference INT DEFAULT NULL COMMENT '바이너리 정보',
     user_score FLOAT NOT NULL DEFAULT 36.5,
     role INT NOT NULL DEFAULT 1
-) ENGINE=InnoDB;
+) ENGINE=INNODB;
+
+-- 리프레쉬 토큰 테이블
+CREATE TABLE RefreshToken (
+	id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	token VARCHAR(255) NOT NULL,
+	username VARCHAR(255) NOT NULL,
+	expiryDate DATETIME NOT NULL,
+	FOREIGN KEY(username) REFERENCES User(user_id)
+) ENGINE=INNODB;
 
 -- 채팅방 테이블
 CREATE TABLE Chat (

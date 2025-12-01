@@ -1,4 +1,11 @@
 import axios from "axios";
+import { refreshTokenAPI } from "./auth";
+import {
+  getToken,
+  getRefreshToken,
+  updateTokens,
+  removeTokens,
+} from "../utils/token";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -11,34 +18,48 @@ export const apiClient = axios.create({
 // 요청 인터셉터
 apiClient.interceptors.request.use(
   (config) => {
-    // 로컬 스토리지에서 토큰을 가져옴
-    const token = localStorage.getItem("authToken");
+    const token = getToken(); // [변경] 유틸 함수 사용 (local/session 자동 체크)
     if (token) {
-      // 토큰이 있다면 모든 요청 헤더에 'Authorization'을 추가
-      config.headers["Authorization"] = token;
+      config.headers["Authorization"] = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // 응답 인터셉터
 apiClient.interceptors.response.use(
-  (response) => {
-    // 2xx 범위의 상태 코드는 이 함수를 트리거
-    return response;
-  },
-  (error) => {
-    // 2xx 외의 범위는 이 함수를 트리거
-    if (axios.isAxiosError(error) && error.response) {
-      if (error.response.status === 401) {
-        // 401 (미인증) 에러 처리
-        console.error("401 Error: Unauthorized. Logging out.");
-        localStorage.removeItem("authToken");
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // 401 에러이고, 재시도한 요청이 아닐 경우
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true; // 무한 루프 방지 플래그
+
+      try {
+        const storedRefreshToken = getRefreshToken();
+        if (!storedRefreshToken) {
+          throw new Error("No refresh token");
+        }
+
+        // 토큰 갱신 요청
+        const { accessToken, refreshToken: newRefreshToken } =
+          await refreshTokenAPI(storedRefreshToken);
+
+        // 새로운 토큰 저장
+        updateTokens(accessToken, newRefreshToken);
+
+        // 실패했던 요청의 헤더 업데이트 후 재요청
+        originalRequest.headers["Authorization"] = `Bearer ${accessToken}`;
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        // 갱신 실패 시 로그아웃 처리
+        console.error("Token refresh failed:", refreshError);
+        removeTokens();
         window.location.href = "/login";
         alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+        return Promise.reject(refreshError);
       }
     }
     return Promise.reject(error);

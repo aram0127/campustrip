@@ -47,6 +47,7 @@ import PersonalInfoPage from "./pages/profile/PersonalInfoPage";
 import ProfileEditPage from "./pages/profile/ProfileEditPage";
 import DeleteAccountPage from "./pages/profile/DeleteAccountPage";
 import ChatMenuPage from "./pages/chat/ChatMenuPage";
+import InstallGuidePage from "./pages/guide/InstallGuidePage";
 
 const RootRedirect: React.FC = () => {
   const { isLoggedIn } = useAuth();
@@ -55,10 +56,15 @@ const RootRedirect: React.FC = () => {
 };
 
 function App() {
-  // 테마 설정
+  // 설치 안내 관련 상태
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
+
+  // 테마 상태
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
 
   useEffect(() => {
+    // 테마 설정
     const savedTheme = localStorage.getItem("theme");
     if (!savedTheme) {
       const systemPrefersDark = window.matchMedia(
@@ -66,6 +72,34 @@ function App() {
       ).matches;
       setTheme(systemPrefersDark ? "dark" : "light");
     }
+
+    // PWA 설치 프롬프트 이벤트 감지
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    // 모바일이면서 앱 모드가 아닌 경우 감지
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone;
+
+    // 모바일 브라우저이고, 아직 설치되지 않았다면 가이드 표시
+    if (isMobile && !isStandalone) {
+      // 세션 스토리지 등을 확인하여 '다시 보지 않기' 처리도 가능하지만,
+      // 현재는 매 접속 시(새로고침 시) 체크하도록 설정
+      setShowInstallGuide(true);
+    }
+
+    return () => {
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt
+      );
+    };
   }, []);
 
   const toggleTheme = () => {
@@ -136,111 +170,125 @@ function App() {
   return (
     <ThemeProvider theme={currentTheme}>
       <GlobalStyle />
-      <AuthProvider>
-        <Router>
-          <PostCreateProvider>
-            <Toast
-              title={toast.title}
-              body={toast.body}
-              isVisible={toast.visible}
-              onClose={closeToast}
-            />
 
-            <Routes>
-              {/* Root */}
-              <Route path="/" element={<RootRedirect />} />
-
-              {/* Auth */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
-              <Route path="/find-id" element={<FindIdPage />} />
-              <Route path="/find-id/result" element={<FindIdResultPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route
-                path="/set-new-password"
-                element={<SetNewPasswordPage />}
+      {showInstallGuide ? (
+        <InstallGuidePage
+          onClose={() => setShowInstallGuide(false)}
+          deferredPrompt={deferredPrompt}
+        />
+      ) : (
+        <AuthProvider>
+          <Router>
+            <PostCreateProvider>
+              <Toast
+                title={toast.title}
+                body={toast.body}
+                isVisible={toast.visible}
+                onClose={closeToast}
               />
 
-              {/* Profile */}
-              <Route path="/profile/:userId" element={<ProfilePage />} />
-              <Route
-                path="/profile/:userId/follows"
-                element={<FollowListPage />}
-              />
-              <Route path="/profile/blocked" element={<BlockedListPage />} />
-              <Route path="/notifications" element={<NotificationListPage />} />
-              <Route
-                path="/profile/personal-info"
-                element={<PersonalInfoPage />}
-              />
-              <Route path="/test/travel" element={<TravelTestPage />} />
-              <Route path="/profile/edit" element={<ProfileEditPage />} />
-              <Route
-                path="/profile/delete-account"
-                element={<DeleteAccountPage />}
-              />
+              <Routes>
+                {/* Root */}
+                <Route path="/" element={<RootRedirect />} />
 
-              {/* Posts */}
-              <Route path="/posts/:postId" element={<PostDetailPage />} />
-              <Route path="/posts/new/*" element={<PostCreateFlow />} />
-              <Route
-                path="/posts/edit/:postId/*"
-                element={<PostEditLoader />}
-              />
-              <Route
-                path="/posts/:postId/applicants"
-                element={<ApplicantListPage />}
-              />
-              <Route
-                path="/location/:chatRoomId"
-                element={<LocationSharePage />}
-              />
+                {/* Auth */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+                <Route path="/find-id" element={<FindIdPage />} />
+                <Route path="/find-id/result" element={<FindIdResultPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route
+                  path="/set-new-password"
+                  element={<SetNewPasswordPage />}
+                />
 
-              {/* Review */}
-              <Route path="/reviews/new" element={<ReviewCreatePage />} />
-              <Route path="/reviews/:reviewId" element={<ReviewDetailPage />} />
-              <Route
-                path="/reviews/edit/:reviewId"
-                element={<ReviewCreatePage />}
-              />
+                {/* Profile */}
+                <Route path="/profile/:userId" element={<ProfilePage />} />
+                <Route
+                  path="/profile/:userId/follows"
+                  element={<FollowListPage />}
+                />
+                <Route path="/profile/blocked" element={<BlockedListPage />} />
+                <Route
+                  path="/notifications"
+                  element={<NotificationListPage />}
+                />
+                <Route
+                  path="/profile/personal-info"
+                  element={<PersonalInfoPage />}
+                />
+                <Route path="/test/travel" element={<TravelTestPage />} />
+                <Route path="/profile/edit" element={<ProfileEditPage />} />
+                <Route
+                  path="/profile/delete-account"
+                  element={<DeleteAccountPage />}
+                />
 
-              {/* Planner */}
-              <Route path="/planner/create" element={<PlannerCreatePage />} />
-              <Route
-                path="/planner/edit/:plannerId"
-                element={<PlannerEditPage />}
-              />
-              <Route
-                path="/planner/:plannerId"
-                element={<PlannerDetailPage />}
-              />
+                {/* Posts */}
+                <Route path="/posts/:postId" element={<PostDetailPage />} />
+                <Route path="/posts/new/*" element={<PostCreateFlow />} />
+                <Route
+                  path="/posts/edit/:postId/*"
+                  element={<PostEditLoader />}
+                />
+                <Route
+                  path="/posts/:postId/applicants"
+                  element={<ApplicantListPage />}
+                />
+                <Route
+                  path="/location/:chatRoomId"
+                  element={<LocationSharePage />}
+                />
 
-              {/* Chat */}
-              <Route path="/chat/:chatId" element={<ChatRoomPage />} />
-              <Route path="/chat/new" element={<NewChatPage />} />
-              <Route path="/chat/:chatId/menu" element={<ChatMenuPage />} />
+                {/* Review */}
+                <Route path="/reviews/new" element={<ReviewCreatePage />} />
+                <Route
+                  path="/reviews/:reviewId"
+                  element={<ReviewDetailPage />}
+                />
+                <Route
+                  path="/reviews/edit/:reviewId"
+                  element={<ReviewCreatePage />}
+                />
 
-              {/* Test */}
-              <Route path="/test/fcm" element={<FCMTestPage />} />
+                {/* Planner */}
+                <Route path="/planner/create" element={<PlannerCreatePage />} />
+                <Route
+                  path="/planner/edit/:plannerId"
+                  element={<PlannerEditPage />}
+                />
+                <Route
+                  path="/planner/:plannerId"
+                  element={<PlannerDetailPage />}
+                />
 
-              {/* Main Layout */}
-              <Route
-                path="/*"
-                element={
-                  <MainLayout currentTheme={theme} toggleTheme={toggleTheme}>
-                    <Routes>
-                      <Route path="/posts" element={<PostListPage />} />
-                      <Route path="/reviews" element={<ReviewListPage />} />
-                      <Route path="/planner" element={<PlannerListPage />} />
-                      <Route path="/chat" element={<ChatListPage />} />
-                    </Routes>
-                  </MainLayout>
-                }
-              />
-            </Routes>
-          </PostCreateProvider>
-        </Router>
-      </AuthProvider>
+                {/* Chat */}
+                <Route path="/chat/:chatId" element={<ChatRoomPage />} />
+                <Route path="/chat/new" element={<NewChatPage />} />
+                <Route path="/chat/:chatId/menu" element={<ChatMenuPage />} />
+
+                {/* Test */}
+                <Route path="/test/fcm" element={<FCMTestPage />} />
+
+                {/* Main Layout */}
+                <Route
+                  path="/*"
+                  element={
+                    <MainLayout currentTheme={theme} toggleTheme={toggleTheme}>
+                      <Routes>
+                        <Route path="/posts" element={<PostListPage />} />
+                        <Route path="/reviews" element={<ReviewListPage />} />
+                        <Route path="/planner" element={<PlannerListPage />} />
+                        <Route path="/chat" element={<ChatListPage />} />
+                      </Routes>
+                    </MainLayout>
+                  }
+                />
+              </Routes>
+            </PostCreateProvider>
+          </Router>
+        </AuthProvider>
+      )}
     </ThemeProvider>
   );
 }
