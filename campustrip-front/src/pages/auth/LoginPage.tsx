@@ -64,19 +64,20 @@ interface DecodedToken {
 function LoginPage() {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
+  const [isKeepLogin, setIsKeepLogin] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const { mutate: performLogin, error } = useMutation({
     mutationFn: loginUser,
     onSuccess: async (data) => {
-      const { token } = data;
-      login(token);
+      const { accessToken, refreshToken } = data;
+      login(accessToken, refreshToken, isKeepLogin);
 
       // 로그인 성공 시 FCM 토큰 발급 및 서버 전송
       try {
         // 토큰에서 membershipId 추출
-        const decoded = jwtDecode<DecodedToken>(token);
+        const decoded = jwtDecode<DecodedToken>(accessToken);
         const membershipId = decoded.membershipId;
 
         // FCM 토큰 발급 요청
@@ -127,7 +128,13 @@ function LoginPage() {
           required
         />
         <OptionsContainer>
-          <Checkbox label="로그인 상태 유지" />
+          <Checkbox
+            label="로그인 상태 유지"
+            checked={isKeepLogin}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setIsKeepLogin(e.target.checked)
+            }
+          />
         </OptionsContainer>
         <ErrorMessage>
           {error ? "아이디 또는 비밀번호가 올바르지 않습니다." : ""}
