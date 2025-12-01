@@ -24,4 +24,7 @@ public class PlannerDetailId implements Serializable {
 
     @Column(name = "planner_id")
     private Integer plannerId;
+
+    @Column(name = "day")
+    private Integer day;
 }

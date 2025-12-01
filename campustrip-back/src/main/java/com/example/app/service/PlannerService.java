@@ -45,9 +45,8 @@ public class PlannerService {
         if (createPlanner.getSchedules() != null) {
             for (PlannerDetailDTO detailDTO : createPlanner.getSchedules()) {
                 PlannerDetail detail = new PlannerDetail(
-                        new PlannerDetailId(detailDTO.getPlannerOrder(), planner.getPlannerId()),
+                        new PlannerDetailId(detailDTO.getPlannerOrder(), planner.getPlannerId(), detailDTO.getDay()),
                         planner,
-                        detailDTO.getDay(),
                         detailDTO.getGooglePlaceId()
                 );
                 plannerDetailRepository.save(detail);
@@ -70,9 +69,8 @@ public class PlannerService {
         if (createPlanner.getSchedules() != null) {
             for (PlannerDetailDTO detailDTO : createPlanner.getSchedules()) {
                 PlannerDetail detail = new PlannerDetail(
-                        new PlannerDetailId(detailDTO.getPlannerOrder(), planner.getPlannerId()),
+                        new PlannerDetailId(detailDTO.getPlannerOrder(), planner.getPlannerId(), detailDTO.getDay()),
                         planner,
-                        detailDTO.getDay(),
                         detailDTO.getGooglePlaceId()
                 );
                 plannerDetailRepository.save(detail);
@@ -106,7 +104,7 @@ public class PlannerService {
                     .stream()
                     .map(d -> new PlannerDetailDTO(
                             d.getId().getPlannerOrder(),
-                            d.getDay(),
+                            d.getId().getDay(),
                             d.getGooglePlaceId()
                     ))
                     .toList();
