@@ -1,46 +1,67 @@
+import { useState } from "react";
 import styled from "styled-components";
 import {
   IoChatbubble,
   IoPersonAdd,
   IoTrashOutline,
-  IoSettingsOutline,
   IoCheckmarkCircle,
   IoNotifications,
   IoCloseCircle,
   IoStar,
   IoChatboxEllipses,
+  IoCheckbox,
+  IoSquareOutline,
+  IoClose,
 } from "react-icons/io5";
 import PageLayout, {
   ScrollingContent,
 } from "../../components/layout/PageLayout";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
-import { getUserNotifications } from "../../api/notifications";
-import { type NotificationType } from "../../types/notification";
+import {
+  getUserNotifications,
+  deleteNotification,
+} from "../../api/notifications";
+import {
+  type NotificationType,
+  type PushNotification,
+} from "../../types/notification";
+import Button from "../../components/common/Button";
 
 const NotificationList = styled.div``;
 
-const NotificationItem = styled.div`
+const NotificationItem = styled.div<{ $isSelected?: boolean }>`
   display: flex;
   align-items: flex-start;
   gap: 12px;
   padding: 16px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
-  background-color: ${({ theme }) => theme.colors.background};
+  background-color: ${({ theme, $isSelected }) =>
+    $isSelected ? theme.colors.inputBackground : theme.colors.background};
   transition: background-color 0.2s;
+  cursor: pointer;
 
   &:active {
     background-color: ${({ theme }) => theme.colors.inputBackground};
   }
 `;
 
+const CheckboxWrapper = styled.div`
+  font-size: 24px;
+  color: ${({ theme }) => theme.colors.primary};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+`;
+
 const IconWrapper = styled.div<{ $type: NotificationType | string }>`
   font-size: 24px;
   color: ${({ theme, $type }) => {
-    if ($type === "FOLLOW") return theme.colors.primary; // 팔로우는 파란색/초록색
-    if ($type === "APPLICATION_ACCEPT") return theme.colors.secondary; // 수락은 성공색
-    if ($type === "APLLICATION_REQUEST") return "#FF9500"; // 신청은 주황색
+    if ($type === "FOLLOW") return theme.colors.primary;
+    if ($type === "APPLICATION_ACCEPT") return theme.colors.secondary;
+    if ($type === "APLLICATION_REQUEST") return "#FF9500";
     return theme.colors.secondaryTextColor;
   }};
   flex-shrink: 0;
@@ -87,8 +108,8 @@ const HeaderActionButton = styled.button`
 const RightHeaderGroup = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-right: -12px;
+  gap: 4px;
+  margin-right: -8px;
 `;
 
 const Message = styled.p`
@@ -97,7 +118,23 @@ const Message = styled.p`
   color: ${({ theme }) => theme.colors.secondaryTextColor};
 `;
 
-// 타입에 따른 아이콘 반환
+const SelectAllButton = styled.button`
+  font-size: 14px;
+  font-weight: bold;
+  color: ${({ theme }) => theme.colors.text};
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-right: 8px;
+  white-space: nowrap;
+`;
+
+const BottomActionContainer = styled.div`
+  padding: 16px;
+  border-top: 1px solid ${({ theme }) => theme.colors.borderColor};
+  background-color: ${({ theme }) => theme.colors.background};
+`;
+
 const getIcon = (type: string) => {
   switch (type) {
     case "FOLLOW":
@@ -117,13 +154,11 @@ const getIcon = (type: string) => {
   }
 };
 
-// 날짜 포맷팅 함수
 const formatTime = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
 
-  // 24시간 이내면 시간만 표시, 그 외엔 날짜 표시
   if (diff < 1000 * 60 * 60 * 24) {
     return date.toLocaleTimeString("ko-KR", {
       hour: "2-digit",
@@ -136,6 +171,10 @@ const formatTime = (dateString: string) => {
 function NotificationListPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // 알림 목록 쿼리
   const {
@@ -145,11 +184,72 @@ function NotificationListPage() {
   } = useQuery({
     queryKey: ["notifications", user?.id],
     queryFn: () => getUserNotifications(user!.id),
-    enabled: !!user, // 유저 정보가 있을 때만 실행
-    refetchOnWindowFocus: true, // 알림 페이지 돌아올 때 갱신
+    enabled: !!user,
+    refetchOnWindowFocus: true,
   });
 
-  const handleNotificationClick = (noti: any) => {
+  // 삭제 Mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id) => deleteNotification(id)));
+    },
+    onSuccess: () => {
+      alert("삭제되었습니다.");
+      queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+      setIsDeleteMode(false);
+      setSelectedIds(new Set());
+    },
+    onError: (err) => {
+      console.error("Error deleting notifications:", err);
+      alert("삭제 중 오류가 발생했습니다.");
+    },
+  });
+
+  // 삭제 모드 토글
+  const toggleDeleteMode = () => {
+    if (isDeleteMode) {
+      setIsDeleteMode(false);
+      setSelectedIds(new Set());
+    } else {
+      setIsDeleteMode(true);
+    }
+  };
+
+  // 개별 선택 토글
+  const handleToggleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  // 전체 선택/해제 핸들러
+  const handleSelectAll = () => {
+    if (selectedIds.size === notifications.length && notifications.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      const allIds = new Set(notifications.map((n) => n.id));
+      setSelectedIds(allIds);
+    }
+  };
+
+  // 선택 삭제 실행
+  const handleDeleteSelected = () => {
+    if (selectedIds.size === 0) return;
+    if (window.confirm(`${selectedIds.size}개의 알림을 삭제하시겠습니까?`)) {
+      deleteMutation.mutate(Array.from(selectedIds));
+    }
+  };
+
+  const handleItemClick = (noti: PushNotification) => {
+    if (isDeleteMode) {
+      handleToggleSelect(noti.id);
+      return;
+    }
+
     if (
       noti.type === "APLLICATION_REQUEST" ||
       noti.type === "APPLICATION_ACCEPT" ||
@@ -165,20 +265,42 @@ function NotificationListPage() {
     }
   };
 
-  return (
-    <PageLayout
-      title="알림"
-      headerRight={
+  const renderHeaderRight = () => {
+    if (isDeleteMode) {
+      // 전체 선택 여부 확인
+      const isAllSelected =
+        selectedIds.size === notifications.length && notifications.length > 0;
+
+      return (
         <RightHeaderGroup>
-          <HeaderActionButton>
-            <IoSettingsOutline />
-          </HeaderActionButton>
-          <HeaderActionButton>
-            <IoTrashOutline />
+          <SelectAllButton onClick={handleSelectAll}>
+            {isAllSelected ? "전체 해제" : "전체 선택"}
+          </SelectAllButton>
+          <HeaderActionButton onClick={toggleDeleteMode}>
+            <IoClose size={24} />
           </HeaderActionButton>
         </RightHeaderGroup>
-      }
-      onBackClick={() => navigate(-1)}
+      );
+    }
+
+    return (
+      <RightHeaderGroup>
+        <HeaderActionButton onClick={toggleDeleteMode}>
+          <IoTrashOutline />
+        </HeaderActionButton>
+      </RightHeaderGroup>
+    );
+  };
+
+  return (
+    <PageLayout
+      title={isDeleteMode ? `알림 선택 (${selectedIds.size})` : "알림"}
+      headerRight={renderHeaderRight()}
+      onBackClick={() => {
+        if (isDeleteMode) toggleDeleteMode();
+        else navigate(-1);
+      }}
+      showBackButton={true}
     >
       <ScrollingContent>
         {isLoading && <Message>알림을 불러오는 중...</Message>}
@@ -188,22 +310,49 @@ function NotificationListPage() {
         )}
 
         <NotificationList>
-          {notifications.map((noti) => (
-            <NotificationItem
-              key={`${noti.receiverId}-${noti.createdAt}`}
-              onClick={() => handleNotificationClick(noti)}
-              style={{ cursor: "pointer" }}
-            >
-              <IconWrapper $type={noti.type}>{getIcon(noti.type)}</IconWrapper>
-              <NotificationContent>
-                <NotificationTitle>{noti.title}</NotificationTitle>
-                <NotificationBody>{noti.body}</NotificationBody>
-                <Timestamp>{formatTime(noti.createdAt)}</Timestamp>
-              </NotificationContent>
-            </NotificationItem>
-          ))}
+          {notifications.map((noti) => {
+            const isSelected = selectedIds.has(noti.id);
+
+            return (
+              <NotificationItem
+                key={noti.id}
+                onClick={() => handleItemClick(noti)}
+                $isSelected={isSelected}
+              >
+                {isDeleteMode && (
+                  <CheckboxWrapper>
+                    {isSelected ? <IoCheckbox /> : <IoSquareOutline />}
+                  </CheckboxWrapper>
+                )}
+
+                <IconWrapper $type={noti.type}>
+                  {getIcon(noti.type)}
+                </IconWrapper>
+
+                <NotificationContent>
+                  <NotificationTitle>{noti.title}</NotificationTitle>
+                  <NotificationBody>{noti.body}</NotificationBody>
+                  <Timestamp>{formatTime(noti.createdAt)}</Timestamp>
+                </NotificationContent>
+              </NotificationItem>
+            );
+          })}
         </NotificationList>
       </ScrollingContent>
+
+      {isDeleteMode && (
+        <BottomActionContainer>
+          <Button
+            $variant="danger"
+            $size="large"
+            style={{ width: "100%" }}
+            disabled={selectedIds.size === 0 || deleteMutation.isPending}
+            onClick={handleDeleteSelected}
+          >
+            {deleteMutation.isPending ? "삭제 중..." : "선택 삭제"}
+          </Button>
+        </BottomActionContainer>
+      )}
     </PageLayout>
   );
 }
