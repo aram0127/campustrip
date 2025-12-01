@@ -244,6 +244,12 @@ public class PostService {
         return postDTO;
     }
 
+    public Post getPostByPlanner(Integer plannerId) {
+        Planner planner = plannerRepository.findById(plannerId)
+                .orElseThrow(() -> new NoSuchElementException("Planner not found with id: " + plannerId));
+        return postRepository.findByPlanner(planner);
+    }
+
     /**
      * 전체 게시글 조회
      * keyword가 null이거나 빈 문자열이면 전체 조회, 있으면 검색 조회

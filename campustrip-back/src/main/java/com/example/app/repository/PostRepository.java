@@ -1,6 +1,7 @@
 package com.example.app.repository;
 
 import com.example.app.domain.Chat;
+import com.example.app.domain.Planner;
 import com.example.app.domain.Post;
 import com.example.app.domain.User;
 import org.springframework.data.domain.Pageable;
@@ -100,4 +101,5 @@ public interface PostRepository extends JpaRepository<Post,Integer>
 //    출처: https://sjh9708.tistory.com/167 [데굴데굴 개발자의 기록:티스토리]
 
     Post findByChat(Chat chat);
+    Post findByPlanner(Planner planner);
 }

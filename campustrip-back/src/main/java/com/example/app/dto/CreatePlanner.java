@@ -12,7 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreatePlanner {
-    private Integer membershipId; // userId 또는 membershipId로 받을 수 있음
+    private Integer membershipId;
     private String title;
     private java.time.LocalDate startDate;
     private java.time.LocalDate endDate;
