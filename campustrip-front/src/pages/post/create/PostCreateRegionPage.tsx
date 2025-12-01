@@ -345,7 +345,7 @@ const PostCreateRegionPage: React.FC = () => {
     <PageLayout
       title={isEditMode ? "게시글 수정 (1/3)" : "지역 선택 (1/3)"}
       onBackClick={() => {
-        isEditMode ? navigate(`/posts/${postId}`) : navigate("/posts");
+        isEditMode ? navigate(-1) : navigate("/posts");
       }}
     >
       <ScrollableContent>
