@@ -278,7 +278,7 @@ const PostCreateDetailsPage: React.FC = () => {
     const path = isEditMode
       ? `/posts/edit/${postId}/region`
       : "/posts/new/region";
-    navigate(path); // 1단계로 이동
+    navigate(path, { replace: true }); // 1단계로 이동
   };
 
   // '다음' 버튼 클릭
@@ -302,7 +302,7 @@ const PostCreateDetailsPage: React.FC = () => {
     const path = isEditMode
       ? `/posts/edit/${postId}/planner`
       : "/posts/new/planner";
-    navigate(path); // 3단계(플래너 선택)로 이동
+    navigate(path, { replace: true }); // 3단계(플래너 선택)로 이동
   };
 
   return (

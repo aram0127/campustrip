@@ -291,7 +291,7 @@ const ReviewFormPage: React.FC = () => {
         // 생성 API 호출
         await createReview(payload);
         alert("후기가 성공적으로 등록되었습니다!");
-        navigate("/reviews");
+        navigate("/reviews", { replace: true });
       }
     } catch (error) {
       console.error(isEditMode ? "후기 수정 실패" : "후기 생성 실패", error);

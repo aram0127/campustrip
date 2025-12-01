@@ -303,7 +303,10 @@ function ChatRoomPage() {
           <HeaderButton onClick={() => navigate(`/location/${chatId}`)}>
             <IoLocationSharp />
           </HeaderButton>
-          <HeaderButton style={{ marginRight: "-12px" }}>
+          <HeaderButton
+            style={{ marginRight: "-12px" }}
+            onClick={() => navigate(`/chat/${chatId}/menu`)}
+          >
             <IoMenu />
           </HeaderButton>
         </>
