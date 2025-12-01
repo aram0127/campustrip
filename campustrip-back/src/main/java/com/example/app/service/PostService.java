@@ -294,4 +294,24 @@ public class PostService {
         }
         return postRepository.findPostsByRegionIdsSlice(regionIds, pageable);
     }
+
+    public List<PostMember> getPostMembersByPostId(Integer postId) {
+        List<Object[]> results = applicationRepository.findAllByPostIdWithUserRates(postId);
+        // Object[0] = Application, Object[1] = UserRate (nullable)
+        List<PostMember> postMembers = new ArrayList<>();
+        results.stream().forEach(objArr -> {
+            Application app = (Application) objArr[0];
+            UserRate userRate = (UserRate) objArr[1];
+            // 필요한 처리 수행
+            PostMember postMember = new PostMember();
+            postMember.setPostId(postId);
+            postMember.setUserId(app.getUser().getId());
+            postMember.setUserName(app.getUser().getName());
+            postMember.setProfilePhotoUrl(app.getUser().getProfilePhotoUrl());
+            postMember.setRated(userRate != null);
+            // postMember 리스트에 추가하는 로직 필요
+            postMembers.add(postMember);
+        });
+        return postMembers; // 구현 필요
+    }
 }
