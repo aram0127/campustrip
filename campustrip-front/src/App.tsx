@@ -46,6 +46,7 @@ import FCMTestPage from "./test/FCMTestPage.tsx";
 import PersonalInfoPage from "./pages/profile/PersonalInfoPage";
 import ProfileEditPage from "./pages/profile/ProfileEditPage";
 import DeleteAccountPage from "./pages/profile/DeleteAccountPage";
+import ChatMenuPage from "./pages/chat/ChatMenuPage";
 
 const RootRedirect: React.FC = () => {
   const { isLoggedIn } = useAuth();
@@ -205,12 +206,19 @@ function App() {
 
               {/* Planner */}
               <Route path="/planner/create" element={<PlannerCreatePage />} />
-              <Route path="/planner/edit/:plannerId" element={<PlannerEditPage />} />
-              <Route path="/planner/:plannerId" element={<PlannerDetailPage />} />
+              <Route
+                path="/planner/edit/:plannerId"
+                element={<PlannerEditPage />}
+              />
+              <Route
+                path="/planner/:plannerId"
+                element={<PlannerDetailPage />}
+              />
 
               {/* Chat */}
               <Route path="/chat/:chatId" element={<ChatRoomPage />} />
               <Route path="/chat/new" element={<NewChatPage />} />
+              <Route path="/chat/:chatId/menu" element={<ChatMenuPage />} />
 
               {/* Test */}
               <Route path="/test/fcm" element={<FCMTestPage />} />
