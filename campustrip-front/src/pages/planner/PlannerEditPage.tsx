@@ -471,9 +471,11 @@ function PlannerEditPage() {
                 setStartDate(plannerData.startDate);
                 setEndDate(plannerData.endDate);
 
-                if (plannerData.membershipId) {
-                    setMemberId(plannerData.membershipId);
-                }
+                if ((plannerData as any).userId) { // 타입 정의에 userId가 있다고 가정
+                    setMemberId((plannerData as any).userId);
+                } else if ((plannerData as any).membershipId) { // membershipId 필드가 있을 경우
+                    setMemberId((plannerData as any).membershipId);
+                }
 
                 const detailList = (plannerData as any).details || [];
 
