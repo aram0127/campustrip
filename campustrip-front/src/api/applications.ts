@@ -78,3 +78,8 @@ export const getMyApplications = async (
   );
   return response.data;
 };
+
+/* 채팅방/동행 나가기 */
+export const leaveChat = async (chatId: number): Promise<void> => {
+  await apiClient.put(`/api/applications/unsubscribe/chat/${chatId}`);
+};

@@ -247,7 +247,7 @@ const PostCreateRegionPage: React.FC = () => {
       ? `/posts/edit/${postId}/details`
       : "/posts/new/details";
 
-    navigate(path);
+    navigate(path, { replace: true });
   };
 
   // 1차 지역 (시/도 또는 대륙) 선택

@@ -30,6 +30,7 @@ export interface ChatMessage {
 export interface ChatMember {
   chatId: number;
   userId: number;
+  userName: string;
   profilePhotoUrl?: string;
   chatTitle?: string;
 }

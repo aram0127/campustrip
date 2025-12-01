@@ -140,9 +140,9 @@ const PostCreatePlannerPage: React.FC = () => {
   const handlePrev = () => {
     updateFormData({ plannerId: selectedPlannerId });
     if (isEditMode) {
-      navigate(`/posts/edit/${postId}/details`);
+      navigate(`/posts/edit/${postId}/details`, { replace: true });
     } else {
-      navigate("/posts/new/details");
+      navigate("/posts/new/details", { replace: true });
     }
   };
 
