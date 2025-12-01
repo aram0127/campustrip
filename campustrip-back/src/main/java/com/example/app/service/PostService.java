@@ -23,18 +23,20 @@ public class PostService {
     private final UserRepository userRepository;
     private final RegionRepository regionRepository;
     private final PlannerRepository plannerRepository;
+    private final PlannerDetailRepository plannerDetailRepository;
     private final PostAssetRepository postAssetRepository;
     private final S3Service s3Service;
     private final ApplicationRepository applicationRepository;
 
     @Autowired
     public PostService(PostRepository postRepository,
-                       UserRepository userRepository, RegionRepository regionRepository, PlannerRepository plannerRepository, PostAssetRepository postAssetrepository, S3Service s3Service,
+                       UserRepository userRepository, RegionRepository regionRepository, PlannerRepository plannerRepository, PlannerDetailRepository plannerDetailRepository, PostAssetRepository postAssetrepository, S3Service s3Service,
                        ApplicationRepository applicationRepository) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.regionRepository = regionRepository;
         this.plannerRepository = plannerRepository;
+        this.plannerDetailRepository = plannerDetailRepository;
         this.postAssetRepository = postAssetrepository;
         this.s3Service = s3Service;
         this.applicationRepository = applicationRepository;
@@ -117,13 +119,14 @@ public class PostService {
             Planner planner = plannerRepository.findById(createPost.getPlannerId())
                     .orElseThrow(() -> new NoSuchElementException("Planner not found with id: " + createPost.getPlannerId()));
             if(postRepository.existsByPlanner(planner)) {
-                // 이미 해당 플래너가 다른 게시물에 연결되어 있는 경우 예외 처리
+                // 이미 해당 플래너가 다른 게시물에 연결되어 있는 경우 복제본 생성
                 Planner newPlanner = new Planner();
                 newPlanner.setUser(planner.getUser());
                 newPlanner.setTitle(planner.getTitle()+" (복제본)");
                 newPlanner.setStartDate(planner.getStartDate());
                 newPlanner.setEndDate(planner.getEndDate());
                 planner = plannerRepository.save(newPlanner);
+                // 여기에 플래너 항목들도 복제하는 로직이 필요할 수 있음
             }
             newPost.setPlanner(planner);
         } catch(Exception e){
