@@ -148,11 +148,6 @@ const PostCreatePlannerPage: React.FC = () => {
 
   // 작성 완료, 수정 완료 버튼
   const handleSubmit = () => {
-    if (!selectedPlannerId) {
-      alert("플래너를 선택해주세요.");
-      return;
-    }
-
     if (!user) {
       alert("사용자 정보가 없습니다. 다시 로그인해주세요.");
       return;
@@ -184,9 +179,9 @@ const PostCreatePlannerPage: React.FC = () => {
 
         {!isLoading && planners.length === 0 && (
           <Message>
-            사용할 수 있는 플래너가 없습니다.
+            생성된 플래너가 없습니다.
             <br />
-            (플래너 페이지에서 먼저 플래너를 생성해주세요.)
+            플래너 없이 게시글을 작성할 수 있습니다.
           </Message>
         )}
 
@@ -194,7 +189,13 @@ const PostCreatePlannerPage: React.FC = () => {
           <PlannerItem
             key={planner.plannerId}
             $isSelected={selectedPlannerId === planner.plannerId}
-            onClick={() => setSelectedPlannerId(planner.plannerId)}
+            onClick={() =>
+              setSelectedPlannerId(
+                selectedPlannerId === planner.plannerId
+                  ? null
+                  : planner.plannerId
+              )
+            }
           >
             <PlannerTitle>{planner.title}</PlannerTitle>
             <PlannerInfo>
@@ -217,17 +218,16 @@ const PostCreatePlannerPage: React.FC = () => {
         <PrevButton onClick={handlePrev} disabled={isLoadingSubmit}>
           이전
         </PrevButton>
-        <FooterButton
-          onClick={handleSubmit}
-          disabled={!selectedPlannerId || isLoadingSubmit}
-        >
-          {isEditMode
-            ? isLoadingSubmit
+        <FooterButton onClick={handleSubmit} disabled={isLoadingSubmit}>
+          {isLoadingSubmit
+            ? isEditMode
               ? "수정 중..."
-              : "수정 완료"
-            : isLoadingSubmit
-            ? "생성 중..."
-            : "작성 완료"}
+              : "생성 중..."
+            : selectedPlannerId
+            ? isEditMode
+              ? "수정 완료"
+              : "작성 완료"
+            : "선택 없이 완료"}
         </FooterButton>
       </Footer>
     </PageLayout>
