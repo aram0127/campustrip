@@ -42,6 +42,14 @@ public class ApplicationService {
         return applicationRepository.findAllByPost(post);
     }
 
+    public boolean checkApplicationByPostIdAndMembershipId(Integer userId, Integer postId) {
+        User user = userRepository.findById(userId).orElseThrow();
+        Post post = postRepository.findById(postId).orElseThrow();
+        return applicationRepository.findByUserAndPost(user, post)
+                .orElseThrow()
+                .getApplicationStatus();
+    }
+
     public void saveApplication(Application application) {
 
         // DB에서 영속 상태의 엔티티 조회

@@ -101,6 +101,7 @@ public interface PostRepository extends JpaRepository<Post,Integer>
 //    출처: https://sjh9708.tistory.com/167 [데굴데굴 개발자의 기록:티스토리]
 
     Post findByChat(Chat chat);
+    Post findByPlanner(Planner planner);
 
     boolean existsByPlanner(Planner planner);
 }
