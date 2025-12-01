@@ -8,7 +8,7 @@ import {
     Polyline,
 } from "@react-google-maps/api";
 import { IoArrowBack, IoCreateOutline, IoTrashOutline } from "react-icons/io5";
-// PlannerDetailResponse와 PlannerDetailDTO가 백엔드 필드명(details)을 포함하도록 정의되어 있어야 합니다.
+
 import type { 
     PlannerDetailResponse, 
     PlannerDetailDTO, 
@@ -270,7 +270,7 @@ function PlannerDetailPage() {
         return "기타";
     };
 
-    // 💡 Google Place ID를 이용해 장소 상세 정보를 가져와 schedulePlaces 상태를 업데이트하는 로직
+    //  Google Place ID를 이용해 장소 상세 정보를 가져와 schedulePlaces 상태를 업데이트하는 로직
     useEffect(() => {
         if (!id || !isLoaded) return;
         
@@ -280,8 +280,6 @@ function PlannerDetailPage() {
                 const plannerData: PlannerDetailResponse = await getPlannerDetail(plannerId);
                 setPlanner(plannerData);
                 
-                // 🚨 [핵심 수정] 백엔드 필드명 'details' 사용
-                // 타입 정의에서 plannerData.schedules 대신 plannerData.details를 사용한다고 가정합니다.
                 const detailList = plannerData.details; 
                 
                 console.log("[Detail Load] 백엔드 응답 (ID만 포함):", detailList); 
@@ -334,7 +332,6 @@ function PlannerDetailPage() {
                     .filter((p): p is ({ day: number } & PlannerPlace) => p !== null)
                     .reduce((acc, current) => {
                         const day = current.day;
-                        // 현재 schedulePlaces가 아닌, finalSchedules를 구성하는 acc에서 찾기
                         let schedule = acc.find(s => s.day === day);
                         if (!schedule) {
                             schedule = { day, places: [] };
@@ -361,7 +358,7 @@ function PlannerDetailPage() {
         fetchDetails(Number(id));
     }, [id, navigate, isLoaded]); 
 
-    // 지도 경로 좌표 계산 (schedulePlaces 기반)
+    // 지도 경로 좌표 계산 
     const pathCoordinates = useMemo(() => {
         if (!schedulePlaces) return [];
         return schedulePlaces.flatMap((schedule) =>
@@ -382,6 +379,10 @@ function PlannerDetailPage() {
     };
 
     const handleEdit = () => {
+        if (!isLoaded) {
+        alert("지도가 아직 로딩 중입니다. 잠시 후 다시 시도해주세요.");
+        return;
+    }
         navigate(`/planner/edit/${id}`);
     };
 
@@ -389,7 +390,7 @@ function PlannerDetailPage() {
         return DAY_COLORS[(day - 1) % DAY_COLORS.length];
     };
 
-    // 🚨 [필수 수정] 로딩 조건 추가: planner가 null이면 렌더링을 막습니다.
+    // 로딩 조건 추가: planner가 null이면 렌더링을 막음
     if (!isLoaded || !planner) return <div>Loading...</div>; 
     
 
