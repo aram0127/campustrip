@@ -26,6 +26,7 @@ import { useAuth } from "../../context/AuthContext";
 import Button from "../../components/common/Button";
 import ReviewListItem from "../../components/domain/ReviewListItem";
 import PostListItem from "../../components/domain/PostListItem";
+import UserRatingModal from "../../components/domain/UserRatingModal";
 
 const MenuContainer = styled.div`
   position: relative;
@@ -226,6 +227,15 @@ const LoadMoreTrigger = styled.div`
   margin-top: 10px;
 `;
 
+const RateButton = styled(ActionButton)`
+  background-color: ${({ theme }) => theme.colors.secondary};
+  margin-top: 12px;
+
+  &:hover {
+    background-color: #218838;
+  }
+`;
+
 // 임시 여행 성향 태그 (preference 비트마스크에 따라 파싱)
 const parsePreferences = (preference: number | null) => {
   if (preference === null) return ["정보 없음"];
@@ -248,6 +258,7 @@ function ProfilePage() {
 
   const [activeTab, setActiveTab] = useState("여행 기록");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // 사용자 프로필 데이터 가져오기
@@ -348,9 +359,13 @@ function ProfilePage() {
     navigate("/profile/edit");
   };
 
-  const handleSettings = () => {
+  const handlePersonalInfo = () => {
     setIsMenuOpen(false);
     navigate("/profile/personal-info");
+  };
+
+  const handleRateClick = () => {
+    setIsRatingModalOpen(true);
   };
 
   // 여행 기록 가져오기
@@ -453,7 +468,9 @@ function ProfilePage() {
                 <DropdownItem onClick={handleEditProfile}>
                   프로필 수정
                 </DropdownItem>
-                <DropdownItem onClick={handleSettings}>개인정보</DropdownItem>
+                <DropdownItem onClick={handlePersonalInfo}>
+                  개인정보
+                </DropdownItem>
               </DropdownMenu>
             )}
           </MenuContainer>
@@ -479,18 +496,30 @@ function ProfilePage() {
           </FollowInfo>
 
           {!isMyProfile && (
-            <Button
-              $variant={isFollowing ? "outline" : "primary"}
-              onClick={handleFollowToggle}
-              disabled={followMutation.isPending || unfollowMutation.isPending}
-              style={{ width: "100%", marginTop: "16px" }}
-            >
-              {isFollowing
-                ? "언팔로우"
-                : followMutation.isPending
-                ? "팔로우 중..."
-                : "팔로우"}
-            </Button>
+            <>
+              <Button
+                $variant={isFollowing ? "outline" : "primary"}
+                onClick={handleFollowToggle}
+                disabled={
+                  followMutation.isPending || unfollowMutation.isPending
+                }
+                style={{ width: "100%", marginTop: "16px" }}
+              >
+                {isFollowing
+                  ? "언팔로우"
+                  : followMutation.isPending
+                  ? "팔로우 중..."
+                  : "팔로우"}
+              </Button>
+
+              {/*
+                실제로는 여행이 끝났는지, 같은 그룹이었는지 확인하는 로직이 필요
+                현재는 본인이 아니면 무조건 표시
+              */}
+              <RateButton onClick={handleRateClick}>
+                동행 평가 남기기
+              </RateButton>
+            </>
           )}
         </ProfileInfoContainer>
 
@@ -572,6 +601,14 @@ function ProfilePage() {
           )}
         </ContentFeed>
       </ScrollingContent>
+
+      {profileUser && (
+        <UserRatingModal
+          isOpen={isRatingModalOpen}
+          onClose={() => setIsRatingModalOpen(false)}
+          targetUser={profileUser}
+        />
+      )}
     </PageLayout>
   );
 }
