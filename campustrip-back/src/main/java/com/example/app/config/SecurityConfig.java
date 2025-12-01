@@ -64,8 +64,8 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/ws/**", "/ws/chat/**", "/ws/websocket/**").permitAll()
-                        .requestMatchers("/", "/index.html", "/login", "/api/login", "/api/users", "/api/users/id-check", "/api/auth/**",
-                                "assets/**", "/vite.svg", "manifest.webmanifest", "/registerSW.js", "/*.ico", "/*.png",
+                        .requestMatchers("/", "/index.html", "/login", "/api/login", "/api/users", "/api/users/id-check",  "/api/auth/**",
+                                "assets/**", "/vite.svg", "manifest.webmanifest", "/registerSW.js", "/*.ico", "/*.png", "/sw.js",
                                 "/*jpg")
                         .permitAll()
                         .requestMatchers("/api/fcm/**").permitAll()
