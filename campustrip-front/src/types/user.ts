@@ -22,4 +22,5 @@ export interface UserRate {
   targetName: string;
   rate: 1 | -1;
   comment: string;
+  profileImageUrl?: string;
 }
