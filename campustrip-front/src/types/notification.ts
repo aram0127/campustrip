@@ -1,9 +1,14 @@
 export type NotificationType =
   | "FOLLOW"
   | "APLLICATION_REQUEST"
-  | "APPLICATION_ACCEPT";
+  | "APPLICATION_ACCEPT"
+  | "APPLICATION_REJECT"
+  | "USER_RATED"
+  | "REVIEW_COMMENT"
+  | "CHAT_MESSAGE";
 
 export interface PushNotification {
+  id: string;
   receiverId: number;
   senderId: number;
   type: NotificationType;
