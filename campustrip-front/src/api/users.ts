@@ -30,3 +30,16 @@ export const updateUserProfileImage = async (
     },
   });
 };
+
+/* 회원 탈퇴 */
+export const deleteUserAccount = async (
+  userId: number,
+  password: string
+): Promise<void> => {
+  await apiClient.delete(`/api/users/${userId}`, {
+    data: password,
+    headers: {
+      "Content-Type": "text/plain",
+    },
+  });
+};
