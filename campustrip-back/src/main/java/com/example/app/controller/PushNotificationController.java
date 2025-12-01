@@ -3,10 +3,7 @@ package com.example.app.controller;
 import com.example.app.dto.PushResponseDTO;
 import com.example.app.service.PushNotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -23,5 +20,10 @@ public class PushNotificationController {
     @GetMapping("/user/{receiverId}")
     public List<PushResponseDTO> getUserNotifications(@PathVariable Integer receiverId) {
         return pushNotificationService.getNotificationsForUser(receiverId);
+    }
+
+    @DeleteMapping("/{notificationId}")
+    public void deleteNotification(@PathVariable String notificationId) {
+        pushNotificationService.deleteNotification(notificationId);
     }
 }

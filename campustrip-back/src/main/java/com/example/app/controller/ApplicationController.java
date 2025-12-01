@@ -100,7 +100,7 @@ public class ApplicationController {
             notificationRequest = new PushNotificationRequest(
                     user.getId(),
                     post.getUser().getId(),
-                    PushNotificationType.APPLICATION_ACCEPT,
+                    PushNotificationType.APPLICATION_REJECT,
                     post.getPostId(),
                     "동행 신청이 거절되었습니다.",
                     post.getTitle() + "에 대한 동행 신청이 거절되었습니다."
