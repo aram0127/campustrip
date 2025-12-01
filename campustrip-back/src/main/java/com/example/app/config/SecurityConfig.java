@@ -1,5 +1,6 @@
 package com.example.app.config;
 
+import com.example.app.service.RefreshTokenService;
 import com.example.app.util.JwtFilter;
 import com.example.app.util.JwtUtil;
 import com.example.app.util.LoginFilter;
@@ -21,7 +22,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -29,11 +29,14 @@ public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
 
     public SecurityConfig(@Qualifier("customUserDetailsService") UserDetailsService userDetailsService,
-            JwtUtil jwtUtil) {
+                          JwtUtil jwtUtil,
+                          RefreshTokenService refreshTokenService) {
         this.userDetailsService = userDetailsService;
         this.jwtUtil = jwtUtil;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Bean
@@ -51,7 +54,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        LoginFilter loginFilter = new LoginFilter(authenticationManager(), jwtUtil);
+        LoginFilter loginFilter = new LoginFilter(authenticationManager(), jwtUtil, refreshTokenService);
         loginFilter.setFilterProcessesUrl("/login");
 
         http
@@ -61,7 +64,7 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/ws/**", "/ws/chat/**", "/ws/websocket/**").permitAll()
-                        .requestMatchers("/", "/index.html", "/login", "/api/login", "/api/users", "/api/users/id-check",  "/api/auth/email/**",
+                        .requestMatchers("/", "/index.html", "/login", "/api/login", "/api/users", "/api/users/id-check", "/api/auth/**",
                                 "assets/**", "/vite.svg", "manifest.webmanifest", "/registerSW.js", "/*.ico", "/*.png",
                                 "/*jpg")
                         .permitAll()
