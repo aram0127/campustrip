@@ -14,3 +14,12 @@ export interface User {
   university: string;
   universityId: number;
 }
+
+export interface UserRate {
+  raterId: number;
+  raterName: string;
+  targetId: number;
+  targetName: string;
+  rate: 1 | -1;
+  comment: string;
+}

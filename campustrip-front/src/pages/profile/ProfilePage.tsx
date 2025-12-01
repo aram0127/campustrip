@@ -8,10 +8,10 @@ import {
   useQueryClient,
   useInfiniteQuery,
 } from "@tanstack/react-query";
-import { getUserProfile } from "../../api/users";
+import { getUserProfile, getUserRates } from "../../api/users";
 import { getReviewsByUserId } from "../../api/reviews";
 import { getMyTripHistory } from "../../api/posts";
-import { type User } from "../../types/user";
+import { type User, type UserRate } from "../../types/user";
 import PageLayout, {
   ScrollingContent,
 } from "../../components/layout/PageLayout";
@@ -27,6 +27,7 @@ import Button from "../../components/common/Button";
 import ReviewListItem from "../../components/domain/ReviewListItem";
 import PostListItem from "../../components/domain/PostListItem";
 import UserRatingModal from "../../components/domain/UserRatingModal";
+import UserRateListItem from "../../components/domain/UserRateListItem";
 
 const MenuContainer = styled.div`
   position: relative;
@@ -252,6 +253,7 @@ const parsePreferences = (preference: number | null) => {
 
 function ProfilePage() {
   const { userId: userIdString } = useParams<{ userId: string }>();
+  const numericUserId = Number(userIdString);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
@@ -409,6 +411,16 @@ function ProfilePage() {
   const userReviews = useMemo(() => {
     return reviewData?.pages.flatMap((page) => page.content) ?? [];
   }, [reviewData]);
+
+  // 받은 평가 목록 가져오기
+  const { data: receivedRates = [], isLoading: isRatesLoading } = useQuery<
+    UserRate[],
+    Error
+  >({
+    queryKey: ["userRates", numericUserId],
+    queryFn: () => getUserRates(numericUserId),
+    enabled: !!numericUserId && activeTab === "받은 후기",
+  });
 
   // 무한 스크롤 핸들러
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -597,7 +609,22 @@ function ProfilePage() {
 
           {/* 받은 후기 */}
           {activeTab === "받은 후기" && (
-            <Message>받은 후기가 없습니다.</Message>
+            <>
+              {isRatesLoading && <Message>후기를 불러오는 중...</Message>}
+
+              {!isRatesLoading && receivedRates.length === 0 && (
+                <Message>받은 후기가 없습니다.</Message>
+              )}
+
+              {!isRatesLoading &&
+                receivedRates.map((rate, index) => (
+                  <UserRateListItem
+                    // 고유 ID가 없으므로 index나 조합된 키 사용 (실제론 user_rate_id가 있는게 좋음)
+                    key={`${rate.raterId}-${rate.targetId}-${index}`}
+                    rate={rate}
+                  />
+                ))}
+            </>
           )}
         </ContentFeed>
       </ScrollingContent>

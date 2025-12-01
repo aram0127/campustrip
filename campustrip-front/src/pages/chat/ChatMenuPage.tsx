@@ -155,7 +155,7 @@ const ChatMenuPage: React.FC = () => {
     <PageLayout
       title="채팅 메뉴"
       showBackButton={true}
-      onBackClick={() => navigate(`/chat/${chatId}`)}
+      onBackClick={() => navigate(-1)}
     >
       <Container>
         <InfoSection>
