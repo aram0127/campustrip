@@ -43,3 +43,15 @@ export const deleteUserAccount = async (
     },
   });
 };
+
+// 사용자 평가 데이터 타입
+export interface CreateUserRateRequest {
+  targetId: number;
+  rate: 1 | -1; // 1: 좋아요, -1: 싫어요
+  comment: string;
+}
+
+// 사용자 평가 남기기
+export const rateUser = async (data: CreateUserRateRequest): Promise<void> => {
+  await apiClient.put(`/api/users/${data.targetId}/rate`, data);
+};

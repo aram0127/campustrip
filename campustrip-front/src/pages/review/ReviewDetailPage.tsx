@@ -455,7 +455,6 @@ const ReviewDetailPage: React.FC = () => {
   return (
     <PageLayout
       title="후기게시글"
-      onBackClick={() => navigate("/reviews")}
       headerRight={
         isMyReview && (
           <div style={{ position: "relative" }}>
