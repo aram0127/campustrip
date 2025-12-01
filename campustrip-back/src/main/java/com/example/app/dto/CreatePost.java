@@ -14,7 +14,6 @@ import java.util.List;
 public class CreatePost {
     private Integer postId;
     private User user;
-    private Post post;
     private String title;
     private String body;
     private java.time.LocalDateTime createdAt = java.time.LocalDateTime.now();

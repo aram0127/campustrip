@@ -110,9 +110,9 @@ public class PostService {
         newPost.setChat(chat);
         List<Integer> regions = createPost.getRegions();
         newPost.setRegions(new HashSet<>(regionRepository.findByRegionIdIn(regions)));
-        newPost.setPlanner(plannerRepository.findById(1)
-                .orElseThrow(() -> new NoSuchElementException("Planner not found with id: 1"))
-        );
+        Planner planner = plannerRepository.findById(createPost.getPlannerId())
+                .orElseThrow(() -> new NoSuchElementException("Planner not found with id: " + createPost.getPlannerId()));
+        newPost.setPlanner(planner);
         newPost = postRepository.save(newPost);
 
         // 이미지 없을 때 처리
