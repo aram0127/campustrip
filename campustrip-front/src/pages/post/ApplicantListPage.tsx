@@ -6,10 +6,13 @@ import {
   getApplicants,
   acceptApplication,
   rejectApplication,
+  leaveTrip,
 } from "../../api/applications";
+import { getPostById } from "../../api/posts";
 import { type Applicant } from "../../types/applicant";
-import { IoCheckmark, IoClose } from "react-icons/io5";
+import { IoCheckmark, IoClose, IoLogOutOutline } from "react-icons/io5";
 import PageLayout from "../../components/layout/PageLayout";
+import { useAuth } from "../../context/AuthContext";
 
 const ApplicantList = styled.main`
   flex-grow: 1;
@@ -134,6 +137,15 @@ const ApplicantListPage: React.FC = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  const { data: post } = useQuery({
+    queryKey: ["post", postId],
+    queryFn: () => getPostById(postId!),
+    enabled: !!postId,
+  });
+
+  const isAuthor = user?.id === post?.user.id;
 
   // 신청자 목록 조회
   const {
@@ -171,6 +183,25 @@ const ApplicantListPage: React.FC = () => {
     },
   });
 
+  // 동행 나가기
+  const { mutate: leaveMutate, isPending: isLeaving } = useMutation({
+    mutationFn: leaveTrip,
+    onSuccess: () => {
+      alert("동행에서 나갔습니다.");
+      queryClient.invalidateQueries({ queryKey: ["post", postId] }); // 게시글 상태 갱신
+      navigate(`/posts/${postId}`); // 게시글 상세로 이동
+    },
+    onError: (err) => {
+      alert(`나가기 처리 중 오류 발생: ${err.message}`);
+    },
+  });
+
+  const handleLeave = () => {
+    if (window.confirm("정말로 이 동행에서 나가시겠습니까?")) {
+      leaveMutate(Number(postId));
+    }
+  };
+
   const handleAccept = (applicantId: number) => {
     if (isAccepting || isRejecting) return;
     acceptMutate({ postId: Number(postId), userId: applicantId });
@@ -196,9 +227,9 @@ const ApplicantListPage: React.FC = () => {
 
   return (
     <PageLayout
-      title="동행 신청자 목록"
+      title={isAuthor ? "동행 신청자 목록" : "참여자 목록"}
       showBackButton
-      onBackClick={() => navigate(`/posts/${postId}`)}
+      onBackClick={() => navigate(-1)}
     >
       <ApplicantList>
         {applicants.length === 0 && <Message>아직 신청자가 없습니다.</Message>}
@@ -207,37 +238,77 @@ const ApplicantListPage: React.FC = () => {
             <ApplicantInfo onClick={() => handleProfileClick(applicant.id)}>
               <Avatar $imageUrl={applicant.profilePhotoUrl} />
               <NameContainer>
-                <ApplicantName>{applicant.name}</ApplicantName>
+                <ApplicantName>
+                  {applicant.name}
+                  {user?.id === applicant.id && (
+                    <span
+                      style={{
+                        fontSize: "12px",
+                        color: "#007AFF",
+                        marginLeft: "4px",
+                      }}
+                    >
+                      (나)
+                    </span>
+                  )}
+                </ApplicantName>
                 <UserScore>
                   여행 온도: 🌡{applicant.userScore.toFixed(1)}
                 </UserScore>
               </NameContainer>
             </ApplicantInfo>
+
             <ActionContainer>
-              {applicant.applicationStatus === null && ( // 대기중
+              {/* 작성자인 경우 관리 기능 표시 */}
+              {isAuthor && (
                 <>
-                  <ActionButton
-                    $variant="accept"
-                    onClick={() => handleAccept(applicant.id)}
-                    disabled={isAccepting || isRejecting}
-                  >
-                    <IoCheckmark />
-                  </ActionButton>
-                  <ActionButton
-                    $variant="reject"
-                    onClick={() => handleReject(applicant.id)}
-                    disabled={isAccepting || isRejecting}
-                  >
-                    <IoClose />
-                  </ActionButton>
+                  {applicant.applicationStatus === null && (
+                    <>
+                      <ActionButton
+                        $variant="accept"
+                        onClick={() => handleAccept(applicant.id)}
+                        disabled={isAccepting || isRejecting}
+                      >
+                        <IoCheckmark />
+                      </ActionButton>
+                      <ActionButton
+                        $variant="reject"
+                        onClick={() => handleReject(applicant.id)}
+                        disabled={isAccepting || isRejecting}
+                      >
+                        <IoClose />
+                      </ActionButton>
+                    </>
+                  )}
+                  {applicant.applicationStatus === true && (
+                    <StatusText $status="accepted">수락됨</StatusText>
+                  )}
+                  {applicant.applicationStatus === false && (
+                    <StatusText $status="rejected">거절됨</StatusText>
+                  )}
                 </>
               )}
-              {applicant.applicationStatus === true && ( // 수락됨
-                <StatusText $status="accepted">수락됨</StatusText>
-              )}
-              {applicant.applicationStatus === false && ( // 거절됨
-                <StatusText $status="rejected">거절됨</StatusText>
-              )}
+
+              {/* 참여자인 경우 수락된 상태라면 '나가기' 버튼 표시 */}
+              {!isAuthor &&
+                user?.id === applicant.id &&
+                applicant.applicationStatus === true && (
+                  <ActionButton
+                    $variant="reject"
+                    onClick={handleLeave}
+                    disabled={isLeaving}
+                    title="동행 나가기"
+                  >
+                    <IoLogOutOutline /> 나가기
+                  </ActionButton>
+                )}
+
+              {/* 다른 참여자거나 상태 표시만 필요한 경우 */}
+              {!isAuthor &&
+                user?.id !== applicant.id &&
+                (applicant.applicationStatus === true ? (
+                  <StatusText $status="accepted">참여중</StatusText>
+                ) : null)}
             </ActionContainer>
           </ApplicantItem>
         ))}

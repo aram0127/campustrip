@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import { type User } from "../types/user";
+import { type User, type UserRate } from "../types/user";
 
 /* 특정 사용자의 프로필 정보를 가져옴 */
 export const getUserProfile = async (id: number): Promise<User> => {
@@ -54,4 +54,12 @@ export interface CreateUserRateRequest {
 // 사용자 평가 남기기
 export const rateUser = async (data: CreateUserRateRequest): Promise<void> => {
   await apiClient.put(`/api/users/${data.targetId}/rate`, data);
+};
+
+// 사용자가 받은 평가 목록 조회
+export const getUserRates = async (userId: number): Promise<UserRate[]> => {
+  const response = await apiClient.get<UserRate[]>(
+    `/api/users/${userId}/my-rates`
+  );
+  return response.data;
 };
