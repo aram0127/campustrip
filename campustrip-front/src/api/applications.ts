@@ -83,3 +83,8 @@ export const getMyApplications = async (
 export const leaveChat = async (chatId: number): Promise<void> => {
   await apiClient.put(`/api/applications/unsubscribe/chat/${chatId}`);
 };
+
+/* 동행 나가기 */
+export const leaveTrip = async (postId: number): Promise<void> => {
+  await apiClient.put(`/api/applications/unsubscribe/post/${postId}`);
+};
