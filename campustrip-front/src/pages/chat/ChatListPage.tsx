@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import FloatingActionButton from "../../components/common/FloatingActionButton";
 import { useQuery } from "@tanstack/react-query";
 import { getMyChats } from "../../api/chats";
-import {type Chat, MessageTypeValue} from "../../types/chat";
+import { type Chat, MessageTypeValue } from "../../types/chat";
 import { useAuth } from "../../context/AuthContext";
 import { useMemo } from "react";
 
@@ -35,12 +35,16 @@ const ChatItem = styled(Link)`
   }
 `;
 
-const Avatar = styled.div`
+const Avatar = styled.div<{ $imageUrl?: string }>`
   width: 50px;
   height: 50px;
   border-radius: 50%;
   background-color: ${({ theme }) => theme.colors.inputBackground};
   flex-shrink: 0;
+  background-image: url(${({ $imageUrl }) =>
+    $imageUrl || "/default-profile.png"});
+  background-size: cover;
+  background-position: center;
 `;
 
 const ChatInfo = styled.div`
@@ -131,24 +135,29 @@ function ChatListPage() {
   return (
     <PageContainer>
       <ChatList>
-        {sortedChats.length === 0 && <Message>참여중인 채팅방이 없습니다.</Message>}
+        {sortedChats.length === 0 && (
+          <Message>참여중인 채팅방이 없습니다.</Message>
+        )}
         {sortedChats.map((chat) => (
           <ChatItem to={`/chat/${chat.id}`} key={chat.id}>
-            <Avatar />
+            <Avatar $imageUrl={chat.profilePhotoUrl} />
             <ChatInfo>
               <UserName>{chat.title}</UserName>
               <LastMessage>
                 {chat.lastMessage
-                  ? (chat.lastMessageType === MessageTypeValue.JOIN || chat.lastMessageType === MessageTypeValue.LEAVE
+                  ? chat.lastMessageType === MessageTypeValue.JOIN ||
+                    chat.lastMessageType === MessageTypeValue.LEAVE
                     ? chat.lastMessage
-                    : chat.senderName + ": " + chat.lastMessage)
+                    : chat.senderName + ": " + chat.lastMessage
                   : "아직 메시지가 없습니다."}
               </LastMessage>
             </ChatInfo>
             <Timestamp>
               {(() => {
                 const timeStr = chat.lastMessageTime || chat.createdAt;
-                return timeStr ? new Date(timeStr).toLocaleDateString("ko-KR") : "";
+                return timeStr
+                  ? new Date(timeStr).toLocaleDateString("ko-KR")
+                  : "";
               })()}
             </Timestamp>
           </ChatItem>
