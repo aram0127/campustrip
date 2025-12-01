@@ -27,4 +27,8 @@ public class PushNotificationService {
                 .map(PushNotification::toDTO)
                 .toList();
     }
+
+    public void deleteNotification(String notificationId) {
+        pushNotificationRepository.deleteById(notificationId);
+    }
 }
