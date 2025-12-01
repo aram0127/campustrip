@@ -116,10 +116,25 @@ public class PostService {
         try{
             Planner planner = plannerRepository.findById(createPost.getPlannerId())
                     .orElseThrow(() -> new NoSuchElementException("Planner not found with id: " + createPost.getPlannerId()));
+            if(postRepository.existsByPlanner(planner)) {
+                // 이미 해당 플래너가 다른 게시물에 연결되어 있는 경우 예외 처리
+                Planner newPlanner = new Planner();
+                newPlanner.setUser(planner.getUser());
+                newPlanner.setTitle(planner.getTitle()+" (복제본)");
+                newPlanner.setStartDate(planner.getStartDate());
+                newPlanner.setEndDate(planner.getEndDate());
+                planner = plannerRepository.save(newPlanner);
+            }
             newPost.setPlanner(planner);
         } catch(Exception e){
-            // Planner는 optional
-            newPost.setPlanner(null);
+            // 플래너가 선택되지 않았거나 찾을 수 없는 경우 새 플래너 생성
+            Planner newPlanner = new Planner();
+            newPlanner.setUser(user);
+            newPlanner.setTitle("\""+createPost.getTitle()+"\"의 플래너");
+            newPlanner.setStartDate(createPost.getStartAt());
+            newPlanner.setEndDate(createPost.getEndAt());
+            Planner savedPlanner = plannerRepository.save(newPlanner);
+            newPost.setPlanner(savedPlanner);
         }
         Post savedPost = postRepository.save(newPost);
 
