@@ -126,9 +126,14 @@ public class ApplicationController {
     @PutMapping("/unsubscribe/chat/{chatId}")
     public void unsubscribeApplicationByChat(@PathVariable Integer chatId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         // 채팅방 ID로 게시물 ID 조회
-        Integer postId = chatService.getPostIdByChatId(chatId);
-        if (postId != null) {
-            unsubscribeApplication(postId, userDetails.getUser().getUserId());
+        try{
+            Integer postId = chatService.getPostIdByChatId(chatId);
+            if (postId != null) {
+                unsubscribeApplication(postId, userDetails.getUser().getUserId());
+            }
+        } catch (IllegalArgumentException e){
+            // postId를 찾을 수 없는 경우 예외 처리 (필요시 로그 남기기)
+            // 게시글이 이미 삭제된 경우일 수 있음
         }
     }
 
