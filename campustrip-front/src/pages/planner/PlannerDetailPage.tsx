@@ -410,15 +410,44 @@ function PlannerDetailPage() {
                     zoom={12}
                     options={{ disableDefaultUI: true, clickableIcons: false }}
                 >
-                    {/* 전체 경로 실선 */}
-                    <Polyline
-                        path={pathCoordinates}
-                        options={{ strokeColor: theme.colors.primary, strokeWeight: 4, strokeOpacity: 0.7 }}
-                    />
-
                     {/* schedulePlaces 기반으로 지도 마커 렌더링 */}
+                    {schedulePlaces?.map((schedule) => {
+                        const dayColor = getDayColor(schedule.day);
+                        const path = (schedule.places || []).map((p) => ({
+                             lat: p.latitude,
+                             lng: p.longitude,
+                        }));
+
+                        // 장소가 2개 이상일 때만 경로 표시
+                        if (path.length < 2) return null;
+                        
+                        return (
+                            <Polyline
+                                key={`polyline-${schedule.day}`}
+                                path={path}
+                                options={{
+                                    strokeOpacity: 0, // 실선 투명하게
+                                    icons: [ // 점선 모양 아이콘 설정
+                                        {
+                                            icon: { 
+                                                path: "M 0,-1 0,1", 
+                                                strokeOpacity: 1, 
+                                                scale: 3, 
+                                                strokeColor: dayColor, // 일차별 색상 적용
+                                            },
+                                            offset: "0",
+                                            repeat: "20px",
+                                        },
+                                    ],
+                                    zIndex: 1,
+                                }}
+                            />
+                        );
+                    })}
+
+                    {/* schedulePlaces 기반으로 지도 마커 렌더링 (기존 코드는 유지) */}
                     {schedulePlaces?.map((schedule) =>
-                    (schedule.places || []).map((place) => (
+                        (schedule.places || []).map((place) => (
                             <Marker
                                 key={`${schedule.day}-${place.order}`}
                                 position={{ lat: place.latitude, lng: place.longitude }}
