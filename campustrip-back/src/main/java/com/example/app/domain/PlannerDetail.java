@@ -21,9 +21,6 @@ public class PlannerDetail {
     @JoinColumn(name = "planner_id", nullable = false)
     private Planner planner;
 
-    @Column(name = "day", nullable = false)
-    private Integer day;
-
     @Column(name = "google_place_id", nullable = false)
     private String googlePlaceId;
 }
