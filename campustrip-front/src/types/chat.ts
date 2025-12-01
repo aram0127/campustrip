@@ -15,7 +15,7 @@ export interface Chat {
   senderName: string;
   lastMessage: string;
   lastMessageTime: string;
-  profilePhotoUrl?: string;
+  profilePhotoUrl: string[];
 }
 
 export interface ChatMessage {

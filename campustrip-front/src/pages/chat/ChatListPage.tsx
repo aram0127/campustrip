@@ -35,16 +35,27 @@ const ChatItem = styled(Link)`
   }
 `;
 
-const Avatar = styled.div<{ $imageUrl?: string }>`
+const AvatarGrid = styled.div<{ $isGroup: boolean }>`
   width: 50px;
   height: 50px;
-  border-radius: 50%;
+  border-radius: ${({ $isGroup }) => ($isGroup ? "18px" : "50%")};
   background-color: ${({ theme }) => theme.colors.inputBackground};
   flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  flex-wrap: wrap;
+`;
+
+const AvatarImage = styled.div<{ $imageUrl?: string; $count: number }>`
+  width: ${({ $count }) => ($count === 1 ? "100%" : "50%")};
+  height: ${({ $count }) => ($count <= 2 ? "100%" : "50%")};
   background-image: url(${({ $imageUrl }) =>
     $imageUrl || "/default-profile.png"});
   background-size: cover;
   background-position: center;
+  box-sizing: border-box;
+  border: ${({ $count }) =>
+    $count > 1 ? "0.5px solid rgba(255,255,255,0.1)" : "none"};
 `;
 
 const ChatInfo = styled.div`
@@ -81,19 +92,18 @@ const Message = styled.p`
 
 function ChatListPage() {
   const navigate = useNavigate();
-  const { user } = useAuth(); // 현재 사용자 정보
+  const { user } = useAuth();
 
   const {
     data: chats = [],
     isLoading,
     error,
   } = useQuery<Chat[], Error>({
-    queryKey: ["myChats", user?.id], // user.id를 queryKey에 포함
-    queryFn: () => getMyChats(user!.id), // API 호출
-    enabled: !!user, // user가 있을 때만 실행
+    queryKey: ["myChats", user?.id],
+    queryFn: () => getMyChats(user!.id),
+    enabled: !!user,
   });
 
-  // 최근 메시지 시간이 없으면 createdAt을 기준으로 내림차순 정렬
   const sortedChats = useMemo(() => {
     return [...chats].sort((a, b) => {
       const aTime = a.lastMessageTime
@@ -106,7 +116,7 @@ function ChatListPage() {
         : b.createdAt
         ? new Date(b.createdAt).getTime()
         : 0;
-      return bTime - aTime; // 최근 순서(내림차순)
+      return bTime - aTime;
     });
   }, [chats]);
 
@@ -138,30 +148,48 @@ function ChatListPage() {
         {sortedChats.length === 0 && (
           <Message>참여중인 채팅방이 없습니다.</Message>
         )}
-        {sortedChats.map((chat) => (
-          <ChatItem to={`/chat/${chat.id}`} key={chat.id}>
-            <Avatar $imageUrl={chat.profilePhotoUrl} />
-            <ChatInfo>
-              <UserName>{chat.title}</UserName>
-              <LastMessage>
-                {chat.lastMessage
-                  ? chat.lastMessageType === MessageTypeValue.JOIN ||
-                    chat.lastMessageType === MessageTypeValue.LEAVE
-                    ? chat.lastMessage
-                    : chat.senderName + ": " + chat.lastMessage
-                  : "아직 메시지가 없습니다."}
-              </LastMessage>
-            </ChatInfo>
-            <Timestamp>
-              {(() => {
-                const timeStr = chat.lastMessageTime || chat.createdAt;
-                return timeStr
-                  ? new Date(timeStr).toLocaleDateString("ko-KR")
-                  : "";
-              })()}
-            </Timestamp>
-          </ChatItem>
-        ))}
+        {sortedChats.map((chat) => {
+          const profileUrls =
+            chat.profilePhotoUrl && chat.profilePhotoUrl.length > 0
+              ? chat.profilePhotoUrl
+              : ["/default-profile.png"];
+
+          const displayCount = Math.min(profileUrls.length, 4);
+          const isGroup = displayCount > 1;
+
+          return (
+            <ChatItem to={`/chat/${chat.id}`} key={chat.id}>
+              <AvatarGrid $isGroup={isGroup}>
+                {profileUrls.slice(0, 4).map((url, idx) => (
+                  <AvatarImage
+                    key={idx}
+                    $imageUrl={url}
+                    $count={displayCount}
+                  />
+                ))}
+              </AvatarGrid>
+              <ChatInfo>
+                <UserName>{chat.title}</UserName>
+                <LastMessage>
+                  {chat.lastMessage
+                    ? chat.lastMessageType === MessageTypeValue.JOIN ||
+                      chat.lastMessageType === MessageTypeValue.LEAVE
+                      ? chat.lastMessage
+                      : chat.senderName + ": " + chat.lastMessage
+                    : "아직 메시지가 없습니다."}
+                </LastMessage>
+              </ChatInfo>
+              <Timestamp>
+                {(() => {
+                  const timeStr = chat.lastMessageTime || chat.createdAt;
+                  return timeStr
+                    ? new Date(timeStr).toLocaleDateString("ko-KR")
+                    : "";
+                })()}
+              </Timestamp>
+            </ChatItem>
+          );
+        })}
       </ChatList>
 
       <FloatingActionButton onClick={handleNewChat} />
