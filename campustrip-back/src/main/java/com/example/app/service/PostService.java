@@ -113,9 +113,14 @@ public class PostService {
         newPost.setUser(user);
         List<Integer> regions = createPost.getRegions();
         newPost.setRegions(new HashSet<>(regionRepository.findByRegionIdIn(regions)));
-        Planner planner = plannerRepository.findById(createPost.getPlannerId())
-                .orElseThrow(() -> new NoSuchElementException("Planner not found with id: " + createPost.getPlannerId()));
-        newPost.setPlanner(planner);
+        try{
+            Planner planner = plannerRepository.findById(createPost.getPlannerId())
+                    .orElseThrow(() -> new NoSuchElementException("Planner not found with id: " + createPost.getPlannerId()));
+            newPost.setPlanner(planner);
+        } catch(Exception e){
+            // Planner는 optional
+            newPost.setPlanner(null);
+        }
         Post savedPost = postRepository.save(newPost);
 
         // 이미지 없을 때 처리
