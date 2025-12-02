@@ -169,16 +169,24 @@ export const getInfinitePosts = async ({
     params.append("keyword", keyword);
   }
 
-  // universityId 필터가 있으면 우선 적용
+  // universityId 필터가 있으면 우선 적용 (지역 필터도 함께 적용 가능)
   if (universityId) {
     params.append("universityId", universityId.toString());
+
+    // 대학교 필터와 함께 지역 필터도 적용
+    if (regionIds && regionIds.length > 0) {
+      regionIds.forEach((id) => {
+        params.append("regionIds", id.toString());
+      });
+    }
+
     const response = await apiClient.get<PostSlice<Post>>(
       `/api/posts/university?${params.toString()}`
     );
     return response.data;
   }
 
-  // regionIds 필터 적용
+  // universityId가 없을 때는 지역 필터만 적용
   if (regionIds && regionIds.length > 0) {
     regionIds.forEach((id) => {
       params.append("regionIds", id.toString());
