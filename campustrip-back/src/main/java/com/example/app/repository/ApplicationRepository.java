@@ -16,8 +16,8 @@ public interface ApplicationRepository extends JpaRepository<Application, Intege
     List<Application> findAllByUser(User user);
     List<Application> findAllByPost(Post post);
     @Query("SELECT a, ur FROM Application a " +
-            "LEFT JOIN FETCH a.user " +
-            "LEFT JOIN UserRate ur ON a.user.id = ur.target.id " +
+            "LEFT JOIN FETCH a.user u " +
+            "LEFT JOIN UserRate ur ON u.id = ur.target.id AND ur.rater.userId = :userId " +
             "WHERE a.post.postId = :postId")
-    List<Object[]> findAllByPostIdWithUserRates(@Param("postId") Integer postId);
+    List<Object[]> findAllByPostIdWithUserRates(@Param("postId") Integer postId, @Param("userId") String userId);
 }
