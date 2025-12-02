@@ -30,12 +30,12 @@ const messaging = getMessaging(app);
 // 백그라운드 메시지 핸들러
 onBackgroundMessage(messaging, (payload) => {
   console.log("백그라운드 메시지 수신:", payload);
+  //알림 중복수신 문제 해결 위한 주석처리
+  // const notificationTitle = payload.notification?.title || "알림";
+  // const notificationOptions = {
+  //   body: payload.notification?.body,
+  //   icon: "/icon-192x192.png",
+  // };
 
-  const notificationTitle = payload.notification?.title || "알림";
-  const notificationOptions = {
-    body: payload.notification?.body,
-    icon: "/icon-192x192.png",
-  };
-
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  //self.registration.showNotification(notificationTitle, notificationOptions);
 });
