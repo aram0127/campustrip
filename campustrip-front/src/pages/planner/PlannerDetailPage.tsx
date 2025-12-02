@@ -112,21 +112,14 @@ const HandleBar = styled.div`
     }
 `;
 
-const ScrollableContent = styled.div<{ $containerHeight: number }>`
+const ScrollableContent = styled.div<{ $bottomPadding: number }>`
     flex: 1;
     overflow-y: auto;
     padding-left: 20px;
     padding-right: 20px;
     -webkit-overflow-scrolling: touch;
-
-    /* 첫 항목 padding 제거 요청에 따라 상단 여백 제거 */
     padding-top: 0;
-
-    /* 마지막 항목이 감지 영역에 들어올 수 있도록 하단 여백 */
-    padding-bottom: ${({ $containerHeight }) => {
-        const availablePx = (window.innerHeight * ($containerHeight / 100)) - 180;
-        return `${Math.max(160, Math.min(availablePx, 320))}px`;
-    }};
+    padding-bottom: ${({ $bottomPadding }) => `${$bottomPadding}px`};
 `;
 
 const Header = styled.div`
@@ -274,6 +267,7 @@ function PlannerDetailPage() {
     const [isDragging, setIsDragging] = useState(false);
     const [startY, setStartY] = useState(0);
     const [startHeight, setStartHeight] = useState(55);
+    const [bottomPadding, setBottomPadding] = useState(240);
 
     const placeItemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
     const contentContainerRef = useRef<HTMLDivElement>(null);
@@ -549,6 +543,22 @@ function PlannerDetailPage() {
         return () => observer.disconnect();
     }, [schedulePlaces, containerHeight]);
 
+    // ContentContainer 높이에 따라 하단 패딩 동적 계산
+    useEffect(() => {
+        const updatePadding = () => {
+            if (!contentContainerRef.current) return;
+            const h = contentContainerRef.current.getBoundingClientRect().height;
+            const topDetectionOffset = Math.max(56, Math.min(h * 0.1, 120));
+            const bandHeight = Math.max(64, Math.min(h * 0.12, 120));
+            // 더 과감하게 여백 확보: 컨테이너 높이의 75%를 추가로 더함, 최소 400px 보장
+            const padding = Math.max(topDetectionOffset + bandHeight + Math.floor(h * 0.75), 400);
+            setBottomPadding(Math.ceil(padding));
+        };
+        updatePadding();
+        window.addEventListener('resize', updatePadding);
+        return () => window.removeEventListener('resize', updatePadding);
+    }, [containerHeight, schedulePlaces]);
+
     // 로딩 조건 추가: planner가 null이면 렌더링을 막음
     if (!isLoaded || !planner) return <div>Loading...</div>; 
     
@@ -636,7 +646,7 @@ function PlannerDetailPage() {
                     onMouseDown={handleDragStart}
                     onTouchStart={handleDragStart}
                 />
-                <ScrollableContent $containerHeight={containerHeight}>
+                <ScrollableContent $bottomPadding={bottomPadding}>
                     <Header>
                         <TitleRow>
                             {/* planner가 null이 아니므로 안전하게 접근 가능 */}
