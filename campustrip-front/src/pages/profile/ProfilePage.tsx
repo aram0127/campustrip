@@ -227,16 +227,36 @@ const LoadMoreTrigger = styled.div`
   margin-top: 10px;
 `;
 
-// 임시 여행 성향 태그 (preference 비트마스크에 따라 파싱)
+const TAG_PAIRS = [
+  { high: "#계획적", low: "#즉흥적" }, // index 0
+  { high: "#맛집탐방", low: "#음식아무거나" }, // index 1
+  { high: "#사진필수", low: "#눈으로기억" }, // index 2
+  { high: "#뚜벅이", low: "#교통중심" }, // index 3
+  { high: "#가성비", low: "#투자" }, // index 4
+  { high: "#느긋힐링", low: "#액티비티" }, // index 5
+  { high: "#규칙적 식사", low: "#비규칙적 식사" }, // index 6
+  { high: "#아침형", low: "#저녁형" }, // index 7
+];
+
+// [수정] 3진법 디코딩 로직으로 변경
 const parsePreferences = (preference: number | null) => {
   if (preference === null) return ["정보 없음"];
 
-  const tags = [];
-  if (preference & 1) tags.push("#계획적");
-  if (preference & 2) tags.push("#즉흥적");
-  if (preference & 4) tags.push("#맛집탐방");
-  if (preference & 8) tags.push("#사진필수");
-  if (preference & 16) tags.push("#뚜벅이여행");
+  const tags: string[] = [];
+  let currentPref = preference;
+
+  // TAG_PAIRS 순서대로 3진법 값을 해석
+  TAG_PAIRS.forEach((pair) => {
+    const val = currentPref % 3; // 현재 자리의 값 (0, 1, 2) 추출
+    currentPref = Math.floor(currentPref / 3); // 다음 자릿수로 이동
+
+    if (val === 2) {
+      tags.push(pair.high); // High 성향 선택 시
+    } else if (val === 1) {
+      tags.push(pair.low); // Low 성향 선택 시
+    }
+    // val === 0 인 경우(건너뛰기)는 태그를 추가하지 않음
+  });
 
   return tags.length > 0 ? tags : ["정보 없음"];
 };
@@ -448,7 +468,7 @@ function ProfilePage() {
   const tempPercentage = Math.max(0, Math.min(100, profileUser.userScore || 0));
 
   const handleStartTest = () => {
-    navigate(`/test/travel`);
+    navigate(`/profile/test`);
   };
 
   return (

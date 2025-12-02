@@ -83,66 +83,11 @@ const StyledTextArea = styled.textarea`
   }
 `;
 
-const StyleBox = styled.div`
-  width: 100%;
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid ${({ theme }) => theme.colors.borderColor};
-  background-color: ${({ theme }) => theme.colors.background};
-  box-sizing: border-box;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 60px;
-`;
-
-const TagWrapper = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  flex: 1;
-`;
-
-const Tag = styled.span`
-  font-size: 14px;
-  color: ${({ theme }) => theme.colors.text};
-  font-weight: 500;
-`;
-
-const RetakeButton = styled.button`
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 13px;
-  font-weight: bold;
-  cursor: pointer;
-  white-space: nowrap;
-  margin-left: 12px;
-
-  &:hover {
-    opacity: 0.9;
-  }
-`;
-
 const SaveButtonContainer = styled.div`
   width: 100%;
   margin-top: auto;
   padding-top: 20px;
 `;
-
-// 여행 성향 파싱 함수 (임시)
-const parsePreferences = (preference: number | null) => {
-  if (preference === null) return [];
-  const tags = [];
-  if (preference & 1) tags.push("#계획적");
-  if (preference & 2) tags.push("#즉흥적");
-  if (preference & 4) tags.push("#맛집탐방");
-  if (preference & 8) tags.push("#사진필수");
-  if (preference & 16) tags.push("#뚜벅이여행");
-  return tags;
-};
 
 const ProfileEditPage: React.FC = () => {
   const navigate = useNavigate();
@@ -223,10 +168,6 @@ const ProfileEditPage: React.FC = () => {
     updateInfoMutation.mutate();
   };
 
-  const handleRetakeTest = () => {
-    navigate("/test/travel");
-  };
-
   if (isLoading || !userProfile) {
     return (
       <PageLayout title="프로필 수정">
@@ -234,8 +175,6 @@ const ProfileEditPage: React.FC = () => {
       </PageLayout>
     );
   }
-
-  const tags = parsePreferences(userProfile.preference);
 
   return (
     <PageLayout title="프로필 수정" showBackButton={true}>
@@ -267,23 +206,6 @@ const ProfileEditPage: React.FC = () => {
             onChange={(e) => setDescription(e.target.value)}
             maxLength={200}
           />
-        </FormSection>
-
-        {/* 여행 성향 섹션 */}
-        <FormSection>
-          <Label>나의 여행 성향</Label>
-          <StyleBox>
-            <TagWrapper>
-              {tags.length > 0 ? (
-                tags.map((tag, index) => <Tag key={index}>{tag}</Tag>)
-              ) : (
-                <Tag style={{ color: "#888" }}>검사 결과가 없습니다.</Tag>
-              )}
-            </TagWrapper>
-            <RetakeButton onClick={handleRetakeTest}>
-              다시 검사하기
-            </RetakeButton>
-          </StyleBox>
         </FormSection>
 
         {/* 저장 버튼 */}
