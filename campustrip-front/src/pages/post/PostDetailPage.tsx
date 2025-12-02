@@ -453,6 +453,7 @@ const PostDetailPage: React.FC = () => {
   }
 
   const isMyPost = user?.id === post.user.id;
+  const isMember = isMyPost || applicationStatus === "ACCEPTED";
   const isMutationLoading = isApplying || isCanceling || isDeleting;
 
   const renderBottomButtons = () => {
@@ -651,7 +652,10 @@ const PostDetailPage: React.FC = () => {
         {activeTab === "planner" && (
           <>
             {post.plannerId ? (
-              <PlannerViewer plannerId={post.plannerId} />
+              <PlannerViewer
+                plannerId={post.plannerId}
+                showEditButton={isMember}
+              />
             ) : (
               <ContentContainer>
                 <Message>연결된 플래너가 없습니다.</Message>
