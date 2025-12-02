@@ -105,6 +105,16 @@ public interface PostRepository extends JpaRepository<Post,Integer>
     @Query("SELECT DISTINCT p FROM Post p WHERE p.user.university.id = :universityId AND (p.title LIKE %:keyword% OR p.body LIKE %:keyword%)")
     Slice<Post> findAllByUniversityIdAndKeyword(@Param("universityId") Integer universityId, @Param("keyword") String keyword, Pageable pageable);
 
+    /* 특정 대학교(universityId)의 사용자가 작성한 게시글 중 특정 지역(regionIds)에 속하는 게시글을 Slice로 조회 */
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "chat", "regions", "assets"})
+    @Query("SELECT DISTINCT p FROM Post p JOIN p.regions r WHERE p.user.university.id = :universityId AND r.regionId IN :regionIds")
+    Slice<Post> findAllByUniversityIdAndRegionIds(@Param("universityId") Integer universityId, @Param("regionIds") List<Integer> regionIds, Pageable pageable);
+
+    /* 특정 대학교(universityId)의 사용자가 작성한 게시글 중 특정 지역(regionIds)에 속하고 검색어(keyword)가 포함된 게시글을 Slice로 조회 */
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "chat", "regions", "assets"})
+    @Query("SELECT DISTINCT p FROM Post p JOIN p.regions r WHERE p.user.university.id = :universityId AND r.regionId IN :regionIds AND (p.title LIKE %:keyword% OR p.body LIKE %:keyword%)")
+    Slice<Post> findAllByUniversityIdAndRegionIdsAndKeyword(@Param("universityId") Integer universityId, @Param("regionIds") List<Integer> regionIds, @Param("keyword") String keyword, Pageable pageable);
+
     // 동적 쿼리 생성
 //    @Query(value= "select m from Member m where m.memberId = :id and m.email = :email" )
 //    Member findMemberByIdAndEmail(@Param("id") Long id, @Param("email") String email);

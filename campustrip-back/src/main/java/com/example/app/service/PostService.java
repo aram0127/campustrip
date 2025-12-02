@@ -315,6 +315,29 @@ public class PostService {
         return postRepository.findAllByUniversityId(universityId, pageable);
     }
 
+    /**
+     * 대학교 + 지역 필터링 게시글 조회
+     * regionIds와 keyword에 따라 적절한 쿼리 메서드 호출
+     */
+    public Slice<Post> getPostsByUniversityIdAndRegionIdsSlice(Integer universityId, List<Integer> regionIds, String keyword, Pageable pageable) {
+        boolean hasRegions = regionIds != null && !regionIds.isEmpty();
+        boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
+
+        if (hasRegions && hasKeyword) {
+            // 대학교 + 지역 + 검색어
+            return postRepository.findAllByUniversityIdAndRegionIdsAndKeyword(universityId, regionIds, keyword, pageable);
+        } else if (hasRegions) {
+            // 대학교 + 지역
+            return postRepository.findAllByUniversityIdAndRegionIds(universityId, regionIds, pageable);
+        } else if (hasKeyword) {
+            // 대학교 + 검색어
+            return postRepository.findAllByUniversityIdAndKeyword(universityId, keyword, pageable);
+        } else {
+            // 대학교만
+            return postRepository.findAllByUniversityId(universityId, pageable);
+        }
+    }
+
     public List<PostMember> getPostMembersByPostId(Integer postId) {
         List<Object[]> results = applicationRepository.findAllByPostIdWithUserRates(postId);
         // Object[0] = Application, Object[1] = UserRate (nullable)

@@ -71,13 +71,23 @@ public class PostController {
         return postSlice.map(post -> postService.convertPostToDTO(post, chatService, regionService));
     }
 
-    // 대학교 ID로 게시물 조회 (Slice로 반환)
+    // 대학교 ID로 게시물 조회 (Slice로 반환) - 지역 ID 필터 추가 지원
     @GetMapping("/university")
     public Slice<PostDTO> getPostsByUniversityId(
             @RequestParam Integer universityId,
+            @RequestParam(required = false) List<Integer> regionIds,
             @RequestParam(required = false) String keyword,
             @PageableDefault(size = 3, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Slice<Post> postSlice = postService.getPostsByUniversityIdSlice(universityId, keyword, pageable);
+        Slice<Post> postSlice;
+
+        if (regionIds != null && !regionIds.isEmpty()) {
+            // 대학교 + 지역 필터링
+            postSlice = postService.getPostsByUniversityIdAndRegionIdsSlice(universityId, regionIds, keyword, pageable);
+        } else {
+            // 대학교만 필터링
+            postSlice = postService.getPostsByUniversityIdSlice(universityId, keyword, pageable);
+        }
+
         return postSlice.map(post -> postService.convertPostToDTO(post, chatService, regionService));
     }
 
