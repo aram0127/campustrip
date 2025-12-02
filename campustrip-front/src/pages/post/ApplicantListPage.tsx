@@ -8,11 +8,20 @@ import {
   rejectApplication,
   leaveTrip,
 } from "../../api/applications";
-import { getPostById, getPostMembers } from "../../api/posts";
+import {
+  getPostById,
+  getPostMembers,
+  transferPostOwnership,
+} from "../../api/posts";
 import { type Applicant } from "../../types/applicant";
 import { type PostMember } from "../../types/post";
 import { type User } from "../../types/user";
-import { IoCheckmark, IoClose, IoLogOutOutline } from "react-icons/io5";
+import {
+  IoCheckmark,
+  IoClose,
+  IoLogOutOutline,
+  IoRibbonOutline,
+} from "react-icons/io5";
 import PageLayout from "../../components/layout/PageLayout";
 import { useAuth } from "../../context/AuthContext";
 import UserRatingModal from "../../components/domain/UserRatingModal";
@@ -72,7 +81,9 @@ const ActionContainer = styled.div`
   flex-shrink: 0;
 `;
 
-const ActionButton = styled.button<{ $variant: "accept" | "reject" }>`
+const ActionButton = styled.button<{
+  $variant: "accept" | "reject" | "transfer";
+}>`
   padding: 8px 16px;
   border-radius: 8px;
   border: none;
@@ -98,6 +109,14 @@ const ActionButton = styled.button<{ $variant: "accept" | "reject" }>`
     css`
       background-color: ${theme.colors.inputBackground};
       color: ${theme.colors.text};
+    `}
+
+  /* 위임 버튼 */
+  ${({ $variant }) =>
+    $variant === "transfer" &&
+    css`
+      background-color: #ff9500;
+      color: white;
     `}
   
   &:disabled {
@@ -166,7 +185,7 @@ const ApplicantListPage: React.FC = () => {
   const isTripFinished = post?.endAt
     ? (() => {
         const endDate = new Date(post.endAt);
-        endDate.setDate(endDate.getDate() + 1); // 종료일 다음 날
+        endDate.setDate(endDate.getDate() + 1);
         return new Date() > endDate;
       })()
     : false;
@@ -217,6 +236,20 @@ const ApplicantListPage: React.FC = () => {
     },
   });
 
+  // 방장 위임
+  const { mutate: transferMutate, isPending: isTransferring } = useMutation({
+    mutationFn: (newOwnerId: number) =>
+      transferPostOwnership(postId!, newOwnerId),
+    onSuccess: () => {
+      alert("방장 권한을 위임했습니다.");
+      queryClient.invalidateQueries({ queryKey: ["post", postId] });
+      navigate(`/posts/${postId}`);
+    },
+    onError: (err) => {
+      alert(`위임 처리 중 오류 발생: ${err.message}`);
+    },
+  });
+
   // 동행 나가기
   const { mutate: leaveMutate, isPending: isLeaving } = useMutation({
     mutationFn: leaveTrip,
@@ -244,6 +277,16 @@ const ApplicantListPage: React.FC = () => {
   const handleReject = (applicantId: number) => {
     if (isAccepting || isRejecting) return;
     rejectMutate({ postId: Number(postId), userId: applicantId });
+  };
+
+  const handleTransfer = (applicantId: number) => {
+    if (
+      window.confirm(
+        "정말로 방장 권한을 위임하시겠습니까?\n위임 후에는 더 이상 모집 관리 권한이 없습니다."
+      )
+    ) {
+      transferMutate(applicantId);
+    }
   };
 
   const handleProfileClick = (applicantId: number) => {
@@ -328,6 +371,7 @@ const ApplicantListPage: React.FC = () => {
                   {/* 작성자인 경우 관리 기능 표시 */}
                   {isAuthor && (
                     <>
+                      {/* 대기중인 신청자 */}
                       {applicant.applicationStatus === null && (
                         <>
                           <ActionButton
@@ -346,9 +390,26 @@ const ApplicantListPage: React.FC = () => {
                           </ActionButton>
                         </>
                       )}
+
+                      {/* 수락된 참여자: 방장 위임 가능 */}
                       {applicant.applicationStatus === true && (
-                        <StatusText $status="accepted">수락됨</StatusText>
+                        <>
+                          <StatusText $status="accepted">수락됨</StatusText>
+                          {/* 본인이 아닌 수락된 참여자에게만 위임 버튼 표시 */}
+                          {user?.id !== applicant.id && (
+                            <ActionButton
+                              $variant="transfer"
+                              onClick={() => handleTransfer(applicant.id)}
+                              disabled={isTransferring}
+                              title="방장 위임"
+                            >
+                              <IoRibbonOutline />
+                            </ActionButton>
+                          )}
+                        </>
                       )}
+
+                      {/* 거절된 신청자 */}
                       {applicant.applicationStatus === false && (
                         <StatusText $status="rejected">거절됨</StatusText>
                       )}
@@ -369,7 +430,7 @@ const ApplicantListPage: React.FC = () => {
                       </ActionButton>
                     )}
 
-                  {/* 다른 참여자 상태 표시 */}
+                  {/* 다른 참여자 상태 표시 (작성자 아님) */}
                   {!isAuthor &&
                     user?.id !== applicant.id &&
                     (applicant.applicationStatus === true ? (
