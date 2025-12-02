@@ -71,6 +71,16 @@ public class PostController {
         return postSlice.map(post -> postService.convertPostToDTO(post, chatService, regionService));
     }
 
+    // 대학교 ID로 게시물 조회 (Slice로 반환)
+    @GetMapping("/university")
+    public Slice<PostDTO> getPostsByUniversityId(
+            @RequestParam Integer universityId,
+            @RequestParam(required = false) String keyword,
+            @PageableDefault(size = 3, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Slice<Post> postSlice = postService.getPostsByUniversityIdSlice(universityId, keyword, pageable);
+        return postSlice.map(post -> postService.convertPostToDTO(post, chatService, regionService));
+    }
+
     // 사용자 id를 통해 작성한 게시글 또는 참여한 게시글 (Post + Application)조회
     @GetMapping("/membership/{membershipId}")
     public Slice<PostDTO> getPostsByMembershipId(

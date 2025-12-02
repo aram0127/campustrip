@@ -304,6 +304,17 @@ public class PostService {
         return postRepository.findPostsByRegionIdsSlice(regionIds, pageable);
     }
 
+    /**
+     * 대학교 필터링 게시글 조회
+     * keyword가 null이거나 빈 문자열이면 대학교 필터만 적용, 있으면 대학교+검색 조회
+     */
+    public Slice<Post> getPostsByUniversityIdSlice(Integer universityId, String keyword, Pageable pageable) {
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            return postRepository.findAllByUniversityIdAndKeyword(universityId, keyword, pageable);
+        }
+        return postRepository.findAllByUniversityId(universityId, pageable);
+    }
+
     public List<PostMember> getPostMembersByPostId(Integer postId) {
         List<Object[]> results = applicationRepository.findAllByPostIdWithUserRates(postId);
         // Object[0] = Application, Object[1] = UserRate (nullable)
