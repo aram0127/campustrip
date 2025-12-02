@@ -225,3 +225,14 @@ export const getMyTripHistory = async (
   );
   return response.data;
 };
+
+/* 게시글 방장 권한 위임 */
+export const transferPostOwnership = async (
+  postId: string,
+  newOwnerId: number
+): Promise<void> => {
+  const params = new URLSearchParams();
+  params.append("newOwnerMembershipId", newOwnerId.toString());
+
+  await apiClient.post(`/api/posts/${postId}/transfer?${params.toString()}`);
+};
