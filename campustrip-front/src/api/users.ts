@@ -63,3 +63,11 @@ export const getUserRates = async (userId: number): Promise<UserRate[]> => {
   );
   return response.data;
 };
+
+// 사용자 여행 성향 수정
+export const updateUserPreference = async (
+  id: number,
+  preference: number
+): Promise<void> => {
+  await apiClient.put(`/api/users/preference/${id}`, { preference });
+};

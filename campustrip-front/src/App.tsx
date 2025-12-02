@@ -210,7 +210,10 @@ function App() {
                     path="/profile/:userId/follows"
                     element={<FollowListPage />}
                   />
-                  <Route path="/profile/blocked" element={<BlockedListPage />} />
+                  <Route
+                    path="/profile/blocked"
+                    element={<BlockedListPage />}
+                  />
                   <Route
                     path="/notifications"
                     element={<NotificationListPage />}
@@ -219,7 +222,7 @@ function App() {
                     path="/profile/personal-info"
                     element={<PersonalInfoPage />}
                   />
-                  <Route path="/test/travel" element={<TravelTestPage />} />
+                  <Route path="/profile/test" element={<TravelTestPage />} />
                   <Route path="/profile/edit" element={<ProfileEditPage />} />
                   <Route
                     path="/profile/delete-account"
@@ -254,7 +257,10 @@ function App() {
                   />
 
                   {/* Planner */}
-                  <Route path="/planner/create" element={<PlannerCreatePage />} />
+                  <Route
+                    path="/planner/create"
+                    element={<PlannerCreatePage />}
+                  />
                   <Route
                     path="/planner/edit/:plannerId"
                     element={<PlannerEditPage />}
@@ -276,11 +282,17 @@ function App() {
                   <Route
                     path="/*"
                     element={
-                      <MainLayout currentTheme={theme} toggleTheme={toggleTheme}>
+                      <MainLayout
+                        currentTheme={theme}
+                        toggleTheme={toggleTheme}
+                      >
                         <Routes>
                           <Route path="/posts" element={<PostListPage />} />
                           <Route path="/reviews" element={<ReviewListPage />} />
-                          <Route path="/planner" element={<PlannerListPage />} />
+                          <Route
+                            path="/planner"
+                            element={<PlannerListPage />}
+                          />
                           <Route path="/chat" element={<ChatListPage />} />
                         </Routes>
                       </MainLayout>
