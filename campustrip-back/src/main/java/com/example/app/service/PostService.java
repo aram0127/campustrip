@@ -127,6 +127,14 @@ public class PostService {
                 newPlanner.setEndDate(planner.getEndDate());
                 planner = plannerRepository.save(newPlanner);
                 // 여기에 플래너 항목들도 복제하는 로직이 필요할 수 있음
+                List<PlannerDetail> originalDetails = plannerDetailRepository.findByPlannerPlannerIdOrderByIdPlannerOrder(createPost.getPlannerId());
+                for (PlannerDetail detail : originalDetails) {
+                    PlannerDetail newDetail = new PlannerDetail();
+                    newDetail.setId(new PlannerDetailId(detail.getId().getPlannerOrder(), newPlanner.getPlannerId(), detail.getId().getDay()));
+                    newDetail.setPlanner(newPlanner);
+                    newDetail.setGooglePlaceId(detail.getGooglePlaceId());
+                    plannerDetailRepository.save(newDetail);
+                }
             }
             newPost.setPlanner(planner);
         } catch(Exception e){

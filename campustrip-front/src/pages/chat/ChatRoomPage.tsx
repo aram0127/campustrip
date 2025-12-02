@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { useNavigate, useParams } from "react-router-dom";
 import { IoMenu, IoImage, IoSend, IoLocationSharp } from "react-icons/io5";
-import { Client, type IMessage } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
+import { type IMessage, type StompSubscription } from "@stomp/stompjs";
 import { useAuth } from "../../context/AuthContext";
+import { useWebSocket } from "../../context/WebSocketContext";
 import { type ChatMessage, MessageTypeValue } from "../../types/chat";
 import PageLayout, {
   ScrollingContent,
@@ -15,7 +15,6 @@ import {
   getChatMembers,
   sendImageMessage,
 } from "../../api/chats";
-import { getToken } from "../../utils/token";
 
 const MessageListContainer = styled(ScrollingContent)`
   padding: 16px;
@@ -151,12 +150,13 @@ const Message = styled.p`
 function ChatRoomPage() {
   const { chatId } = useParams<{ chatId: string }>();
   const { user } = useAuth(); // 현재 로그인한 사용자 정보
+  const { subscribe, publish, isConnected } = useWebSocket();
   const navigate = useNavigate();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]); // 실시간 + 과거 메시지
   const [inputValue, setInputValue] = useState("");
   const [roomTitle] = useState("채팅방");
-  const stompClientRef = useRef<Client | null>(null);
+  const subscriptionRef = useRef<StompSubscription | null>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null); // 파일 input ref
   const [isHistoryLoaded, setIsHistoryLoaded] = useState(false); // 중복 로드 방지
@@ -196,53 +196,31 @@ function ChatRoomPage() {
   }, [historyData]); // historyData가 변경될 때마다 실행
 
   useEffect(() => {
-    if (!chatId || !user || !isHistoryLoaded) return;
+    if (!chatId || !user || !isHistoryLoaded || !isConnected) return;
 
-    // STOMP 클라이언트 생성
-    const client = new Client({
-      // 백엔드 WebSocketConfig.java의 /ws/chat 엔드포인트
-      brokerURL: `${import.meta.env.VITE_API_BASE_URL.replace(
-        "http",
-        "ws"
-      )}/ws/chat`,
-      webSocketFactory: () =>
-        new SockJS(`${import.meta.env.VITE_API_BASE_URL}/ws/chat`),
-      connectHeaders: {
-        Authorization: getToken() || "",
-      },
-      debug: (str) => {
-        console.log(new Date(), str);
-      },
-      reconnectDelay: 5000,
-      heartbeatIncoming: 4000,
-      heartbeatOutgoing: 4000,
-    });
-
-    // 연결 성공 시
-    client.onConnect = () => {
-      console.log("WebSocket 연결 성공");
-
-      // 채팅방 구독 (KafkaConsumerService가 여기로 메시지 전송)
-      client.subscribe(`/topic/chat/room/${chatId}`, (message: IMessage) => {
+    // 채팅방 구독 (KafkaConsumerService가 여기로 메시지 전송)
+    const subscription = subscribe(
+      `/topic/chat/room/${chatId}`,
+      (message: IMessage) => {
         const receivedMessage = JSON.parse(message.body) as ChatMessage;
         setMessages((prevMessages) => [...prevMessages, receivedMessage]);
-      });
-    };
+      }
+    );
 
-    // 연결 오류 시
-    client.onStompError = (frame) => {
-      console.error("Broker reported error: " + frame.headers["message"]);
-      console.error("Additional details: " + frame.body);
-    };
+    subscriptionRef.current = subscription;
 
-    // 클라이언트 활성화
-    client.activate();
-    stompClientRef.current = client;
-  }, [chatId, user, isHistoryLoaded]); // user와 chatId가 변경될 때마다 재연결
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+        subscriptionRef.current = null;
+      }
+    };
+  }, [chatId, user, isHistoryLoaded, isConnected]); // user와 chatId가 변경될 때마다 재연결
 
   // 텍스트 메시지 전송 핸들러
+  // 텍스트 메시지 전송 핸들러
   const handleSend = () => {
-    if (inputValue.trim() && stompClientRef.current?.active && user) {
+    if (inputValue.trim() && isConnected && user) {
       const chatMessage: ChatMessage = {
         messageType: MessageTypeValue.CHAT,
         roomId: chatId!,
@@ -251,10 +229,7 @@ function ChatRoomPage() {
         message: inputValue,
       };
 
-      stompClientRef.current.publish({
-        destination: "/pub/chat/message", // @MessageMapping("/chat/message")
-        body: JSON.stringify(chatMessage),
-      });
+      publish("/pub/chat/message", chatMessage);
 
       setInputValue("");
     }
@@ -396,7 +371,7 @@ function ChatRoomPage() {
         <SendButton
           onClick={handleSend}
           style={{ marginRight: "-4px" }}
-          disabled={!isHistoryLoaded || !stompClientRef.current?.active}
+          disabled={!isHistoryLoaded || !isConnected}
         >
           <IoSend />
         </SendButton>

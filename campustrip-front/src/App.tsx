@@ -38,6 +38,7 @@ import LocationSharePage from "./pages/location/LocationSharePage";
 import NotificationListPage from "./pages/notification/NotificationListPage";
 import PostEditLoader from "./pages/post/edit/PostEditLoader";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import SocketLayout from "./components/layout/SocketLayout";
 import TravelTestPage from "./pages/profile/TravelTestPage.tsx";
 import { PostCreateProvider } from "./context/PostCreateContext";
 import ReviewCreatePage from "./pages/review/ReviewCreatePage";
@@ -202,88 +203,90 @@ function App() {
                   element={<SetNewPasswordPage />}
                 />
 
-                {/* Profile */}
-                <Route path="/profile/:userId" element={<ProfilePage />} />
-                <Route
-                  path="/profile/:userId/follows"
-                  element={<FollowListPage />}
-                />
-                <Route path="/profile/blocked" element={<BlockedListPage />} />
-                <Route
-                  path="/notifications"
-                  element={<NotificationListPage />}
-                />
-                <Route
-                  path="/profile/personal-info"
-                  element={<PersonalInfoPage />}
-                />
-                <Route path="/test/travel" element={<TravelTestPage />} />
-                <Route path="/profile/edit" element={<ProfileEditPage />} />
-                <Route
-                  path="/profile/delete-account"
-                  element={<DeleteAccountPage />}
-                />
+                <Route element={<SocketLayout />}>
+                  {/* Profile */}
+                  <Route path="/profile/:userId" element={<ProfilePage />} />
+                  <Route
+                    path="/profile/:userId/follows"
+                    element={<FollowListPage />}
+                  />
+                  <Route path="/profile/blocked" element={<BlockedListPage />} />
+                  <Route
+                    path="/notifications"
+                    element={<NotificationListPage />}
+                  />
+                  <Route
+                    path="/profile/personal-info"
+                    element={<PersonalInfoPage />}
+                  />
+                  <Route path="/test/travel" element={<TravelTestPage />} />
+                  <Route path="/profile/edit" element={<ProfileEditPage />} />
+                  <Route
+                    path="/profile/delete-account"
+                    element={<DeleteAccountPage />}
+                  />
 
-                {/* Posts */}
-                <Route path="/posts/:postId" element={<PostDetailPage />} />
-                <Route path="/posts/new/*" element={<PostCreateFlow />} />
-                <Route
-                  path="/posts/edit/:postId/*"
-                  element={<PostEditLoader />}
-                />
-                <Route
-                  path="/posts/:postId/applicants"
-                  element={<ApplicantListPage />}
-                />
-                <Route
-                  path="/location/:chatRoomId"
-                  element={<LocationSharePage />}
-                />
+                  {/* Posts */}
+                  <Route path="/posts/:postId" element={<PostDetailPage />} />
+                  <Route path="/posts/new/*" element={<PostCreateFlow />} />
+                  <Route
+                    path="/posts/edit/:postId/*"
+                    element={<PostEditLoader />}
+                  />
+                  <Route
+                    path="/posts/:postId/applicants"
+                    element={<ApplicantListPage />}
+                  />
+                  <Route
+                    path="/location/:chatRoomId"
+                    element={<LocationSharePage />}
+                  />
 
-                {/* Review */}
-                <Route path="/reviews/new" element={<ReviewCreatePage />} />
-                <Route
-                  path="/reviews/:reviewId"
-                  element={<ReviewDetailPage />}
-                />
-                <Route
-                  path="/reviews/edit/:reviewId"
-                  element={<ReviewCreatePage />}
-                />
+                  {/* Review */}
+                  <Route path="/reviews/new" element={<ReviewCreatePage />} />
+                  <Route
+                    path="/reviews/:reviewId"
+                    element={<ReviewDetailPage />}
+                  />
+                  <Route
+                    path="/reviews/edit/:reviewId"
+                    element={<ReviewCreatePage />}
+                  />
 
-                {/* Planner */}
-                <Route path="/planner/create" element={<PlannerCreatePage />} />
-                <Route
-                  path="/planner/edit/:plannerId"
-                  element={<PlannerEditPage />}
-                />
-                <Route
-                  path="/planner/:plannerId"
-                  element={<PlannerDetailPage />}
-                />
+                  {/* Planner */}
+                  <Route path="/planner/create" element={<PlannerCreatePage />} />
+                  <Route
+                    path="/planner/edit/:plannerId"
+                    element={<PlannerEditPage />}
+                  />
+                  <Route
+                    path="/planner/:plannerId"
+                    element={<PlannerDetailPage />}
+                  />
 
-                {/* Chat */}
-                <Route path="/chat/:chatId" element={<ChatRoomPage />} />
-                <Route path="/chat/new" element={<NewChatPage />} />
-                <Route path="/chat/:chatId/menu" element={<ChatMenuPage />} />
+                  {/* Chat */}
+                  <Route path="/chat/:chatId" element={<ChatRoomPage />} />
+                  <Route path="/chat/new" element={<NewChatPage />} />
+                  <Route path="/chat/:chatId/menu" element={<ChatMenuPage />} />
 
-                {/* Test */}
-                <Route path="/test/fcm" element={<FCMTestPage />} />
+                  {/* Test */}
+                  <Route path="/test/fcm" element={<FCMTestPage />} />
 
-                {/* Main Layout */}
-                <Route
-                  path="/*"
-                  element={
-                    <MainLayout currentTheme={theme} toggleTheme={toggleTheme}>
-                      <Routes>
-                        <Route path="/posts" element={<PostListPage />} />
-                        <Route path="/reviews" element={<ReviewListPage />} />
-                        <Route path="/planner" element={<PlannerListPage />} />
-                        <Route path="/chat" element={<ChatListPage />} />
-                      </Routes>
-                    </MainLayout>
-                  }
-                />
+                  {/* Main Layout */}
+                  <Route
+                    path="/*"
+                    element={
+                      <MainLayout currentTheme={theme} toggleTheme={toggleTheme}>
+                        <Routes>
+                          <Route path="/posts" element={<PostListPage />} />
+                          <Route path="/reviews" element={<ReviewListPage />} />
+                          <Route path="/planner" element={<PlannerListPage />} />
+                          <Route path="/chat" element={<ChatListPage />} />
+                        </Routes>
+                      </MainLayout>
+                    }
+                  />
+                </Route>
               </Routes>
             </PostCreateProvider>
           </Router>
