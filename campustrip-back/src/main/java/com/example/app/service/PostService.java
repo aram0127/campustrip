@@ -3,6 +3,8 @@ package com.example.app.service;
 import com.example.app.domain.*;
 import com.example.app.dto.*;
 import com.example.app.repository.*;
+import com.fasterxml.jackson.databind.SequenceWriter;
+import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;  // @Service 어노테이션
@@ -14,6 +16,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.LinkedHashMap;
 import java.util.Comparator;
 
@@ -27,11 +31,12 @@ public class PostService {
     private final PostAssetRepository postAssetRepository;
     private final S3Service s3Service;
     private final ApplicationRepository applicationRepository;
+    private final EntityManager entityManager;
 
     @Autowired
     public PostService(PostRepository postRepository,
                        UserRepository userRepository, RegionRepository regionRepository, PlannerRepository plannerRepository, PlannerDetailRepository plannerDetailRepository, PostAssetRepository postAssetrepository, S3Service s3Service,
-                       ApplicationRepository applicationRepository) {
+                       ApplicationRepository applicationRepository, EntityManager entityManager) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.regionRepository = regionRepository;
@@ -40,6 +45,7 @@ public class PostService {
         this.postAssetRepository = postAssetrepository;
         this.s3Service = s3Service;
         this.applicationRepository = applicationRepository;
+        this.entityManager = entityManager;
     }
 
     public List<Post> getAllPosts() {
@@ -359,10 +365,42 @@ public class PostService {
     }
 
     // 게시글 위임
+    @Transactional
     public void transferPostOwnership(Post post, Integer newOwnerId) {
         User newOwner = userRepository.findById(newOwnerId)
                 .orElseThrow(() -> new NoSuchElementException("User not found with id: " + newOwnerId));
+        User currentOwner = post.getUser();
+
+        // 1. 새로운 소유자의 기존 신청 조회 및 삭제
+        Post finalPost = post;
+        applicationRepository.findByUserAndPost(newOwner, post)
+                .ifPresent(existingApp -> {
+                    applicationRepository.delete(existingApp);
+                    // Post의 컬렉션에서도 제거
+                    if (finalPost.getApplications() != null) {
+                        finalPost.getApplications().remove(existingApp);
+                    }
+                });
+
+        // 2. 영속성 컨텍스트 즉시 동기화
+        entityManager.flush();
+        entityManager.clear();
+
+        // 3. Post와 Application을 다시 로드
+        post = postRepository.findById(post.getPostId())
+                .orElseThrow(() -> new NoSuchElementException("Post not found"));
+
+        // 4. 소유자 변경
         post.setUser(newOwner);
         postRepository.save(post);
+
+        // 5. 기존 소유자를 신청자로 추가
+        Application newApplication = new Application(currentOwner, post, true);
+        applicationRepository.save(newApplication);
+    }
+
+    @Transactional
+    protected void deleteApplicationsByPostAndUser(Post post, User user) {
+        applicationRepository.deleteByUserAndPost(user, post);
     }
 }

@@ -24,6 +24,7 @@ const DAY_COLORS = [
 
 const libraries: "places"[] = ["places"];
 
+// Google Places Service 인스턴스를 한 번만 생성하기 위한 래퍼
 const PlaceServiceWrapper = {
     service: null as google.maps.places.PlacesService | null,
     getInstance: () => {
@@ -35,14 +36,11 @@ const PlaceServiceWrapper = {
     }
 };
 
-// 날짜 계산
-const addDaysToDateString = (dateString, days) => {
+// 날짜 일수 더하거나 빼는 함수
+const addDaysToDateString = (dateString: string, days: number) => {
     if (!dateString) return '';
-
     const [year, month, day] = dateString.split('-').map(Number);
     const date = new Date(year, month - 1, day); 
-
-    // 날짜 더하기
     date.setDate(date.getDate() + days);
 
     const newYear = date.getFullYear();
@@ -50,6 +48,60 @@ const addDaysToDateString = (dateString, days) => {
     const newDay = String(date.getDate()).padStart(2, '0');
 
     return `${newYear}-${newMonth}-${newDay}`;
+};
+
+// 시작일과 종료일 사이 총 일수 계산하는 함수
+const calculateDayCount = (start: string, end: string) => {
+    if (!start || !end) return 1;
+    
+    const dateStart = new Date(start);
+    const dateStartLocal = new Date(dateStart.getUTCFullYear(), dateStart.getUTCMonth(), dateStart.getUTCDate());
+
+    const dateEnd = new Date(end);
+    const dateEndLocal = new Date(dateEnd.getUTCFullYear(), dateEnd.getUTCMonth(), dateEnd.getUTCDate());
+
+    if (dateEndLocal.getTime() < dateStartLocal.getTime()) return 1; 
+    
+    // 밀리초를 일(Day) 단위로 변환 후, 기간 포함을 위해 +1
+    const timeDiff = dateEndLocal.getTime() - dateStartLocal.getTime();
+    const dayCount = Math.floor(timeDiff / (1000 * 3600 * 24)) + 1;
+    
+    return dayCount > 0 ? dayCount : 1;
+};
+
+// 날짜 기간에 맞춰 schedules를 초기화/조정하는 함수 
+const initializeSchedulesByDates = (
+    newStart: string, 
+    newEnd: string, 
+    currentSchedules: PlannerSchedule[], 
+    setSchedules: React.Dispatch<React.SetStateAction<PlannerSchedule[]>>,
+    setCurrentDay: React.Dispatch<React.SetStateAction<number>>
+) => {
+    const count = calculateDayCount(newStart, newEnd);
+    
+    if (count < 1) {
+        setSchedules([{ day: 1, places: [] }]);
+        setCurrentDay(1);
+        return;
+    }
+
+    const newSchedules: PlannerSchedule[] = [];
+    for (let i = 1; i <= count; i++) {
+        const existingSchedule = currentSchedules.find(s => s.day === i);
+        newSchedules.push({ 
+            day: i, 
+            places: existingSchedule ? existingSchedule.places : []
+        }); 
+    }
+    
+    // 기간을 줄였을 때 currentDay가 사라지지 않도록 조정
+    const safeCurrentDay = Math.min(
+        newSchedules.length > 0 ? newSchedules.length : 1, 
+        currentSchedules.length > 0 ? currentSchedules[0].day : 1 // 1일차는 항상 유지
+    );
+
+    setSchedules(newSchedules.length > 0 ? newSchedules : [{ day: 1, places: [] }]);
+    setCurrentDay(safeCurrentDay);
 };
 
 // --- 스타일 컴포넌트 ---
@@ -331,12 +383,17 @@ const GoogleMapContent: React.FC<GoogleMapContentProps> = ({
         setSchedules((prevSchedules) => {
             const exists = prevSchedules.some(s => s.day === currentDay);
             if (!exists) {
+                // 현재 선택된 day에 해당하는 일정이 없다면, 새로운 일정을 추가하고 day 순서로 정렬
                 return [...prevSchedules, { day: currentDay, places: [newPlace] }].sort((a, b) => a.day - b.day);
             }
 
+            // 해당 day에 장소를 추가하고 place order 재정렬 (불필요한 정렬 방지)
             return prevSchedules.map((schedule) =>
                 schedule.day === currentDay
-                    ? { ...schedule, places: [...schedule.places, newPlace] }
+                    ? { 
+                        ...schedule, 
+                        places: [...schedule.places, newPlace].map((p, i) => ({ ...p, order: i + 1 })) 
+                    }
                     : schedule
             );
         });
@@ -348,6 +405,7 @@ const GoogleMapContent: React.FC<GoogleMapContentProps> = ({
                 <Autocomplete
                     onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
                     onPlaceChanged={onPlaceSelected}
+                    options={{ fields: ['name', 'geometry', 'types', 'place_id'] }} // 필요한 필드만 요청
                 >
                     <SearchWrapper>
                         <SearchInput placeholder="장소를 검색해서 추가하세요" />
@@ -362,6 +420,7 @@ const GoogleMapContent: React.FC<GoogleMapContentProps> = ({
                 zoom={12}
                 options={{ disableDefaultUI: true, clickableIcons: false }}
             >
+                {/* 모든 일차의 경로와 마커를 렌더링 */}
                 {schedules.map((schedule) => {
                     const dayColor = getCurrentDayColor(schedule.day);
                     const path = schedule.places.map((p) => ({
@@ -371,6 +430,7 @@ const GoogleMapContent: React.FC<GoogleMapContentProps> = ({
 
                     return (
                         <React.Fragment key={schedule.day}>
+                            {/* 경로 (점선) */}
                             {path.map((point, index) => {
                                 if (index === path.length - 1) return null;
                                 const segmentPath = [path[index], path[index + 1]];
@@ -408,7 +468,7 @@ const GoogleMapContent: React.FC<GoogleMapContentProps> = ({
                                         color: "white",
                                         fontWeight: "bold",
                                     }}
-                                    zIndex={2}
+                                    zIndex={schedule.day === currentDay ? 3 : 2} // 현재 일차 마커를 더 앞으로
                                     icon={{
                                         path: "M 12 2 C 8.13 2 5 5.13 5 9 c 0 5.25 7 13 7 13 s 7 -7.75 7 -13 c 0 -3.87 -3.13 -7 -7 -7 z",
                                         fillColor: dayColor,
@@ -436,7 +496,7 @@ function PlannerEditPage() {
     const id = plannerId;
     const navigate = useNavigate();
 
-    // Google Maps API 로딩: isLoaded 상태를 받아옴
+    // Google Maps API 로딩
     const { isLoaded } = useJsApiLoader({
         id: "google-map-script",
         googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -447,14 +507,10 @@ function PlannerEditPage() {
     const [title, setTitle] = useState("");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
-    // 멤버십 ID 상태 추가 (초기값은 null 또는 0)
     const [memberId, setMemberId] = useState<number | null>(null);
-    // 데이터 로딩 상태
     const [isLoading, setIsLoading] = useState(true); 
 
     const [schedules, setSchedules] = useState<PlannerSchedule[]>([]); 
-
-    const [isSaving, setIsSaving] = useState(false);
 
     const [currentDay, setCurrentDay] = useState(1);
     const [mapCenter, setMapCenter] = useState({ lat: 37.5665, lng: 126.978 }); 
@@ -467,7 +523,6 @@ function PlannerEditPage() {
             return;
         }
         
-        // Google Maps API 로드가 완료된 후에만 데이터 패치 시작
         if (!isLoaded) {
              return; 
         }
@@ -478,7 +533,7 @@ function PlannerEditPage() {
             const service = PlaceServiceWrapper.getInstance(); 
 
             if (!service) {
-                console.error("[Fatal Error] Google PlaceService 인스턴스 생성 실패. isLoaded가 true이나 서비스 객체 없음.");
+                console.error("[Fatal Error] Google PlaceService 인스턴스 생성 실패.");
                 setIsLoading(false); 
                 return;
             }
@@ -490,20 +545,18 @@ function PlannerEditPage() {
                 setStartDate(plannerData.startDate);
                 setEndDate(plannerData.endDate);
 
-                if ((plannerData as any).userId) { // 타입 정의에 userId가 있다고 가정
-                    setMemberId((plannerData as any).userId);
-                } else if ((plannerData as any).membershipId) { // membershipId 필드가 있을 경우
-                    setMemberId((plannerData as any).membershipId);
-                }
+                // 사용자 ID 설정
+                if ((plannerData as any).userId) { 
+                    setMemberId((plannerData as any).userId);
+                } else if ((plannerData as any).membershipId) { 
+                    setMemberId((plannerData as any).membershipId);
+                }
 
-                const detailList = (plannerData as any).details || [];
-
-                // 디버깅 로그: 데이터 로드됐는지 확인용 
-                console.log("Loaded detail list length (Using 'details' field):", detailList.length);
+                const detailList: PlannerDetailDTO[] = (plannerData as any).details || [];
 
                 if (detailList.length === 0) {
                     setSchedules([{ day: 1, places: [] }]);
-                    setMapCenter({ lat: 33.4507, lng: 126.5706 });
+                    setMapCenter({ lat: 33.4507, lng: 126.5706 }); // 제주도 중심 등 초기값 설정
                     return;
                 }
 
@@ -553,15 +606,24 @@ function PlannerEditPage() {
                     schedule.places.sort((a, b) => a.order - b.order);
                 });
                 
-                setSchedules(finalSchedules.length > 0 ? finalSchedules : [{ day: 1, places: [] }]);
+                // 기간 계산 로직을 사용해 빈 일차를 포함하여 최종 스케줄 설정
+                const dayCount = calculateDayCount(plannerData.startDate, plannerData.endDate);
+                const completeSchedules: PlannerSchedule[] = [];
+
+                for (let i = 1; i <= dayCount; i++) {
+                    const existing = finalSchedules.find(s => s.day === i);
+                    completeSchedules.push(existing || { day: i, places: [] });
+                }
                 
-                const initialPlace = finalSchedules[0]?.places[0];
+                setSchedules(completeSchedules.length > 0 ? completeSchedules : [{ day: 1, places: [] }]);
+                
+                const initialPlace = completeSchedules[0]?.places[0];
                 if (initialPlace) {
-                    setCurrentDay(finalSchedules[0].day);
+                    setCurrentDay(completeSchedules[0].day);
                     setMapCenter({ lat: initialPlace.latitude, lng: initialPlace.longitude });
                 } else {
                     setCurrentDay(1);
-                    setMapCenter({ lat: 33.4507, lng: 126.5706 });
+                    setMapCenter({ lat: 37.5665, lng: 126.978 }); // 서울 시청 기본값
                 }
 
             } catch (err) {
@@ -569,7 +631,7 @@ function PlannerEditPage() {
                 alert("플래너 정보를 불러오지 못했습니다.");
                 navigate("/planner");
             } finally {
-                setIsLoading(false); // 백엔드/Google Places 데이터 처리가 모두 끝나야 로딩 종료
+                setIsLoading(false); 
             }
         };
 
@@ -586,7 +648,11 @@ function PlannerEditPage() {
         if (schedules.length === 1) {
             if (window.confirm("1일차 일정을 모두 비우시겠습니까?")) {
                 setSchedules([{ day: 1, places: [] }]);
-                // 지도 중앙은 기본값으로 리셋 (서울 시청)
+                 if (startDate) {
+                    setEndDate(startDate); 
+                 } else {
+                    setEndDate('');
+                 }
                 setMapCenter({ lat: 37.5665, lng: 126.978 }); 
             }
             return;
@@ -598,7 +664,6 @@ function PlannerEditPage() {
         }
 
         const newSchedules = [...schedules];
-        // currentDay는 1부터 시작하므로 인덱스는 currentDay - 1
         newSchedules.splice(currentDay - 1, 1);
 
         // 날짜 번호 재정렬 (1, 2, 3...)
@@ -641,22 +706,24 @@ function PlannerEditPage() {
     
     // 일차 추가 핸들러
     const addDay = () => {
-        const existingDays = schedules.map(s => s.day);
-        let nextDay = 1;
-        while (existingDays.includes(nextDay)) {
-            nextDay++;
-        }
+        const lastDay = schedules.length > 0 ? schedules[schedules.length - 1].day : 0;
+        const nextDay = lastDay + 1;
 
         // 새 일정 추가
-        setSchedules([...schedules, { day: nextDay, places: [] }].sort((a, b) => a.day - b.day));
+        const newSchedules = [...schedules, { day: nextDay, places: [] }].sort((a, b) => a.day - b.day);
+        setSchedules(newSchedules);
         setCurrentDay(nextDay);
 
         // 일차가 늘어나면 endDate도 늘어남
-        if (endDate) {
-        const newEndDate = addDaysToDateString(endDate, 1);
-        setEndDate(newEndDate); 
+        if (startDate) {
+            // 현재 날짜 수 (새로 추가된 날 포함)
+            const currentDays = newSchedules.length;
+            // startDate를 기준으로 currentDays만큼 떨어진 날짜 계산 (currentDays - 1 일 후)
+            const newEndDate = addDaysToDateString(startDate, currentDays - 1);
+            setEndDate(newEndDate); 
         }
     };
+
 
     // updatePlanner 사용
     const handleSave = async () => {
@@ -667,6 +734,17 @@ function PlannerEditPage() {
         if (!memberId) {
             return alert("사용자 정보를 불러올 수 없습니다. 다시 로그인해 주세요.");
         }
+        
+        // 일차 개수와 날짜 기간 일치 검사
+        const scheduleDays = schedules.length;
+        const calculatedDays = calculateDayCount(startDate, endDate);
+        
+        if (scheduleDays !== calculatedDays) {
+            if (!window.confirm(`일정 개수(${scheduleDays}일차)와 선택된 기간(${calculatedDays}일)이 다릅니다. 이대로 저장하시겠습니까?`)) {
+                return;
+            }
+        }
+
 
         const plannerDetails = schedules.flatMap(schedule => 
             schedule.places.map(place => ({
@@ -687,7 +765,7 @@ function PlannerEditPage() {
         try {
             await updatePlanner(Number(id), updatedPlannerData);
             alert("플래너가 수정되었습니다");
-            navigate(`/planner/${id}`, { replace: true });    
+            navigate(`/planner/${id}`, { replace: true }); 	
         } catch (error) {
             console.error(error);
             alert("수정 중 오류가 발생했습니다.");
@@ -743,13 +821,23 @@ function PlannerEditPage() {
                     <DateInput
                         type="date"
                         value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
+                        onChange={(e) => {
+                            const newStart = e.target.value; 
+                            setStartDate(newStart);
+                            // 날짜 변경 시 일차 초기화/조정 로직 호출
+                            initializeSchedulesByDates(newStart, endDate, schedules, setSchedules, setCurrentDay); 
+                        }}
                     />
                     <span style={{ alignSelf: "center", color: "#888" }}>~</span>
                     <DateInput
                         type="date"
                         value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
+                        onChange={(e) => {
+                            const newEnd = e.target.value;
+                            setEndDate(newEnd);
+                            // 날짜 변경 시 일차 초기화/조정 로직 호출
+                            initializeSchedulesByDates(startDate, newEnd, schedules, setSchedules, setCurrentDay);
+                        }}
                     />
                 </DateRow>
             </InputGroup>
@@ -770,7 +858,7 @@ function PlannerEditPage() {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        marginBottom: "12px", // DaySelector의 기존 margin-bottom을 대체
+                        marginBottom: "12px", 
                     }}
                 >
                     <DaySelector style={{ marginBottom: 0, flex: 1 }}>
@@ -783,13 +871,13 @@ function PlannerEditPage() {
                             >
                                 {s.day}일차
                             </DayButton>
-                    ))}
-                    <DayButton $active={false} $color="gray" onClick={addDay}>
-                        + 추가
-                    </DayButton>
-                </DaySelector>
-                
-                <button
+                        ))}
+                        <DayButton $active={false} $color="gray" onClick={addDay}>
+                            + 추가
+                        </DayButton>
+                    </DaySelector>
+                    
+                    <button
                         onClick={handleDeleteDay}
                         style={{
                             background: "none",
@@ -799,7 +887,7 @@ function PlannerEditPage() {
                             color: "#999",
                             display: "flex",
                             alignItems: "center",
-                            flexShrink: 0, // DaySelector가 너무 줄어들지 않도록
+                            flexShrink: 0, 
                         }}
                         title={schedules.length === 1 ? "일정 비우기" : "현재 일차 삭제"}
                     >

@@ -531,14 +531,22 @@ const PostDetailPage: React.FC = () => {
 
     // 그 외 (미신청, 대기, 거절)
     let text = "동행 신청하기";
-    let variant: "primary" | "danger" | "outline" = "primary";
+    let variant: "primary" | "danger" | "outline" | "secondary" = "primary";
     let disabled = isMutationLoading;
+
+    const today = new Date();
+    const endDate = post.endAt ? new Date(post.endAt) : null;
+    const isTripEnded = endDate ? endDate < today : false;
 
     if (applicationStatus === "PENDING") {
       text = "신청 취소";
       variant = "danger";
     } else if (applicationStatus === "REJECTED") {
       text = "거절됨";
+      disabled = true;
+    } else if (isTripEnded) {
+      text = "모집 마감";
+      variant = "secondary";
       disabled = true;
     }
 
