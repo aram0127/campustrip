@@ -120,6 +120,7 @@ const LocationSharePage: React.FC = () => {
     googleMapsApiKey: apiKey || "",
   });
 
+  // 내 위치 아이콘
   const myLocationIcon = useMemo(() => {
     if (!isLoaded) return undefined;
     return {
@@ -129,6 +130,20 @@ const LocationSharePage: React.FC = () => {
       fillOpacity: 1,
       strokeWeight: 2,
       strokeColor: "white",
+    };
+  }, [isLoaded]);
+
+  // 동행 위치 아이콘
+  const companionIcon = useMemo(() => {
+    if (!isLoaded) return undefined;
+    return {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 10,
+      fillColor: "#EA4335",
+      fillOpacity: 1,
+      strokeWeight: 3,
+      strokeColor: "white",
+      labelOrigin: new google.maps.Point(0, -2),
     };
   }, [isLoaded]);
 
@@ -364,9 +379,22 @@ const LocationSharePage: React.FC = () => {
         zoom={15}
         options={mapOptions}
       >
-        {myPosition && <MarkerF position={myPosition} icon={myLocationIcon} />}
+        {myPosition && (
+          <MarkerF position={myPosition} icon={myLocationIcon} zIndex={100} />
+        )}
         {companionsArray.map((c) => (
-          <MarkerF key={c.userId} position={c.position} label={c.username} />
+          <MarkerF
+            key={c.userId}
+            position={c.position}
+            icon={companionIcon}
+            label={{
+              text: c.username,
+              color: "#333333",
+              fontSize: "14px",
+              fontWeight: "bold",
+              className: "map-label",
+            }}
+          />
         ))}
       </GoogleMap>
     );
