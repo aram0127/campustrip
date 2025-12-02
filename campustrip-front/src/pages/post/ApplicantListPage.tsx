@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styled, { css } from "styled-components";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -8,11 +8,15 @@ import {
   rejectApplication,
   leaveTrip,
 } from "../../api/applications";
-import { getPostById } from "../../api/posts";
+import { getPostById, getPostMembers } from "../../api/posts";
 import { type Applicant } from "../../types/applicant";
+import { type PostMember } from "../../types/post";
+import { type User } from "../../types/user";
 import { IoCheckmark, IoClose, IoLogOutOutline } from "react-icons/io5";
 import PageLayout from "../../components/layout/PageLayout";
 import { useAuth } from "../../context/AuthContext";
+import UserRatingModal from "../../components/domain/UserRatingModal";
+import Button from "../../components/common/Button";
 
 const ApplicantList = styled.main`
   flex-grow: 1;
@@ -106,7 +110,7 @@ const ActionButton = styled.button<{ $variant: "accept" | "reject" }>`
   }
 `;
 
-const StatusText = styled.span<{ $status: "accepted" | "rejected" }>`
+const StatusText = styled.span<{ $status: "accepted" | "rejected" | "rated" }>`
   font-size: 14px;
   font-weight: bold;
   padding: 6px 10px;
@@ -125,6 +129,13 @@ const StatusText = styled.span<{ $status: "accepted" | "rejected" }>`
       color: ${theme.colors.error};
       background-color: ${theme.colors.inputBackground};
     `}
+  
+  ${({ theme, $status }) =>
+    $status === "rated" &&
+    css`
+      color: ${theme.colors.secondaryTextColor};
+      background-color: ${theme.colors.inputBackground};
+    `}
 `;
 
 const Message = styled.p`
@@ -139,6 +150,11 @@ const ApplicantListPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
+  const [ratingModalOpen, setRatingModalOpen] = useState(false);
+  const [selectedUserToRate, setSelectedUserToRate] = useState<User | null>(
+    null
+  );
+
   const { data: post } = useQuery({
     queryKey: ["post", postId],
     queryFn: () => getPostById(postId!),
@@ -146,16 +162,35 @@ const ApplicantListPage: React.FC = () => {
   });
 
   const isAuthor = user?.id === post?.user.id;
+  // 여행 종료 여부 확인
+  const isTripFinished = post?.endAt
+    ? (() => {
+        const endDate = new Date(post.endAt);
+        endDate.setDate(endDate.getDate() + 1); // 종료일 다음 날
+        return new Date() > endDate;
+      })()
+    : false;
 
-  // 신청자 목록 조회
+  // 여행 종료 전: 신청자/참여자 관리 목록 조회
   const {
     data: applicants = [],
-    isLoading,
-    error,
+    isLoading: isLoadingApplicants,
+    error: errorApplicants,
   } = useQuery<Applicant[], Error>({
     queryKey: ["applicants", postId],
     queryFn: () => getApplicants(postId!),
-    enabled: !!postId,
+    enabled: !!postId && !isTripFinished,
+  });
+
+  // 여행 종료 후: 평가를 위한 참여자 목록 조회
+  const {
+    data: members = [],
+    isLoading: isLoadingMembers,
+    error: errorMembers,
+  } = useQuery<PostMember[], Error>({
+    queryKey: ["postMembers", postId],
+    queryFn: () => getPostMembers(postId!),
+    enabled: !!postId && isTripFinished,
   });
 
   // 신청 수락
@@ -163,7 +198,6 @@ const ApplicantListPage: React.FC = () => {
     mutationFn: acceptApplication,
     onSuccess: () => {
       alert("신청을 수락했습니다.");
-      // 목록을 새로고침
       queryClient.invalidateQueries({ queryKey: ["applicants", postId] });
     },
     onError: (err) => {
@@ -188,8 +222,8 @@ const ApplicantListPage: React.FC = () => {
     mutationFn: leaveTrip,
     onSuccess: () => {
       alert("동행에서 나갔습니다.");
-      queryClient.invalidateQueries({ queryKey: ["post", postId] }); // 게시글 상태 갱신
-      navigate(`/posts/${postId}`); // 게시글 상세로 이동
+      queryClient.invalidateQueries({ queryKey: ["post", postId] });
+      navigate(`/posts/${postId}`);
     },
     onError: (err) => {
       alert(`나가기 처리 중 오류 발생: ${err.message}`);
@@ -213,106 +247,205 @@ const ApplicantListPage: React.FC = () => {
   };
 
   const handleProfileClick = (applicantId: number) => {
-    // 백엔드 DTO의 id필드(membership_id)를 프로필 ID로 사용
     navigate(`/profile/${applicantId}`);
   };
 
-  if (isLoading) {
-    return <Message>신청자 목록을 불러오는 중...</Message>;
+  // 평가하기 버튼 클릭
+  const handleRateClick = (member: PostMember) => {
+    const targetUser: User = {
+      id: member.userId,
+      name: member.userName,
+      profilePhotoUrl: member.profilePhotoUrl,
+      gender: null,
+      userId: "",
+      phoneNumber: "",
+      email: "",
+      schoolEmail: "",
+      description: null,
+      preference: null,
+      userScore: 0,
+      role: 0,
+      university: "",
+      universityId: 0,
+    };
+    setSelectedUserToRate(targetUser);
+    setRatingModalOpen(true);
+  };
+
+  if (isLoadingApplicants || isLoadingMembers) {
+    return <Message>목록을 불러오는 중...</Message>;
   }
 
-  if (error) {
-    return <Message>오류가 발생했습니다: {error.message}</Message>;
+  if (errorApplicants || errorMembers) {
+    return <Message>오류가 발생했습니다.</Message>;
   }
 
   return (
     <PageLayout
-      title={isAuthor ? "동행 신청자 목록" : "참여자 목록"}
+      title={
+        isTripFinished
+          ? "참여자 평가"
+          : isAuthor
+          ? "동행 신청자 목록"
+          : "참여자 목록"
+      }
       showBackButton
       onBackClick={() => navigate(-1)}
     >
       <ApplicantList>
-        {applicants.length === 0 && <Message>아직 신청자가 없습니다.</Message>}
-        {applicants.map((applicant) => (
-          <ApplicantItem key={applicant.id}>
-            <ApplicantInfo onClick={() => handleProfileClick(applicant.id)}>
-              <Avatar $imageUrl={applicant.profilePhotoUrl} />
-              <NameContainer>
-                <ApplicantName>
-                  {applicant.name}
-                  {user?.id === applicant.id && (
-                    <span
-                      style={{
-                        fontSize: "12px",
-                        color: "#007AFF",
-                        marginLeft: "4px",
-                      }}
-                    >
-                      (나)
-                    </span>
-                  )}
-                </ApplicantName>
-                <UserScore>
-                  여행 온도: 🌡{applicant.userScore.toFixed(1)}
-                </UserScore>
-              </NameContainer>
-            </ApplicantInfo>
+        {/* 여행 종료 전: 기존 신청자 목록 표시 */}
+        {!isTripFinished && (
+          <>
+            {applicants.length === 0 && (
+              <Message>아직 신청자가 없습니다.</Message>
+            )}
+            {applicants.map((applicant) => (
+              <ApplicantItem key={applicant.id}>
+                <ApplicantInfo onClick={() => handleProfileClick(applicant.id)}>
+                  <Avatar $imageUrl={applicant.profilePhotoUrl} />
+                  <NameContainer>
+                    <ApplicantName>
+                      {applicant.name}
+                      {user?.id === applicant.id && (
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            color: "#007AFF",
+                            marginLeft: "4px",
+                          }}
+                        >
+                          (나)
+                        </span>
+                      )}
+                    </ApplicantName>
+                    <UserScore>
+                      여행 온도: 🌡{applicant.userScore.toFixed(1)}
+                    </UserScore>
+                  </NameContainer>
+                </ApplicantInfo>
 
-            <ActionContainer>
-              {/* 작성자인 경우 관리 기능 표시 */}
-              {isAuthor && (
-                <>
-                  {applicant.applicationStatus === null && (
+                <ActionContainer>
+                  {/* 작성자인 경우 관리 기능 표시 */}
+                  {isAuthor && (
                     <>
-                      <ActionButton
-                        $variant="accept"
-                        onClick={() => handleAccept(applicant.id)}
-                        disabled={isAccepting || isRejecting}
-                      >
-                        <IoCheckmark />
-                      </ActionButton>
-                      <ActionButton
-                        $variant="reject"
-                        onClick={() => handleReject(applicant.id)}
-                        disabled={isAccepting || isRejecting}
-                      >
-                        <IoClose />
-                      </ActionButton>
+                      {applicant.applicationStatus === null && (
+                        <>
+                          <ActionButton
+                            $variant="accept"
+                            onClick={() => handleAccept(applicant.id)}
+                            disabled={isAccepting || isRejecting}
+                          >
+                            <IoCheckmark />
+                          </ActionButton>
+                          <ActionButton
+                            $variant="reject"
+                            onClick={() => handleReject(applicant.id)}
+                            disabled={isAccepting || isRejecting}
+                          >
+                            <IoClose />
+                          </ActionButton>
+                        </>
+                      )}
+                      {applicant.applicationStatus === true && (
+                        <StatusText $status="accepted">수락됨</StatusText>
+                      )}
+                      {applicant.applicationStatus === false && (
+                        <StatusText $status="rejected">거절됨</StatusText>
+                      )}
                     </>
                   )}
-                  {applicant.applicationStatus === true && (
-                    <StatusText $status="accepted">수락됨</StatusText>
-                  )}
-                  {applicant.applicationStatus === false && (
-                    <StatusText $status="rejected">거절됨</StatusText>
-                  )}
-                </>
-              )}
 
-              {/* 참여자인 경우 수락된 상태라면 '나가기' 버튼 표시 */}
-              {!isAuthor &&
-                user?.id === applicant.id &&
-                applicant.applicationStatus === true && (
-                  <ActionButton
-                    $variant="reject"
-                    onClick={handleLeave}
-                    disabled={isLeaving}
-                    title="동행 나가기"
-                  >
-                    <IoLogOutOutline /> 나가기
-                  </ActionButton>
-                )}
+                  {/* 참여자 본인이면 나가기 버튼 */}
+                  {!isAuthor &&
+                    user?.id === applicant.id &&
+                    applicant.applicationStatus === true && (
+                      <ActionButton
+                        $variant="reject"
+                        onClick={handleLeave}
+                        disabled={isLeaving}
+                        title="동행 나가기"
+                      >
+                        <IoLogOutOutline /> 나가기
+                      </ActionButton>
+                    )}
 
-              {/* 다른 참여자거나 상태 표시만 필요한 경우 */}
-              {!isAuthor &&
-                user?.id !== applicant.id &&
-                (applicant.applicationStatus === true ? (
-                  <StatusText $status="accepted">참여중</StatusText>
-                ) : null)}
-            </ActionContainer>
-          </ApplicantItem>
-        ))}
+                  {/* 다른 참여자 상태 표시 */}
+                  {!isAuthor &&
+                    user?.id !== applicant.id &&
+                    (applicant.applicationStatus === true ? (
+                      <StatusText $status="accepted">참여중</StatusText>
+                    ) : null)}
+                </ActionContainer>
+              </ApplicantItem>
+            ))}
+          </>
+        )}
+
+        {/* 여행 종료 후: 평가 가능한 멤버 목록 표시 */}
+        {isTripFinished && (
+          <>
+            {members.length === 0 && <Message>참여자가 없습니다.</Message>}
+            {members.map((member) => (
+              <ApplicantItem key={member.userId}>
+                <ApplicantInfo
+                  onClick={() => handleProfileClick(member.userId)}
+                >
+                  <Avatar $imageUrl={member.profilePhotoUrl} />
+                  <NameContainer>
+                    <ApplicantName>
+                      {member.userName}
+                      {user?.id === member.userId && (
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            color: "#007AFF",
+                            marginLeft: "4px",
+                          }}
+                        >
+                          (나)
+                        </span>
+                      )}
+                    </ApplicantName>
+                  </NameContainer>
+                </ApplicantInfo>
+
+                <ActionContainer>
+                  {/* 본인이 아니면 평가 버튼 표시 */}
+                  {user?.id !== member.userId && (
+                    <>
+                      {member.rated ? (
+                        <StatusText $status="rated">평가완료</StatusText>
+                      ) : (
+                        <Button
+                          $size="small"
+                          onClick={() => handleRateClick(member)}
+                        >
+                          평가하기
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </ActionContainer>
+              </ApplicantItem>
+            ))}
+          </>
+        )}
       </ApplicantList>
+
+      {/* 평가 모달 */}
+      {selectedUserToRate && (
+        <UserRatingModal
+          isOpen={ratingModalOpen}
+          onClose={() => setRatingModalOpen(false)}
+          targetUser={selectedUserToRate}
+          onRateSuccess={() => {
+            // 평가 후 멤버 목록(평가 여부) 갱신
+            queryClient.invalidateQueries({
+              queryKey: ["postMembers", postId],
+            });
+          }}
+        />
+      )}
     </PageLayout>
   );
 };

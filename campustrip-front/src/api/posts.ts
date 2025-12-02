@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import { type Post } from "../types/post";
+import { type Post, type PostMember } from "../types/post";
 import { type UserInfo } from "../context/AuthContext";
 
 /* 모든 게시글 목록을 가져옴 */
@@ -11,6 +11,14 @@ export const getPosts = async (): Promise<Post[]> => {
 /* 특정 ID의 게시글을 가져옴 */
 export const getPostById = async (postId: string): Promise<Post> => {
   const response = await apiClient.get<Post>(`/api/posts/${postId}`);
+  return response.data;
+};
+
+/* 게시글의 확정된 멤버 목록 및 평가 여부 조회 */
+export const getPostMembers = async (postId: string): Promise<PostMember[]> => {
+  const response = await apiClient.get<PostMember[]>(
+    `/api/posts/${postId}/members`
+  );
   return response.data;
 };
 

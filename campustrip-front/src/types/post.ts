@@ -22,3 +22,12 @@ export interface Post {
   applications: Application[];
   postAssets: string[];
 }
+
+// 참여자 목록 및 평가 여부 확인용 타입
+export interface PostMember {
+  postId: number;
+  userId: number;
+  userName: string;
+  profilePhotoUrl: string;
+  rated: boolean;
+}

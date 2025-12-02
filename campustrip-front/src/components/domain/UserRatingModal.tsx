@@ -130,12 +130,14 @@ interface UserRatingModalProps {
   isOpen: boolean;
   onClose: () => void;
   targetUser: User;
+  onRateSuccess?: () => void;
 }
 
 const UserRatingModal: React.FC<UserRatingModalProps> = ({
   isOpen,
   onClose,
   targetUser,
+  onRateSuccess,
 }) => {
   const queryClient = useQueryClient();
   const [rate, setRate] = useState<1 | -1 | null>(null); // 1: 좋아요, -1: 싫어요
@@ -148,6 +150,7 @@ const UserRatingModal: React.FC<UserRatingModalProps> = ({
       queryClient.invalidateQueries({
         queryKey: ["userProfile", targetUser.id],
       });
+      if (onRateSuccess) onRateSuccess();
       handleClose();
     },
     onError: (err) => {
