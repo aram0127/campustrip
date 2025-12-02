@@ -112,10 +112,21 @@ const HandleBar = styled.div`
     }
 `;
 
-const ScrollableContent = styled.div`
+const ScrollableContent = styled.div<{ $containerHeight: number }>`
     flex: 1;
     overflow-y: auto;
-    padding: 0 20px 24px 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    -webkit-overflow-scrolling: touch;
+
+    /* 첫 항목 padding 제거 요청에 따라 상단 여백 제거 */
+    padding-top: 0;
+
+    /* 마지막 항목이 감지 영역에 들어올 수 있도록 하단 여백 */
+    padding-bottom: ${({ $containerHeight }) => {
+        const availablePx = (window.innerHeight * ($containerHeight / 100)) - 180;
+        return `${Math.max(160, Math.min(availablePx, 320))}px`;
+    }};
 `;
 
 const Header = styled.div`
@@ -166,6 +177,10 @@ const IconButton = styled.button`
 
 const DaySection = styled.div`
     margin-bottom: 24px;
+    
+    &:last-child {
+        margin-bottom: 60px;
+    }
 `;
 
 const DayTitle = styled.h3<{ $color: string }>`
@@ -259,6 +274,17 @@ function PlannerDetailPage() {
     const [isDragging, setIsDragging] = useState(false);
     const [startY, setStartY] = useState(0);
     const [startHeight, setStartHeight] = useState(55);
+
+    const placeItemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+    const contentContainerRef = useRef<HTMLDivElement>(null);
+
+    const setPlaceItemRef = useCallback((key: string, node: HTMLDivElement | null) => {
+        if (!node) {
+            placeItemRefs.current.delete(key);
+            return;
+        }
+        placeItemRefs.current.set(key, node);
+    }, []);
 
     const { isLoaded } = useJsApiLoader({
         id: "google-map-script",
@@ -480,54 +506,48 @@ function PlannerDetailPage() {
         };
     }, [isDragging, startY, startHeight]);
 
-    // Intersection Observer를 사용하여 스크롤 시 지도 중심 이동
-    const placeItemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-
-    const setPlaceItemRef = useCallback((key: string, element: HTMLDivElement | null) => {
-        if (element) {
-            placeItemRefs.current.set(key, element);
-        } else {
-            placeItemRefs.current.delete(key);
-        }
-    }, []);
-
+    // observer effect 추가: 스크롤 위치에 따라 아이템 자동 선택
     useEffect(() => {
-        if (!schedulePlaces || schedulePlaces.length === 0) return;
+        if (!contentContainerRef.current || placeItemRefs.current.size === 0) return;
+
+        const container = contentContainerRef.current;
+        const containerHeightPx = container.getBoundingClientRect().height;
+        const topDetectionOffset = Math.max(56, Math.min(containerHeightPx * 0.1, 120));
+        const bandHeight = Math.max(64, Math.min(containerHeightPx * 0.12, 120));
+        const bottomDetectionOffset = Math.max(0, Math.floor(containerHeightPx - topDetectionOffset - bandHeight));
 
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
-                    if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
-                        const [dayStr, orderStr] = entry.target.getAttribute('data-place')?.split('-') || [];
-                        const day = parseInt(dayStr);
-                        const order = parseInt(orderStr);
+                    if (!entry.isIntersecting || entry.intersectionRatio < 0.5) return;
 
-                        const schedule = schedulePlaces.find(s => s.day === day);
-                        const place = schedule?.places.find(p => p.order === order);
+                    const key = entry.target.getAttribute("data-place");
+                    if (!key) return;
 
-                        if (place) {
-                            setMapCenter({ lat: place.latitude, lng: place.longitude });
-                            setMapZoom(14);
-                            setSelectedPlace({ day, order });
-                        }
-                    }
+                    const [dayStr, orderStr] = key.split("-");
+                    const day = Number(dayStr);
+                    const order = Number(orderStr);
+
+                    const schedule = schedulePlaces.find((s) => s.day === day);
+                    const place = schedule?.places.find((p) => p.order === order);
+                    if (!place) return;
+
+                    setSelectedPlace({ day, order });
+                    setMapCenter({ lat: place.latitude, lng: place.longitude });
+                    setMapZoom(14);
                 });
             },
             {
-                root: null,
-                rootMargin: '-40% 0px -40% 0px', // 화면 중앙 근처에서 트리거
+                root: container,
+                rootMargin: `-${topDetectionOffset}px 0px -${bottomDetectionOffset}px 0px`,
                 threshold: [0.5, 0.75, 1],
             }
         );
 
-        placeItemRefs.current.forEach((element) => {
-            observer.observe(element);
-        });
+        placeItemRefs.current.forEach((element) => observer.observe(element));
 
-        return () => {
-            observer.disconnect();
-        };
-    }, [schedulePlaces]);
+        return () => observer.disconnect();
+    }, [schedulePlaces, containerHeight]);
 
     // 로딩 조건 추가: planner가 null이면 렌더링을 막음
     if (!isLoaded || !planner) return <div>Loading...</div>; 
@@ -611,12 +631,12 @@ function PlannerDetailPage() {
                 </GoogleMap>
             </MapSection>
 
-            <ContentContainer $height={containerHeight} $isDragging={isDragging}>
+            <ContentContainer $height={containerHeight} $isDragging={isDragging} ref={contentContainerRef}>
                 <HandleBar
                     onMouseDown={handleDragStart}
                     onTouchStart={handleDragStart}
                 />
-                <ScrollableContent>
+                <ScrollableContent $containerHeight={containerHeight}>
                     <Header>
                         <TitleRow>
                             {/* planner가 null이 아니므로 안전하게 접근 가능 */}
@@ -653,10 +673,10 @@ function PlannerDetailPage() {
                                         schedule.places.map((place) => (
                                             <PlaceItem
                                                 key={place.order}
-                                                ref={(el) => setPlaceItemRef(`${schedule.day}-${place.order}`, el)}
-                                                data-place={`${schedule.day}-${place.order}`}
                                                 onClick={() => handlePlaceClick(place, schedule.day)}
                                                 $isSelected={selectedPlace?.day === schedule.day && selectedPlace?.order === place.order}
+                                                ref={node => setPlaceItemRef(`${schedule.day}-${place.order}`, node)}
+                                                data-place={`${schedule.day}-${place.order}`}
                                             >
                                                 <NumberBadge $color={dayColor}>{place.order}</NumberBadge>
                                                 <PlaceContent style={{ width: "100%" }}>
