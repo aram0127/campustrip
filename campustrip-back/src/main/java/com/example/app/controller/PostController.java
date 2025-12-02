@@ -6,6 +6,8 @@ import com.example.app.service.*;
 import org.springframework.data.domain.*;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -121,8 +123,20 @@ public class PostController {
         postService.deletePost(postId);
     }
 
+    // 게시물의 멤버들 조회
     @GetMapping("/{postId}/members")
     public List<PostMember> getPostMembers(@PathVariable Integer postId) {
         return postService.getPostMembersByPostId(postId);
+    }
+
+    // 게시글 위임
+    @PostMapping("/{postId}/transfer")
+    public void transferPostOwnership(@PathVariable Integer postId, @RequestParam Integer newOwnerMembershipId, @AuthenticationPrincipal UserDetails userDetails) {
+        // 게시글의 주인이 요청하는 것인지 확인
+        Post post = postService.getPostById(postId);
+        if (post.getUser().getUserId().equals(userDetails.getUsername()) == false) {
+            throw new IllegalArgumentException("Only the post owner can transfer ownership.");
+        }
+        postService.transferPostOwnership(post, newOwnerMembershipId);
     }
 }
