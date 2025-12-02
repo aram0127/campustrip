@@ -14,6 +14,8 @@ import com.example.app.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -146,5 +148,11 @@ public class ChatController {
     @GetMapping("/chat/{chatId}/members")
     public List<ChatMemberDTO> getChatMembers(@PathVariable Integer chatId) {
         return chatService.getMembersByRoomId(chatId);
+    }
+
+    @PutMapping("/chat/{chatId}/exit/")
+    public void exitChatRoom(@PathVariable Integer chatId, @AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.getUserByUserId(userDetails.getUsername());
+        chatService.removeChatMemberByChatAndUser(chatId, user);
     }
 }

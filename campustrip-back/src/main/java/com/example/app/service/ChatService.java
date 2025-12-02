@@ -88,6 +88,12 @@ public class ChatService {
         chatMemberRepository.deleteByChatAndUser(chat, user);
     }
 
+    @Transactional
+    public void removeChatMemberByChatAndUser(Integer chatId, User user) {
+        Chat chat = chatRepository.findById(chatId).orElseThrow(() -> new IllegalArgumentException("Chat not found"));
+        chatMemberRepository.deleteByChatAndUser(chat, user);
+    }
+
     @Transactional(readOnly = true)
     public List<ChatMemberDTO> getMembersByRoomId(Integer roomId) {
         Chat chat = chatRepository.findById(roomId).orElseThrow();
