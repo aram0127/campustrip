@@ -653,7 +653,7 @@ function PlannerEditPage() {
         try {
             await updatePlanner(Number(id), updatedPlannerData);
             alert("플래너가 수정되었습니다");
-            navigate(`/planner/${id}`); 
+            navigate(`/planner/${id}`, { replace: true });    
         } catch (error) {
             console.error(error);
             alert("수정 중 오류가 발생했습니다.");

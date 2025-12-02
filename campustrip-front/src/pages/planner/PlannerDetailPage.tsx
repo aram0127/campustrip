@@ -42,7 +42,7 @@ const PageContainer = styled.div`
 `;
 
 const TopBar = styled.div`
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
@@ -55,7 +55,7 @@ const TopBar = styled.div`
 `;
 
 const BackButton = styled.button`
-    background: white;
+    background: rgba(255, 255, 255, 0.44);
     border: none;
     width: 40px;
     height: 40px;
@@ -65,8 +65,14 @@ const BackButton = styled.button`
     align-items: center;
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    font-size: 20px;
-    color: #333;
+
+
+    & > svg {
+        color: #333 !important; 
+        font-size: 24px !important; 
+        min-width: 24px;
+        min-height: 24px;
+    }
 `;
 
 const MapSection = styled.div`
@@ -398,8 +404,8 @@ function PlannerDetailPage() {
         <PageContainer>
             {/* 뒤로가기 버튼 영역 */}
             <TopBar>
-                <BackButton onClick={() => navigate(-1)}>
-                    <IoArrowBack />
+                <BackButton onClick={() => navigate("/planner")}>
+                    <IoArrowBack style={{ color: "#333", fontSize: "32px" }} />
                 </BackButton>
             </TopBar>
 
