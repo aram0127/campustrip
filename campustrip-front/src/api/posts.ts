@@ -148,6 +148,7 @@ export interface InfinitePostsParams {
   size?: number;
   sort?: string;
   regionIds?: number[] | null;
+  universityId?: number | null;
   keyword?: string;
 }
 
@@ -156,6 +157,7 @@ export const getInfinitePosts = async ({
   size = 3,
   sort,
   regionIds,
+  universityId,
   keyword,
 }: InfinitePostsParams = {}): Promise<PostSlice<Post>> => {
   const params = new URLSearchParams();
@@ -167,6 +169,16 @@ export const getInfinitePosts = async ({
     params.append("keyword", keyword);
   }
 
+  // universityId 필터가 있으면 우선 적용
+  if (universityId) {
+    params.append("universityId", universityId.toString());
+    const response = await apiClient.get<PostSlice<Post>>(
+      `/api/posts/university?${params.toString()}`
+    );
+    return response.data;
+  }
+
+  // regionIds 필터 적용
   if (regionIds && regionIds.length > 0) {
     regionIds.forEach((id) => {
       params.append("regionIds", id.toString());
