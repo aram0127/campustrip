@@ -35,6 +35,23 @@ const PlaceServiceWrapper = {
     }
 };
 
+// 날짜 계산
+const addDaysToDateString = (dateString, days) => {
+    if (!dateString) return '';
+
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day); 
+
+    // 날짜 더하기
+    date.setDate(date.getDate() + days);
+
+    const newYear = date.getFullYear();
+    const newMonth = String(date.getMonth() + 1).padStart(2, '0');
+    const newDay = String(date.getDate()).padStart(2, '0');
+
+    return `${newYear}-${newMonth}-${newDay}`;
+};
+
 // --- 스타일 컴포넌트 ---
 const Container = styled.div`
     display: flex;
@@ -437,6 +454,8 @@ function PlannerEditPage() {
 
     const [schedules, setSchedules] = useState<PlannerSchedule[]>([]); 
 
+    const [isSaving, setIsSaving] = useState(false);
+
     const [currentDay, setCurrentDay] = useState(1);
     const [mapCenter, setMapCenter] = useState({ lat: 37.5665, lng: 126.978 }); 
 
@@ -454,7 +473,7 @@ function PlannerEditPage() {
         }
 
         const fetchExistingDetails = async (plannerId: number) => {
-            setIsLoading(true); // 데이터 로딩 시작
+            setIsLoading(true);
             
             const service = PlaceServiceWrapper.getInstance(); 
 
@@ -560,7 +579,8 @@ function PlannerEditPage() {
     // 현재 일차의 장소 목록 (리스트 표시용)
     const currentPlaces = useMemo(() => schedules.find(s => s.day === currentDay)?.places || [], [schedules, currentDay]);
     const currentColor = getCurrentDayColor(currentDay);
-
+    
+    // 일차 삭제 핸들러
     const handleDeleteDay = () => {
         // 1일차만 남았을 경우 내용 비움 
         if (schedules.length === 1) {
@@ -587,6 +607,12 @@ function PlannerEditPage() {
         });
 
         setSchedules(newSchedules);
+        
+        // 일차 줄어들면 endDate도 줄어듦
+        if (endDate) {
+            const newEndDate = addDaysToDateString(endDate, -1);
+            setEndDate(newEndDate);
+        }
 
         // 삭제된 날짜가 마지막 날짜였다면 그 앞 날짜로 이동
         if (currentDay > newSchedules.length) {
@@ -620,8 +646,16 @@ function PlannerEditPage() {
         while (existingDays.includes(nextDay)) {
             nextDay++;
         }
+
+        // 새 일정 추가
         setSchedules([...schedules, { day: nextDay, places: [] }].sort((a, b) => a.day - b.day));
         setCurrentDay(nextDay);
+
+        // 일차가 늘어나면 endDate도 늘어남
+        if (endDate) {
+        const newEndDate = addDaysToDateString(endDate, 1);
+        setEndDate(newEndDate); 
+        }
     };
 
     // updatePlanner 사용

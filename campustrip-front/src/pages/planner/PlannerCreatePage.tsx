@@ -36,6 +36,39 @@ const DAY_COLORS = [
   "#FFC107", "#E91E63", "#00BCD4", "#795548",
 ];
 
+// 날짜 일수 더하거나 빼는 함수
+const addDaysToDateString = (dateString, days) => {
+    if (!dateString) return '';
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day); 
+    date.setDate(date.getDate() + days);
+
+    const newYear = date.getFullYear();
+    const newMonth = String(date.getMonth() + 1).padStart(2, '0');
+    const newDay = String(date.getDate()).padStart(2, '0');
+
+    return `${newYear}-${newMonth}-${newDay}`;
+};
+
+// 시작일과 종료일 사이 총 일수 계산하는 함수
+const calculateDayCount = (start, end) => {
+    if (!start || !end) return 1;
+    
+    const dateStart = new Date(start);
+    const dateStartLocal = new Date(dateStart.getUTCFullYear(), dateStart.getUTCMonth(), dateStart.getUTCDate());
+
+    const dateEnd = new Date(end);
+    const dateEndLocal = new Date(dateEnd.getUTCFullYear(), dateEnd.getUTCMonth(), dateEnd.getUTCDate());
+
+    if (dateEndLocal.getTime() < dateStartLocal.getTime()) return 1; // 종료일이 시작일보다 빠르면 1일로 처리
+    
+    // 밀리초를 일(Day) 단위로 변환 후, 기간 포함을 위해 +1
+    const timeDiff = dateEndLocal.getTime() - dateStartLocal.getTime();
+    const dayCount = Math.floor(timeDiff / (1000 * 3600 * 24)) + 1;
+    
+    return dayCount > 0 ? dayCount : 1;
+};
+
 // 스타일 컴포넌트
 const Container = styled.div`
   display: flex;
@@ -252,6 +285,23 @@ function PlannerCreatePage() {
   const [mapCenter, setMapCenter] = useState({ lat: 37.5665, lng: 126.978 });
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
+    // 날짜 기간에 맞춰 schedules를 초기화하는 함수
+    const initializeSchedulesByDates = (newStart, newEnd) => {
+        const count = calculateDayCount(newStart, newEnd);
+        
+        const newSchedules = [];
+        for (let i = 1; i <= count; i++) {
+            // 기존 일정을 유지하려면: schedules.find(s => s.day === i)?.places || [] 사용
+            // 여기서는 기간 변경 시 일정이 리셋된다고 가정하고 빈 배열 사용
+            newSchedules.push({ 
+                day: i, 
+                places: schedules.find(s => s.day === i)?.places || [] // 기존 일정 유지는 선택 사항
+            }); 
+        }
+        setSchedules(newSchedules.length > 0 ? newSchedules : [{ day: 1, places: [] }]);
+        setCurrentDay(1); 
+    };
+
   const getCurrentDayColor = (day: number) => {
     if (day <= DAY_COLORS.length) {
       return DAY_COLORS[day - 1];
@@ -341,9 +391,23 @@ function PlannerCreatePage() {
     setSchedules(newSchedules);
   };
 
+  // 일차 추가 핸들러
   const addDay = () => {
-    setSchedules([...schedules, { day: schedules.length + 1, places: [] }]);
-    setCurrentDay(schedules.length + 1);
+    const nextDay = schedules.length + 1;
+
+    setSchedules([...schedules, { day: nextDay, places: [] }]);
+    setCurrentDay(nextDay);
+
+    // 일차 늘어나면 endDate도 늘어남
+    if (endDate) { 
+        const newEndDate = addDaysToDateString(endDate, 1);
+        setEndDate(newEndDate);
+    } else if (startDate) {
+        // endDate가 비어있고 startDate만 있으면, startDate를 기준으로 nextDay만큼 떨어진 날짜로 설정
+        const daysToAdd = nextDay - calculateDayCount(startDate, startDate); // 현재 1일차만 있으면 1,
+        const newEndDate = addDaysToDateString(startDate, daysToAdd -1); // 1일차만 있으면 1-1=0..
+        setEndDate(newEndDate);
+      }
   };
 
   // 해당 일차 삭제 및 초기화 (1일차만 남았을 때 포함)
@@ -351,7 +415,12 @@ function PlannerCreatePage() {
     // 1일차만 남았을 경우 내용 비움 
     if (schedules.length === 1) {
       if (window.confirm("1일차 일정을 모두 비우시겠습니까?")) {
-        setSchedules([{ day: 1, places: [] }]);
+          setSchedules([{ day: 1, places: [] }]);
+          if (startDate) {
+              setEndDate(startDate); 
+          } else {
+              setEndDate('');
+          }
       }
       return;
     }
@@ -371,6 +440,12 @@ function PlannerCreatePage() {
 
     setSchedules(newSchedules);
 
+    // 일차가 줄어들면 endDate도 줄어듬
+    if (endDate) {
+        const newEndDate = addDaysToDateString(endDate, -1);
+        setEndDate(newEndDate); 
+    }
+
     // 삭제된 날짜가 마지막 날짜였다면 그 앞 날짜로 이동
     if (currentDay > newSchedules.length) {
       setCurrentDay(newSchedules.length);
@@ -381,6 +456,16 @@ function PlannerCreatePage() {
     if (!title.trim()) return alert("여행 제목을 입력하세요.");
     if (!startDate || !endDate) return alert("여행 기간을 선택해주세요.");
     
+    // 일차 개수와 날짜 기간 일치 검사
+    const scheduleDays = schedules.length;
+    const calculatedDays = calculateDayCount(startDate, endDate);
+    
+    if (scheduleDays !== calculatedDays) {
+        if (!window.confirm(`일정 개수(${scheduleDays}일차)와 선택된 기간(${calculatedDays}일)이 다릅니다. 이대로 저장하시겠습니까?`)) {
+            return;
+        }
+    }
+
     const flattenedDetails: PlannerDetailRequestDTO[] = schedules.flatMap((schedule) => 
       schedule.places.map((place) => ({
         plannerOrder: place.order,      // DTO: plannerOrder
@@ -430,13 +515,23 @@ function PlannerCreatePage() {
           <DateInput
             type="date"
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            onChange={(e) => {
+                const newStart = e.target.value; 
+                setStartDate(newStart);
+                // 날짜 변경 시 일차 초기화
+                initializeSchedulesByDates(newStart, endDate)     
+            }}
           />
           <span style={{ alignSelf: "center", color: "#888" }}>~</span>
           <DateInput
             type="date"
             value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
+            onChange={(e) => {
+                const newEnd = e.target.value;
+                setEndDate(newEnd);
+                // 날짜 변경 시 일차 초기화
+                initializeSchedulesByDates(startDate, newEnd);     
+            }}
           />
         </DateRow>
       </InputGroup>
