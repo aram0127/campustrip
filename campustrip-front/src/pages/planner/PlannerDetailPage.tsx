@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import styled, { useTheme } from "styled-components";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import styled from "styled-components";
 import { useParams, useNavigate } from "react-router-dom";
 import {
     GoogleMap,
@@ -75,23 +75,47 @@ const BackButton = styled.button`
     }
 `;
 
-const MapSection = styled.div`
+const MapSection = styled.div<{ $height: number }>`
     width: 100%;
-    height: 45%;
+    height: ${({ $height }) => 100 - $height}%;
     flex-shrink: 0;
     position: relative;
+    transition: ${({ theme }) => theme && !theme ? 'height 0.1s ease-out' : 'none'};
 `;
 
-const ContentContainer = styled.div`
-    flex-grow: 1;
+const ContentContainer = styled.div<{ $height: number; $isDragging: boolean }>`
+    height: ${({ $height }) => $height}%;
     background-color: ${({ theme }) => theme.colors.background};
     border-top-left-radius: 24px;
     border-top-right-radius: 24px;
     margin-top: -24px;
-    padding: 24px 20px;
-    overflow-y: auto;
     z-index: 10;
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    transition: ${({ $isDragging }) => $isDragging ? 'none' : 'height 0.1s ease-out'};
+    overflow: hidden;
+`;
+
+const HandleBar = styled.div`
+    width: 40px;
+    height: 4px;
+    background-color: ${({ theme }) => theme.colors.borderColor};
+    margin: 16px auto 12px;
+    border-radius: 2px;
+    cursor: grab;
+    touch-action: none;
+    flex-shrink: 0;
+    
+    &:active {
+        cursor: grabbing;
+    }
+`;
+
+const ScrollableContent = styled.div`
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 20px 24px 20px;
 `;
 
 const Header = styled.div`
@@ -104,14 +128,6 @@ const TitleRow = styled.div`
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 8px;
-`;
-
-const HandleBar = styled.div`
-    width: 40px;
-    height: 4px;
-    background-color: ${({ theme }) => theme.colors.borderColor};
-    margin: 0 auto 16px;
-    border-radius: 2px;
 `;
 
 const Title = styled.h2`
@@ -161,13 +177,23 @@ const DayTitle = styled.h3<{ $color: string }>`
     padding-bottom: 8px;
 `;
 
-const PlaceItem = styled.div`
+const PlaceItem = styled.div<{ $isSelected?: boolean }>`
     display: flex;
     align-items: flex-start;
     padding: 12px;
-    background-color: ${({ theme }) => theme.colors.inputBackground};
+    background-color: ${({ theme, $isSelected }) => 
+        $isSelected ? '#e3f2fd' : theme.colors.inputBackground};
     border-radius: 12px;
     margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid ${({ theme, $isSelected }) => 
+        $isSelected ? theme.colors.primary : 'transparent'};
+
+    &:hover {
+        background-color: #e3f2fd;
+        transform: translateX(4px);
+    }
 `;
 
 const NumberBadge = styled.div<{ $color: string }>`
@@ -218,12 +244,21 @@ function PlannerDetailPage() {
     const { plannerId } = useParams();
     const id = plannerId;
     const navigate = useNavigate();
-    const theme = useTheme();
 
     // 1. 백엔드에서 받은 기본 플래너 정보 (ID만 포함)
     const [planner, setPlanner] = useState<PlannerDetailResponse | null>(null); 
     // 2. Google Places API를 통해 상세 정보가 채워진 렌더링용 스케줄
     const [schedulePlaces, setSchedulePlaces] = useState<PlannerSchedule[]>([]);
+    // 3. 지도 중심 좌표 관리
+    const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
+    const [mapZoom, setMapZoom] = useState(12);
+    const [selectedPlace, setSelectedPlace] = useState<{ day: number; order: number } | null>(null);
+
+    // 4. 드래그 관련 state
+    const [containerHeight, setContainerHeight] = useState(55); // 퍼센트 단위
+    const [isDragging, setIsDragging] = useState(false);
+    const [startY, setStartY] = useState(0);
+    const [startHeight, setStartHeight] = useState(55);
 
     const { isLoaded } = useJsApiLoader({
         id: "google-map-script",
@@ -378,7 +413,7 @@ function PlannerDetailPage() {
                 await deletePlanner(Number(id));
                 alert("삭제되었습니다.");
                 navigate("/planner");
-            } catch (e) {
+            } catch {
                 alert("삭제 중 오류가 발생했습니다.");
             }
         }
@@ -396,6 +431,104 @@ function PlannerDetailPage() {
         return DAY_COLORS[(day - 1) % DAY_COLORS.length];
     };
 
+    // PlaceItem 클릭 시 지도 중심 이동
+    const handlePlaceClick = (place: PlannerPlace, day: number) => {
+        setMapCenter({ lat: place.latitude, lng: place.longitude });
+        setMapZoom(15); // 확대
+        setSelectedPlace({ day, order: place.order });
+    };
+
+    // HandleBar 드래그 시작
+    const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+        setIsDragging(true);
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        setStartY(clientY);
+        setStartHeight(containerHeight);
+    };
+
+    // 드래그 중
+    useEffect(() => {
+        if (!isDragging) return;
+
+        const handleDragMove = (e: MouseEvent | TouchEvent) => {
+            const clientY = 'touches' in e ? (e as TouchEvent).touches[0].clientY : (e as MouseEvent).clientY;
+            const deltaY = startY - clientY;
+            const viewportHeight = window.innerHeight;
+            const deltaPercent = (deltaY / viewportHeight) * 100;
+
+            let newHeight = startHeight + deltaPercent;
+            // 최소 20%, 최대 80%로 제한
+            newHeight = Math.max(20, Math.min(80, newHeight));
+
+            setContainerHeight(newHeight);
+        };
+
+        const handleDragEnd = () => {
+            setIsDragging(false);
+        };
+
+        document.addEventListener('mousemove', handleDragMove);
+        document.addEventListener('touchmove', handleDragMove);
+        document.addEventListener('mouseup', handleDragEnd);
+        document.addEventListener('touchend', handleDragEnd);
+
+        return () => {
+            document.removeEventListener('mousemove', handleDragMove);
+            document.removeEventListener('touchmove', handleDragMove);
+            document.removeEventListener('mouseup', handleDragEnd);
+            document.removeEventListener('touchend', handleDragEnd);
+        };
+    }, [isDragging, startY, startHeight]);
+
+    // Intersection Observer를 사용하여 스크롤 시 지도 중심 이동
+    const placeItemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+    const setPlaceItemRef = useCallback((key: string, element: HTMLDivElement | null) => {
+        if (element) {
+            placeItemRefs.current.set(key, element);
+        } else {
+            placeItemRefs.current.delete(key);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!schedulePlaces || schedulePlaces.length === 0) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+                        const [dayStr, orderStr] = entry.target.getAttribute('data-place')?.split('-') || [];
+                        const day = parseInt(dayStr);
+                        const order = parseInt(orderStr);
+
+                        const schedule = schedulePlaces.find(s => s.day === day);
+                        const place = schedule?.places.find(p => p.order === order);
+
+                        if (place) {
+                            setMapCenter({ lat: place.latitude, lng: place.longitude });
+                            setMapZoom(14);
+                            setSelectedPlace({ day, order });
+                        }
+                    }
+                });
+            },
+            {
+                root: null,
+                rootMargin: '-40% 0px -40% 0px', // 화면 중앙 근처에서 트리거
+                threshold: [0.5, 0.75, 1],
+            }
+        );
+
+        placeItemRefs.current.forEach((element) => {
+            observer.observe(element);
+        });
+
+        return () => {
+            observer.disconnect();
+        };
+    }, [schedulePlaces]);
+
     // 로딩 조건 추가: planner가 null이면 렌더링을 막음
     if (!isLoaded || !planner) return <div>Loading...</div>; 
     
@@ -409,14 +542,14 @@ function PlannerDetailPage() {
                 </BackButton>
             </TopBar>
 
-            <MapSection>
+            <MapSection $height={containerHeight}>
                 <GoogleMap
                     mapContainerStyle={{ width: "100%", height: "100%" }}
-                    center={pathCoordinates[0] || { lat: 37.5665, lng: 126.9780 }}
-                    zoom={12}
+                    center={mapCenter || pathCoordinates[0] || { lat: 37.5665, lng: 126.9780 }}
+                    zoom={mapZoom}
                     options={{ disableDefaultUI: true, clickableIcons: false }}
                 >
-                    {/* schedulePlaces 기반으로 지도 마커 렌더링 */}
+                    {/* schedulePlaces 기반으로 지도 경로(Polyline) 렌더링 */}
                     {schedulePlaces?.map((schedule) => {
                         const dayColor = getDayColor(schedule.day);
                         const path = (schedule.places || []).map((p) => ({
@@ -451,7 +584,7 @@ function PlannerDetailPage() {
                         );
                     })}
 
-                    {/* schedulePlaces 기반으로 지도 마커 렌더링 (기존 코드는 유지) */}
+                    {/* schedulePlaces 기반으로 지도 마커 렌더링 */}
                     {schedulePlaces?.map((schedule) =>
                         (schedule.places || []).map((place) => (
                             <Marker
@@ -478,58 +611,69 @@ function PlannerDetailPage() {
                 </GoogleMap>
             </MapSection>
 
-            <ContentContainer>
-                <HandleBar />
-                <Header>
-                    <TitleRow>
-                        {/* planner가 null이 아니므로 안전하게 접근 가능 */}
-                        <Title>{planner.title}</Title> 
-                        <ButtonGroup>
-                            <IconButton onClick={handleEdit} title="수정">
-                                <IoCreateOutline />
-                            </IconButton>
-                            <IconButton onClick={handleDelete} title="삭제">
-                                <IoTrashOutline />
-                            </IconButton>
-                        </ButtonGroup>
-                    </TitleRow>
+            <ContentContainer $height={containerHeight} $isDragging={isDragging}>
+                <HandleBar
+                    onMouseDown={handleDragStart}
+                    onTouchStart={handleDragStart}
+                />
+                <ScrollableContent>
+                    <Header>
+                        <TitleRow>
+                            {/* planner가 null이 아니므로 안전하게 접근 가능 */}
+                            <Title>{planner.title}</Title>
+                            <ButtonGroup>
+                                <IconButton onClick={handleEdit} title="수정">
+                                    <IoCreateOutline />
+                                </IconButton>
+                                <IconButton onClick={handleDelete} title="삭제">
+                                    <IoTrashOutline />
+                                </IconButton>
+                            </ButtonGroup>
+                        </TitleRow>
 
-                    <Period>
-                        📅 {planner.startDate} ~ {planner.endDate}
-                    </Period>
-                </Header>
+                        <Period>
+                            📅 {planner.startDate} ~ {planner.endDate}
+                        </Period>
+                    </Header>
 
-                {/* schedulePlaces 데이터 기반으로 일정 리스트 렌더링 */}
-                {(!schedulePlaces || schedulePlaces.length === 0) ? (
+                    {/* schedulePlaces 데이터 기반으로 일정 리스트 렌더링 */}
+                    {(!schedulePlaces || schedulePlaces.length === 0) ? (
                         <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
                             <p>등록된 상세 일정이 없습니다.</p>
                         </div>
-                ) : (
-                    schedulePlaces.map((schedule) => {
-                    const dayColor = getDayColor(schedule.day);
-                    return (
-                        <DaySection key={schedule.day}>
-                        <DayTitle $color={dayColor}>{schedule.day}일차</DayTitle>
-                        {(!schedule.places || schedule.places.length === 0) ? (
-                            <p style={{ color: "#999", fontSize: "14px", padding: "8px" }}>일정이 없습니다.</p>
-                        ) : (
-                            schedule.places.map((place) => (
-                            <PlaceItem key={place.order}>
-                                <NumberBadge $color={dayColor}>{place.order}</NumberBadge>
-                                <PlaceContent style={{ width: "100%" }}>
-                                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                                    <PlaceName>{place.placeName}</PlaceName>
-                                    <PlaceCategory>{place.category}</PlaceCategory>
-                                </div>
-                                {place.memo && <PlaceMemo>{place.memo}</PlaceMemo>}
-                                </PlaceContent>
-                            </PlaceItem>
-                            ))
-                        )}
-                        </DaySection>
-                    );
-                    })
-                )}
+                    ) : (
+                        schedulePlaces.map((schedule) => {
+                            const dayColor = getDayColor(schedule.day);
+                            return (
+                                <DaySection key={schedule.day}>
+                                    <DayTitle $color={dayColor}>{schedule.day}일차</DayTitle>
+                                    {(!schedule.places || schedule.places.length === 0) ? (
+                                        <p style={{ color: "#999", fontSize: "14px", padding: "8px" }}>일정이 없습니다.</p>
+                                    ) : (
+                                        schedule.places.map((place) => (
+                                            <PlaceItem
+                                                key={place.order}
+                                                ref={(el) => setPlaceItemRef(`${schedule.day}-${place.order}`, el)}
+                                                data-place={`${schedule.day}-${place.order}`}
+                                                onClick={() => handlePlaceClick(place, schedule.day)}
+                                                $isSelected={selectedPlace?.day === schedule.day && selectedPlace?.order === place.order}
+                                            >
+                                                <NumberBadge $color={dayColor}>{place.order}</NumberBadge>
+                                                <PlaceContent style={{ width: "100%" }}>
+                                                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                                        <PlaceName>{place.placeName}</PlaceName>
+                                                        <PlaceCategory>{place.category}</PlaceCategory>
+                                                    </div>
+                                                    {place.memo && <PlaceMemo>{place.memo}</PlaceMemo>}
+                                                </PlaceContent>
+                                            </PlaceItem>
+                                        ))
+                                    )}
+                                </DaySection>
+                            );
+                        })
+                    )}
+                </ScrollableContent>
             </ContentContainer>
         </PageContainer>
     );
