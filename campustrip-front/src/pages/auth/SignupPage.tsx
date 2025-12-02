@@ -170,7 +170,13 @@ function SignupPage() {
       setTimer(60);
     } catch (err) {
       console.error(err);
-      alert("인증코드 발송에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      if (axios.isAxiosError(err) && err.response?.status === 400) {
+        alert(
+          "지원하지 않는 대학교 도메인입니다. 학교 이메일을 정확히 입력해주세요."
+        );
+      } else {
+        alert("인증코드 발송에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      }
     } finally {
       setIsEmailLoading(false);
     }
