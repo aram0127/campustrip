@@ -34,6 +34,12 @@ public class Application {
     @Column(name="application_date", nullable=false)
     private java.time.LocalDateTime applicationDate = java.time.LocalDateTime.now();
 
+    public Application(User currentOwner, Post post, boolean b) {
+        this.user = currentOwner;
+        this.post = post;
+        this.applicationStatus = b;
+    }
+
     public String getUserId() {
         return user.getUserId();
     }
