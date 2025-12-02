@@ -357,4 +357,12 @@ public class PostService {
         });
         return postMembers; // 구현 필요
     }
+
+    // 게시글 위임
+    public void transferPostOwnership(Post post, Integer newOwnerId) {
+        User newOwner = userRepository.findById(newOwnerId)
+                .orElseThrow(() -> new NoSuchElementException("User not found with id: " + newOwnerId));
+        post.setUser(newOwner);
+        postRepository.save(post);
+    }
 }
