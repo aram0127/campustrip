@@ -125,8 +125,8 @@ public class PostController {
 
     // 게시물의 멤버들 조회
     @GetMapping("/{postId}/members")
-    public List<PostMember> getPostMembers(@PathVariable Integer postId) {
-        return postService.getPostMembersByPostId(postId);
+    public List<PostMember> getPostMembers(@PathVariable Integer postId, @AuthenticationPrincipal UserDetails userDetails) {
+        return postService.getPostMembersByPostId(postId, userDetails.getUsername());
     }
 
     // 게시글 위임

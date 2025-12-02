@@ -338,8 +338,8 @@ public class PostService {
         }
     }
 
-    public List<PostMember> getPostMembersByPostId(Integer postId) {
-        List<Object[]> results = applicationRepository.findAllByPostIdWithUserRates(postId);
+    public List<PostMember> getPostMembersByPostId(Integer postId, String userId) {
+        List<Object[]> results = applicationRepository.findAllByPostIdWithUserRates(postId, userId);
         // Object[0] = Application, Object[1] = UserRate (nullable)
         List<PostMember> postMembers = new ArrayList<>();
         results.stream().forEach(objArr -> {
